@@ -546,7 +546,7 @@
         </div>
 
       </div>
-
+    </div>
     <div id="solicitudescdp" class="section-content" style="display:none;">
 
       <div class="card" style="border:3px solid #16a34a; margin-bottom:20px;">
@@ -1511,6 +1511,21 @@
             <div class="form-group">
                 <label>Objeto Contractual</label>
                 <textarea id="mp_objeto" rows="4" placeholder="Ingrese el objeto contractual"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Modalidad</label>
+              <select id="mp_modalidad" onchange="cambiarModalidadDesdeMP(this.value)">
+                <option value="Contratación Directa (1) Propuesta">Contratación Directa (1) Propuesta</option>
+                <option value="Contratación Directa (3) Propuestas">Contratación Directa (3) Propuestas</option>
+                <option value="Contratación por Convocatoria Pública">Contratación por Convocatoria Pública</option>
+                <option value="Subasta Inversa">Subasta Inversa</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Responsable del Proceso</label>
+              <input id="mp_responsable" type="text" placeholder="Nombre del supervisor o responsable">
             </div>
 
             <div class="form-group">
@@ -2793,7 +2808,7 @@
             id="i3_arch_1"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_1')">
+            onchange="mostrarArchivo(this,'i3_nom_1')">
 
             <div id="i3_nom_1"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -2839,7 +2854,7 @@
             <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:6px;font-size:13px;">
                 Documento PAA
             </label>
-            <button onclick="document.getElementById('archivo_1').click()"
+            <button onclick="document.getElementById('i3_arch_1').click()"
                 style="width:100%;background:#F8FAFC;border:1.5px dashed #94A3B8;color:#374151;
                 padding:11px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;">
                 📎 Seleccionar archivo
@@ -2879,7 +2894,7 @@
             id="i3_arch_2"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_2')">
+            onchange="mostrarArchivo(this,'i3_nom_2')">
 
             <div id="i3_nom_2"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -2947,7 +2962,7 @@
         <!-- Solicitud de la propuesta -->
         <div style="margin-bottom:13px;">
             <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Solicitud de la Propuesta</label>
-            <button onclick="document.getElementById('archivo_2b').click()"
+            <button onclick="document.getElementById('i3_arch_2b').click()"
                 style="width:100%;background:#F8FAFC;border:1.5px dashed #94A3B8;color:#374151;
                 padding:11px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;">
                 📎 Cargar Solicitud (Word, Excel o PDF)
@@ -2961,7 +2976,7 @@
         <!-- Archivo -->
         <div style="margin-bottom:18px;">
             <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Documento</label>
-            <button onclick="document.getElementById('archivo_2').click()"
+            <button onclick="document.getElementById('i3_arch_2').click()"
                 style="width:100%;background:#F8FAFC;border:1.5px dashed #94A3B8;color:#374151;
                 padding:11px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;">
                 📎 Seleccionar archivo
@@ -3002,7 +3017,7 @@
             id="i3_arch_3"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_3')">
+            onchange="mostrarArchivo(this,'i3_nom_3')">
 
             <div id="i3_nom_3"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3054,7 +3069,7 @@
         <!-- Archivo -->
         <div style="margin-bottom:18px;">
             <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Documento CDP</label>
-            <button onclick="document.getElementById('archivo_3').click()"
+            <button onclick="document.getElementById('i3_arch_3').click()"
                 style="width:100%;background:#F8FAFC;border:1.5px dashed #94A3B8;color:#374151;
                 padding:11px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;">
                 📎 Seleccionar archivo
@@ -3086,7 +3101,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_4').click()">
+            onclick="document.getElementById('i3_arch_4').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3094,7 +3109,7 @@
             id="i3_arch_4"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_4'); registrarVersionDoc(this, 4)">
+            onchange="mostrarArchivo(this,'i3_nom_4'); registrarVersionDoc(this, 4)">
 
             <div id="i3_nom_4"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3105,12 +3120,12 @@
             style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;
             padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;
             display:flex;align-items:center;gap:5px;">
-                🕓 Ver historial <span id="badge_hist_4" style="background:#123C7B;color:white;
+                🕓 Ver historial <span id="i3_badge_hist_4" style="background:#123C7B;color:white;
                 border-radius:10px;padding:1px 7px;font-size:10px;">0</span>
             </button>
-            <div id="historial_4" style="display:none;margin-top:8px;max-height:160px;
+            <div id="i3_historial_4" style="display:none;margin-top:8px;max-height:160px;
             overflow-y:auto;border:1px solid #E5E7EB;border-radius:10px;font-size:11px;background:#F8FAFC;">
-                <div style="padding:8px 10px;color:#6B7280;font-style:italic;" id="historial_empty_4">Sin cargas registradas aún.</div>
+                <div style="padding:8px 10px;color:#6B7280;font-style:italic;" id="i3_historial_empty_4">Sin cargas registradas aún.</div>
             </div>
         </td>
     </tr>
@@ -3123,7 +3138,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_5').click()">
+            onclick="document.getElementById('i3_arch_5').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3131,7 +3146,7 @@
             id="i3_arch_5"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_5'); registrarVersionDoc(this, 5)">
+            onchange="mostrarArchivo(this,'i3_nom_5'); registrarVersionDoc(this, 5)">
 
             <div id="i3_nom_5"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3142,12 +3157,12 @@
             style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;
             padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;
             display:flex;align-items:center;gap:5px;">
-                🕓 Ver historial <span id="badge_hist_5" style="background:#123C7B;color:white;
+                🕓 Ver historial <span id="i3_badge_hist_5" style="background:#123C7B;color:white;
                 border-radius:10px;padding:1px 7px;font-size:10px;">0</span>
             </button>
-            <div id="historial_5" style="display:none;margin-top:8px;max-height:160px;
+            <div id="i3_historial_5" style="display:none;margin-top:8px;max-height:160px;
             overflow-y:auto;border:1px solid #E5E7EB;border-radius:10px;font-size:11px;background:#F8FAFC;">
-                <div style="padding:8px 10px;color:#6B7280;font-style:italic;" id="historial_empty_5">Sin cargas registradas aún.</div>
+                <div style="padding:8px 10px;color:#6B7280;font-style:italic;" id="i3_historial_empty_5">Sin cargas registradas aún.</div>
             </div>
         </td>
     </tr>
@@ -3160,7 +3175,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_6').click()">
+            onclick="document.getElementById('i3_arch_6').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3168,7 +3183,7 @@
             id="i3_arch_6"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_6')">
+            onchange="mostrarArchivo(this,'i3_nom_6')">
 
             <div id="i3_nom_6"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3185,7 +3200,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_7').click()">
+            onclick="document.getElementById('i3_arch_7').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3193,7 +3208,7 @@
             id="i3_arch_7"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_7')">
+            onchange="mostrarArchivo(this,'i3_nom_7')">
 
             <div id="i3_nom_7"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3210,7 +3225,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_8').click()">
+            onclick="document.getElementById('i3_arch_8').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3218,7 +3233,7 @@
             id="i3_arch_8"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_8')">
+            onchange="mostrarArchivo(this,'i3_nom_8')">
 
             <div id="i3_nom_8"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3235,7 +3250,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_9').click()">
+            onclick="document.getElementById('i3_arch_9').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3243,7 +3258,7 @@
             id="i3_arch_9"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_9'); registrarVersionDoc(this, 9)">
+            onchange="mostrarArchivo(this,'i3_nom_9'); registrarVersionDoc(this, 9)">
 
             <div id="i3_nom_9"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3254,12 +3269,12 @@
             style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;
             padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;
             display:flex;align-items:center;gap:5px;">
-                🕓 Ver historial <span id="badge_hist_9" style="background:#123C7B;color:white;
+                🕓 Ver historial <span id="i3_badge_hist_9" style="background:#123C7B;color:white;
                 border-radius:10px;padding:1px 7px;font-size:10px;">0</span>
             </button>
-            <div id="historial_9" style="display:none;margin-top:8px;max-height:160px;
+            <div id="i3_historial_9" style="display:none;margin-top:8px;max-height:160px;
             overflow-y:auto;border:1px solid #E5E7EB;border-radius:10px;font-size:11px;background:#F8FAFC;">
-                <div style="padding:8px 10px;color:#6B7280;font-style:italic;" id="historial_empty_9">Sin cargas registradas aún.</div>
+                <div style="padding:8px 10px;color:#6B7280;font-style:italic;" id="i3_historial_empty_9">Sin cargas registradas aún.</div>
             </div>
         </td>
     </tr>
@@ -3272,7 +3287,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_10').click()">
+            onclick="document.getElementById('i3_arch_10').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3280,7 +3295,7 @@
             id="i3_arch_10"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_10')">
+            onchange="mostrarArchivo(this,'i3_nom_10')">
 
             <div id="i3_nom_10"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3297,7 +3312,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_11').click()">
+            onclick="document.getElementById('i3_arch_11').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3305,7 +3320,7 @@
             id="i3_arch_11"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_11')">
+            onchange="mostrarArchivo(this,'i3_nom_11')">
 
             <div id="i3_nom_11"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3322,7 +3337,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_12').click()">
+            onclick="document.getElementById('i3_arch_12').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3330,7 +3345,7 @@
             id="i3_arch_12"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_12')">
+            onchange="mostrarArchivo(this,'i3_nom_12')">
 
             <div id="i3_nom_12"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3338,14 +3353,14 @@
             </div>
         </td>
     </tr>
-    <tr id="fila_13">
+    <tr id="i3_fila_13">
         <td>13</td>
         <td>
             LIBRETA MILITAR
-            <div id="badge_aplica_13" style="display:none;margin-top:6px;"></div>
+            <div id="i3_badge_aplica_13" style="display:none;margin-top:6px;"></div>
         </td>
         <td>
-            <input type="checkbox" id="check_13">
+            <input type="checkbox" id="i3_check_13">
         </td>
         <td>
             <!-- ── SELECTOR APLICA / NO APLICA ── -->
@@ -3372,11 +3387,11 @@
                 </div>
 
                 <!-- Justificación si NO aplica -->
-                <div id="justif_13_wrap" style="display:none;margin-top:8px;">
+                <div id="i3_justif_13_wrap" style="display:none;margin-top:8px;">
                     <label style="font-size:11px;font-weight:700;color:#92400E;display:block;margin-bottom:4px;">
                         📝 Motivo de no aplicabilidad:
                     </label>
-                    <select id="justif_13_sel"
+                    <select id="i3_justif_13_sel"
                             onchange="actualizarJustif13()"
                             style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid #FCD34D;
                                    font-size:12px;background:#FFFBEB;color:#374151;cursor:pointer;">
@@ -3386,22 +3401,22 @@
                         <option value="Persona jurídica — no aplica documento personal">Persona jurídica — no aplica documento personal</option>
                         <option value="Otro motivo">Otro motivo</option>
                     </select>
-                    <div id="justif_13_otro_wrap" style="display:none;margin-top:6px;">
-                        <input type="text" id="justif_13_otro"
+                    <div id="i3_justif_13_otro_wrap" style="display:none;margin-top:6px;">
+                        <input type="text" id="i3_justif_13_otro"
                                placeholder="Describa el motivo..."
                                oninput="actualizarJustif13()"
                                style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid #FCD34D;
                                       font-size:12px;background:#FFFBEB;color:#374151;">
                     </div>
-                    <div id="justif_13_preview" style="margin-top:7px;font-size:11px;color:#6B7280;font-style:italic;"></div>
+                    <div id="i3_justif_13_preview" style="margin-top:7px;font-size:11px;color:#6B7280;font-style:italic;"></div>
                 </div>
             </div>
 
             <!-- ── SECCIÓN DE CARGA (solo visible si aplica) ── -->
-            <div id="carga_13_wrap" style="display:none;">
+            <div id="i3_carga_13_wrap" style="display:none;">
                 <button class="btn"
                 style="padding:10px 14px;font-size:13px;"
-                onclick="document.getElementById('archivo_13').click()">
+                onclick="document.getElementById('i3_arch_13').click()">
                     📎 Cargar Documento
                 </button>
 
@@ -3409,7 +3424,7 @@
                 id="i3_arch_13"
                 style="display:none;"
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                onchange="mostrarArchivo(this,'nombreArchivo_13')">
+                onchange="mostrarArchivo(this,'i3_nom_13')">
 
                 <div id="i3_nom_13"
                 style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3418,9 +3433,9 @@
             </div>
 
             <!-- ── ESTADO cuando NO aplica ── -->
-            <div id="noaplica_13_banner" style="display:none;background:#FEF2F2;border:1px solid #FECACA;
+            <div id="i3_noaplica_13_banner" style="display:none;background:#FEF2F2;border:1px solid #FECACA;
                 border-radius:10px;padding:10px 12px;font-size:12px;color:#DC2626;font-weight:600;">
-                🚫 Documento no requerido — <span id="noaplica_13_motivo" style="font-weight:400;color:#374151;"></span>
+                🚫 Documento no requerido — <span id="i3_noaplica_13_motivo" style="font-weight:400;color:#374151;"></span>
             </div>
         </td>
     </tr>
@@ -3433,7 +3448,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_14').click()">
+            onclick="document.getElementById('i3_arch_14').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3441,7 +3456,7 @@
             id="i3_arch_14"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_14')">
+            onchange="mostrarArchivo(this,'i3_nom_14')">
 
             <div id="i3_nom_14"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3453,7 +3468,7 @@
         <td>15</td>
         <td>CERTIFICADO ANTECEDENTES (DISCIPLINARIOS, FISCALES Y JUDICIALES)</td>
         <td>
-            <input type="checkbox" id="check_15">
+            <input type="checkbox" id="i3_check_15">
         </td>
         <td>
             <!-- ── SUB-DOCUMENTO 15-A: DISCIPLINARIOS ── -->
@@ -3466,13 +3481,13 @@
                     🏛️ Antecedentes disciplinarios — Procuraduría General
                 </div>
                 <button class="btn" style="padding:9px 14px;font-size:12px;"
-                    onclick="document.getElementById('archivo_15a').click()">
+                    onclick="document.getElementById('i3_arch_15a').click()">
                     📎 Cargar Antecedentes Disciplinarios
                 </button>
-                <input type="file" id="archivo_15a" style="display:none;"
+                <input type="file" id="i3_arch_15a" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_15a','check_15',['archivo_15a','archivo_15b','archivo_15c'])">
-                <div id="nombreArchivo_15a"
+                    onchange="mostrarArchivoSub(this,'i3_nom_15a','i3_check_15',['i3_arch_15a','i3_arch_15b','i3_arch_15c'])">
+                <div id="i3_nom_15a"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
                 </div>
@@ -3488,13 +3503,13 @@
                     💰 Antecedentes fiscales — Contraloría General
                 </div>
                 <button class="btn" style="padding:9px 14px;font-size:12px;"
-                    onclick="document.getElementById('archivo_15b').click()">
+                    onclick="document.getElementById('i3_arch_15b').click()">
                     📎 Cargar Antecedentes Fiscales
                 </button>
-                <input type="file" id="archivo_15b" style="display:none;"
+                <input type="file" id="i3_arch_15b" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_15b','check_15',['archivo_15a','archivo_15b','archivo_15c'])">
-                <div id="nombreArchivo_15b"
+                    onchange="mostrarArchivoSub(this,'i3_nom_15b','i3_check_15',['i3_arch_15a','i3_arch_15b','i3_arch_15c'])">
+                <div id="i3_nom_15b"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
                 </div>
@@ -3510,26 +3525,26 @@
                     ⚖️ Antecedentes judiciales — Policía Nacional
                 </div>
                 <button class="btn" style="padding:9px 14px;font-size:12px;"
-                    onclick="document.getElementById('archivo_15c').click()">
+                    onclick="document.getElementById('i3_arch_15c').click()">
                     📎 Cargar Antecedentes Judiciales
                 </button>
-                <input type="file" id="archivo_15c" style="display:none;"
+                <input type="file" id="i3_arch_15c" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_15c','check_15',['archivo_15a','archivo_15b','archivo_15c'])">
-                <div id="nombreArchivo_15c"
+                    onchange="mostrarArchivoSub(this,'i3_nom_15c','i3_check_15',['i3_arch_15a','i3_arch_15b','i3_arch_15c'])">
+                <div id="i3_nom_15c"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
                 </div>
             </div>
 
             <!-- Progreso global ítem 15 -->
-            <div id="progreso_15" style="margin-top:10px;font-size:11px;color:#6B7280;
+            <div id="i3_progreso_15" style="margin-top:10px;font-size:11px;color:#6B7280;
                 background:#EFF6FF;border-radius:8px;padding:7px 10px;display:flex;
                 align-items:center;gap:8px;">
                 <span>📁 Documentos cargados:</span>
-                <span id="progreso_15_txt" style="font-weight:700;color:#123C7B;">0 / 3</span>
+                <span id="i3_progreso_15" style="font-weight:700;color:#123C7B;">0 / 3</span>
                 <div style="flex:1;background:#DBEAFE;border-radius:10px;height:6px;overflow:hidden;">
-                    <div id="progreso_15_bar" style="background:linear-gradient(90deg,#0B7A43,#123C7B);
+                    <div id="i3_progreso_15" style="background:linear-gradient(90deg,#0B7A43,#123C7B);
                         height:6px;width:0%;border-radius:10px;transition:width .4s;"></div>
                 </div>
             </div>
@@ -3544,7 +3559,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_16').click()">
+            onclick="document.getElementById('i3_arch_16').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3552,7 +3567,7 @@
             id="i3_arch_16"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_16')">
+            onchange="mostrarArchivo(this,'i3_nom_16')">
 
             <div id="i3_nom_16"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3569,7 +3584,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_17').click()">
+            onclick="document.getElementById('i3_arch_17').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3577,7 +3592,7 @@
             id="i3_arch_17"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_17')">
+            onchange="mostrarArchivo(this,'i3_nom_17')">
 
             <div id="i3_nom_17"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3594,7 +3609,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_18').click()">
+            onclick="document.getElementById('i3_arch_18').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3602,7 +3617,7 @@
             id="i3_arch_18"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_18')">
+            onchange="mostrarArchivo(this,'i3_nom_18')">
 
             <div id="i3_nom_18"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3619,7 +3634,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_19').click()">
+            onclick="document.getElementById('i3_arch_19').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3627,7 +3642,7 @@
             id="i3_arch_19"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_19')">
+            onchange="mostrarArchivo(this,'i3_nom_19')">
 
             <div id="i3_nom_19"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3639,7 +3654,7 @@
         <td>20</td>
         <td>REVISOR FISCAL (CÉDULA, ANTECEDENTES, TARJETA PROFESIONAL)</td>
         <td>
-            <input type="checkbox" id="check_20">
+            <input type="checkbox" id="i3_check_20">
         </td>
         <td>
             <!-- ── SUB-DOCUMENTO 20-A: CÉDULA ── -->
@@ -3652,13 +3667,13 @@
                     🪪 Cédula de ciudadanía del Revisor Fiscal
                 </div>
                 <button class="btn" style="padding:9px 14px;font-size:12px;"
-                    onclick="document.getElementById('archivo_20a').click()">
+                    onclick="document.getElementById('i3_arch_20a').click()">
                     📎 Cargar Cédula
                 </button>
                 <input type="file" id="archivo_20a" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_20a','check_20',['archivo_20a','archivo_20b','archivo_20c'])">
-                <div id="nombreArchivo_20a"
+                    onchange="mostrarArchivoSub(this,'i3_nom_20a','i3_check_20',['i3_arch_20a','i3_arch_20b','i3_arch_20c'])">
+                <div id="i3_nom_20a"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
                 </div>
@@ -3674,13 +3689,13 @@
                     📋 Certificado de antecedentes del Revisor Fiscal
                 </div>
                 <button class="btn" style="padding:9px 14px;font-size:12px;"
-                    onclick="document.getElementById('archivo_20b').click()">
+                    onclick="document.getElementById('i3_arch_20b').click()">
                     📎 Cargar Antecedentes
                 </button>
                 <input type="file" id="archivo_20b" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_20b','check_20',['archivo_20a','archivo_20b','archivo_20c'])">
-                <div id="nombreArchivo_20b"
+                    onchange="mostrarArchivoSub(this,'i3_nom_20b','i3_check_20',['i3_arch_20a','i3_arch_20b','i3_arch_20c'])">
+                <div id="i3_nom_20b"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
                 </div>
@@ -3696,13 +3711,13 @@
                     🏅 Tarjeta profesional del Revisor Fiscal
                 </div>
                 <button class="btn" style="padding:9px 14px;font-size:12px;"
-                    onclick="document.getElementById('archivo_20c').click()">
+                    onclick="document.getElementById('i3_arch_20c').click()">
                     📎 Cargar Tarjeta Profesional
                 </button>
                 <input type="file" id="archivo_20c" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_20c','check_20',['archivo_20a','archivo_20b','archivo_20c'])">
-                <div id="nombreArchivo_20c"
+                    onchange="mostrarArchivoSub(this,'i3_nom_20c','i3_check_20',['i3_arch_20a','i3_arch_20b','i3_arch_20c'])">
+                <div id="i3_nom_20c"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
                 </div>
@@ -3725,7 +3740,7 @@
         <td>21</td>
         <td>CERTIFICACIÓN Y PLANILLAS DE SEGURIDAD SOCIAL</td>
         <td>
-            <input type="checkbox" id="check_21">
+            <input type="checkbox" id="i3_check_21">
         </td>
         <td>
             <!-- ── SUB-DOCUMENTO 21-A: CERTIFICACIÓN ── -->
@@ -3738,13 +3753,13 @@
                     📄 Certificación de pago de seguridad social
                 </div>
                 <button class="btn" style="padding:9px 14px;font-size:12px;"
-                    onclick="document.getElementById('archivo_21a').click()">
+                    onclick="document.getElementById('i3_arch_21a').click()">
                     📎 Cargar Certificación
                 </button>
                 <input type="file" id="archivo_21a" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_21a','check_21',['archivo_21a','archivo_21b'])">
-                <div id="nombreArchivo_21a"
+                    onchange="mostrarArchivoSub(this,'i3_nom_21a','i3_check_21',['i3_arch_21a','i3_arch_21b'])">
+                <div id="i3_nom_21a"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
                 </div>
@@ -3760,13 +3775,13 @@
                     📊 Planillas de seguridad social (salud, pensión, ARL)
                 </div>
                 <button class="btn" style="padding:9px 14px;font-size:12px;"
-                    onclick="document.getElementById('archivo_21b').click()">
+                    onclick="document.getElementById('i3_arch_21b').click()">
                     📎 Cargar Planillas
                 </button>
                 <input type="file" id="archivo_21b" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_21b','check_21',['archivo_21a','archivo_21b'])">
-                <div id="nombreArchivo_21b"
+                    onchange="mostrarArchivoSub(this,'i3_nom_21b','i3_check_21',['i3_arch_21a','i3_arch_21b'])">
+                <div id="i3_nom_21b"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
                 </div>
@@ -3794,7 +3809,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_22').click()">
+            onclick="document.getElementById('i3_arch_22').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3802,7 +3817,7 @@
             id="i3_arch_22"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_22')">
+            onchange="mostrarArchivo(this,'i3_nom_22')">
 
             <div id="i3_nom_22"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3819,7 +3834,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('archivo_23').click()">
+            onclick="document.getElementById('i3_arch_23').click()">
                 📎 Cargar Documento
             </button>
 
@@ -3827,7 +3842,7 @@
             id="i3_arch_23"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_23'); registrarVersionDoc(this, 23)">
+            onchange="mostrarArchivo(this,'i3_nom_23'); registrarVersionDoc(this, 23)">
 
             <div id="i3_nom_23"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -3838,12 +3853,12 @@
             style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;
             padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;
             display:flex;align-items:center;gap:5px;">
-                🕓 Ver historial <span id="badge_hist_23" style="background:#123C7B;color:white;
+                🕓 Ver historial <span id="i3_badge_hist_23" style="background:#123C7B;color:white;
                 border-radius:10px;padding:1px 7px;font-size:10px;">0</span>
             </button>
-            <div id="historial_23" style="display:none;margin-top:8px;max-height:160px;
+            <div id="i3_historial_23" style="display:none;margin-top:8px;max-height:160px;
             overflow-y:auto;border:1px solid #E5E7EB;border-radius:10px;font-size:11px;background:#F8FAFC;">
-                <div style="padding:8px 10px;color:#6B7280;font-style:italic;" id="historial_empty_23">Sin cargas registradas aún.</div>
+                <div style="padding:8px 10px;color:#6B7280;font-style:italic;" id="i3_historial_empty_23">Sin cargas registradas aún.</div>
             </div>
         </td>
     </tr>
@@ -3867,7 +3882,7 @@
             <div id="d3p_iaResumenGlobal"></div>
           </div>
         </div>
-        <button class="btn btn-actualizar" onclick="">⟳ Actualizar análisis</button>
+        <button class="btn btn-actualizar" onclick="reAnalizarTodo()">⟳ Actualizar análisis</button>
       </div>
       <div id="d3p_iaResultadosContenedor">
         <div style="text-align:center;padding:30px;color:#9CA3AF;">
@@ -4239,7 +4254,7 @@
 
 <!-- Botón flotante Skills Inteligentes Jurídicos -->
 <div id="btnApiKeyFlotante" onclick="mostrarModalApiKey()" title="Skills Inteligentes Jurídicos" style="
-    position:fixed; bottom:88px; right:24px; z-index:99999;
+    position:fixed; bottom: 88px; right:24px; z-index:99999;
     background:linear-gradient(135deg,#0B7A43 0%,#123C7B 100%);
     color:white; border-radius:50px; padding:10px 16px;
     font-size:12px; font-weight:700; cursor:pointer;

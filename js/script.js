@@ -807,16 +807,6 @@ function _actualizarBloquesDinamicos() {
   });
 })();
 
-    function d3p_mostrarArchivo(input, labelId) {
-      if (!input.files || !input.files[0]) return;
-      var f = input.files[0];
-      var el = document.getElementById(labelId);
-      if (el) el.innerHTML = '📄 <strong>' + f.name + '</strong>';
-      // sync modal label si existe
-      var modalLbl = document.getElementById(labelId.replace('d3p_nom_','d3p_arch_') + '_modal');
-      if (modalLbl) modalLbl.textContent = '📄 ' + f.name;
-    }
-
     // Sync arch_1 → modal label
     document.addEventListener('DOMContentLoaded', function() {
       var a1 = document.getElementById('d3p_arch_1');
@@ -1140,20 +1130,18 @@ function exportarObservacion(mod) {
     </body></html>`);
 }
 
-function openModal(modalId){
-    document.getElementById(modalId).style.display='flex';
-}
-
-function closeModal(modalId){
-    document.getElementById(modalId).style.display='none';
-}
-
 window.onclick = function(event){
     const modals = document.querySelectorAll('.modal');
 
     modals.forEach(modal => {
         if(event.target === modal){
             modal.style.display='none';
+            const modalAbierto = [...modals].some(
+              m => m.style.display === 'flex'
+            );
+            if(!modalAbierto){
+              document.getElementById('btnApiKeyFlotante').style.display = 'flex';
+            } 
         }
     });
 }
@@ -1417,24 +1405,6 @@ function renderTablaCDP(){
         `;
 
     });
-}
-
-function guardarCDPArchivo(){
-
-    const modal = document.getElementById('modalCDP');
-
-    const numero = modal.querySelector('input[type="text"]').value;
-    const fecha = modal.querySelector('input[type="date"]').value;
-    const archivo = modal.querySelector('input[type="file"]').files[0];
-
-    if(numero === '' || fecha === '' || !archivo){
-        alert('Debe diligenciar todos los campos y cargar el PDF');
-        return;
-    }
-
-    alert('Certificado CDP cargado correctamente');
-
-    closeModal('modalCDP');
 }
 
 function mostrarNombreArchivo(input, elementoId){
@@ -2076,11 +2046,14 @@ function showSection(sectionId){
 }
 
 // Sincronizar nombre de archivo entre modal y celda
-document.getElementById('archivo_1').addEventListener('change', function() {
-    const nombre = this.files[0] ? this.files[0].name : '';
-    const lbl = document.getElementById('nombreArchivo_1_modal');
-    if (lbl) lbl.textContent = nombre ? '📄 ' + nombre : '';
-});
+var _arch1 = document.getElementById('archivo_1');
+if (_arch1) {
+    _arch1.addEventListener('change', function() {
+        const nombre = this.files[0] ? this.files[0].name : '';
+        const lbl = document.getElementById('nombreArchivo_1_modal');
+        if (lbl) lbl.textContent = nombre ? '📄 ' + nombre : '';
+    });
+}
 
 function guardarPAAItem() {
     const unspsc = document.getElementById('paa-unspsc-input').value.trim();
@@ -2162,11 +2135,14 @@ function scdpAutoLetras() {
 }
 
 // Sincronizar nombre archivo
-document.getElementById('archivo_2').addEventListener('change', function() {
-    const nombre = this.files[0] ? this.files[0].name : '';
-    const lbl = document.getElementById('nombreArchivo_2_modal');
-    if (lbl) lbl.textContent = nombre ? '📄 ' + nombre : '';
-});
+var _arch2 = document.getElementById('archivo_2');
+if (_arch2) {
+    _arch2.addEventListener('change', function() {
+        const nombre = this.files[0] ? this.files[0].name : '';
+        const lbl = document.getElementById('nombreArchivo_2_modal');
+        if (lbl) lbl.textContent = nombre ? '📄 ' + nombre : '';
+    });
+}
 
 function scdpMostrarSolicitud(input) {
     const nombre = input.files[0] ? input.files[0].name : '';
@@ -2241,11 +2217,14 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-document.getElementById('archivo_3').addEventListener('change', function() {
-    const nombre = this.files[0] ? this.files[0].name : '';
-    const lbl = document.getElementById('nombreArchivo_3_modal');
-    if (lbl) lbl.textContent = nombre ? '📄 ' + nombre : '';
-});
+var _arch3 = document.getElementById('archivo_3');
+if (_arch3) {
+    _arch3.addEventListener('change', function() {
+        const nombre = this.files[0] ? this.files[0].name : '';
+        const lbl = document.getElementById('nombreArchivo_3_modal');
+        if (lbl) lbl.textContent = nombre ? '📄 ' + nombre : '';
+    });
+}
 
 function guardarCDPItem() {
     const num    = document.getElementById('cdp-num').value.trim();
@@ -2288,13 +2267,6 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Sincronizar nombre de archivo entre modal y celda
-document.getElementById('archivo_1').addEventListener('change', function() {
-    const nombre = this.files[0] ? this.files[0].name : '';
-    const lbl = document.getElementById('nombreArchivo_1_modal');
-    if (lbl) lbl.textContent = nombre ? '📄 ' + nombre : '';
-});
-
 function i3_guardarPAAItem() {
     const unspsc = document.getElementById('paa-unspsc-input').value.trim();
     const detalle = document.getElementById('paa-detalle-input').value.trim();
@@ -2322,19 +2294,6 @@ function i3_guardarPAAItem() {
     document.getElementById('modalPAAItem').style.display = 'none';
 }
 
-// Restaurar valores guardados al cargar
-window.addEventListener('DOMContentLoaded', function() {
-    const u = localStorage.getItem('paa_unspsc');
-    const d = localStorage.getItem('paa_detalle');
-    if (u) {
-        document.getElementById('paa-unspsc-input').value = u;
-        document.getElementById('paa-detalle-input').value = d || '';
-        document.getElementById('paa-unspsc-label').textContent = u;
-        document.getElementById('paa-detalle-label').textContent = d || '—';
-        document.getElementById('paa-unspsc-preview').style.display = 'block';
-    }
-});
-
 function d3p_mostrarArchivo(input, labelId, miniLabelId) {
   if (!input.files || !input.files[0]) return;
   var nombre = input.files[0].name;
@@ -2344,32 +2303,6 @@ function d3p_mostrarArchivo(input, labelId, miniLabelId) {
     var ml = document.getElementById(miniLabelId);
     if (ml) ml.textContent = '📄 ' + nombre;
   }
-}
-
-function d3p_guardarPAA() {
-  var unspsc = document.getElementById('d3p_paa_unspsc').value.trim();
-  var detalle = document.getElementById('d3p_paa_detalle').value.trim();
-  if (!unspsc) { alert('Por favor ingrese al menos un código UNSPSC.'); return; }
-  document.getElementById('d3p_paa_unspsc_lbl').textContent = unspsc;
-  document.getElementById('d3p_paa_detalle_lbl').textContent = detalle || '—';
-  document.getElementById('d3p_paa_preview').style.display = 'block';
-  var arch = document.getElementById('d3p_arch_1');
-  if (arch.files && arch.files.length > 0) d3p_mostrarArchivo(arch, 'd3p_nom_1', null);
-  document.getElementById('d3p_modalPAA').style.display = 'none';
-}
-
-function d3p_guardarCDP() {
-  var num    = document.getElementById('d3p_cdp_num').value.trim();
-  var fecha  = document.getElementById('d3p_cdp_fecha').value;
-  var objeto = document.getElementById('d3p_cdp_objeto').value.trim();
-  if (!num || !fecha || !objeto) { alert('Complete: Número de CDP, Fecha y Objeto.'); return; }
-  document.getElementById('d3p_cdp_num_lbl').textContent = num;
-  document.getElementById('d3p_cdp_fecha_lbl').textContent = fecha;
-  document.getElementById('d3p_cdp_objeto_lbl').textContent = objeto.slice(0,70) + (objeto.length > 70 ? '…' : '');
-  document.getElementById('d3p_cdp_preview').style.display = 'block';
-  var arch = document.getElementById('d3p_arch_2');
-  if (arch.files && arch.files.length > 0) d3p_mostrarArchivo(arch, 'd3p_nom_2', null);
-  document.getElementById('d3p_modalCDP').style.display = 'none';
 }
 
 // Sync archivo inputs con labels del mini-modal
@@ -3107,29 +3040,6 @@ document.querySelectorAll('.modal').forEach(modal=>{
     });
 });
 
-function openModal(modalId){
-
-    document.querySelectorAll('.modal').forEach(m=>{
-        m.style.display='none';
-    });
-
-    const modal = document.getElementById(modalId);
-
-    if(modal){
-        modal.style.display='flex';
-        document.body.style.overflow='hidden';
-    }
-}
-
-function closeModal(modalId){
-
-    const modal = document.getElementById(modalId);
-
-    if(modal){
-        modal.style.display='none';
-        document.body.style.overflow='auto';
-    }
-}
 
 /* =====================================================================
    AGENTE IA HSLV – ANÁLISIS REAL DE DOCUMENTOS CARGADOS
@@ -3981,10 +3891,12 @@ function cerrarModalApiKey() {
 }
 
 // Cerrar modal al hacer clic fuera
-document.getElementById('modalApiKey').addEventListener('click', function(e) {
-    if (e.target === this) cerrarModalApiKey();
-});
-
+var _modalApiKey = document.getElementById('modalApiKey');
+if (_modalApiKey) {
+    _modalApiKey.addEventListener('click', function(e) {
+        if (e.target === this) cerrarModalApiKey();
+    });
+}
 // ===== LÓGICA SUBDOCUMENTOS ÍTEMS 20 Y 21 ===== 
 
 
@@ -4759,47 +4671,6 @@ function exportarBDProcesos() {
     URL.revokeObjectURL(url);
 }
 
-document.addEventListener('DOMContentLoaded', function(){
-
-    // Bloquear scroll mientras splash/login
-    document.body.style.overflow = 'hidden';
-
-    const splash = document.getElementById('splashScreen');
-    const login = document.getElementById('loginScreen');
-
-    // Mostrar login inmediatamente al finalizar splash
-    setTimeout(function(){
-
-        if(splash){
-            splash.style.display = 'none';
-        }
-
-        if(login){
-            login.style.display = 'flex';
-        }
-
-    }, 10000);
-
-});
-
-function validarLogin(){
-
-    const usuario = document.getElementById('usuarioLogin').value;
-    const password = document.getElementById('passwordLogin').value;
-
-    if(usuario === 'ingenieriabiomedica26' && password === 'contra*20260'){
-
-        document.getElementById('loginScreen').style.display = 'none';
-
-        // Restaurar sistema
-        document.body.style.overflow = 'auto';
-
-    }else{
-
-        document.getElementById('loginError').style.display = 'block';
-
-    }
-}
 
 (function(){
   var HSLV_D3P_DOCS = [
@@ -5000,57 +4871,6 @@ function _mostrarToast(nombre) {
   _toastTimer = setTimeout(function(){ n.style.display = 'none'; }, 2800);
 }
 
-/* ─── Cambio desde modalProceso (CD1P) ─── */
-function cambiarModalidadDesdeMP(val) {
-  if (!val || val === 'Contratación Directa (1) Propuesta') return;
-  var data = _mpGetData();
-  var sel  = document.getElementById('mp_modalidad');
-  if (sel) sel.value = 'Contratación Directa (1) Propuesta';
-
-  if (val === 'Contratación Directa (3) Propuestas') {
-    closeModal('modalProceso');
-    setTimeout(function() {
-      _fillD3PFields(data);
-      var d3pSel = document.getElementById('d3p_modalidad');
-      if (d3pSel) d3pSel.value = val;
-      openModal('modalDirecta3P');
-    }, 120);
-  } else if (val === 'Contratación por Convocatoria Pública') {
-    closeModal('modalProceso');
-    showSection('tab-conv');
-    _mostrarToast('Convocatoria Pública');
-  } else if (val === 'Subasta Inversa') {
-    closeModal('modalProceso');
-    showSection('tab-subasta');
-    _mostrarToast('Subasta Inversa');
-  }
-}
-
-/* ─── Cambio desde modalDirecta3P (CD3P) ─── */
-function cambiarModalidadDesdeD3P(val) {
-  if (!val || val === 'Contratación Directa (3) Propuestas') return;
-  var data = _d3pGetData();
-  var sel  = document.getElementById('d3p_modalidad');
-  if (sel) sel.value = 'Contratación Directa (3) Propuestas';
-
-  if (val === 'Contratación Directa (1) Propuesta') {
-    closeModal('modalDirecta3P');
-    setTimeout(function() {
-      _fillMPFields(data);
-      var mpSel = document.getElementById('mp_modalidad');
-      if (mpSel) mpSel.value = val;
-      openModal('modalProceso');
-    }, 120);
-  } else if (val === 'Contratación por Convocatoria Pública') {
-    closeModal('modalDirecta3P');
-    showSection('tab-conv');
-    _mostrarToast('Convocatoria Pública');
-  } else if (val === 'Subasta Inversa') {
-    closeModal('modalDirecta3P');
-    showSection('tab-subasta');
-    _mostrarToast('Subasta Inversa');
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════════
      JURISKILLS IA BLOCK PARA MODAL DIRECTA 3 PROPUESTAS
