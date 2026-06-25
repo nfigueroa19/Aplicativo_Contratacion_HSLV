@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión — HSLV Contratación</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="login-logo">
+            <span class="login-badge">🏥 Sistema de Contratación</span>
+            <h1>Hospital Susana López<br>de Valencia E.S.E.</h1>
+            <p>Ingrese sus credenciales institucionales para acceder</p>
+        </div>
+
+        <div class="form-group">
+            <label for="loginEmail">Correo electrónico</label>
+            <input
+                type="email"
+                id="loginEmail"
+                placeholder="correo@hslv.gov.co"
+                onkeydown="if(event.key === 'Enter') validarLogin()"
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="loginPassword">Contraseña</label>
+            <input
+                type="password"
+                id="loginPassword"
+                placeholder="••••••••"
+                onkeydown="if(event.key === 'Enter') validarLogin()"
+            >
+        </div>
+
+        <button class="btn-login" id="btnLogin" onclick="validarLogin()">
+            🔐 Iniciar Sesión
+        </button>
+
+        <div class="msg error" id="msgError"></div>
+        <div class="msg pendiente" id="msgPendiente">
+            ⏳ Tu cuenta está pendiente de aprobación por el administrador.
+            Contacta al responsable del sistema para activar tu acceso.
+        </div>
+
+        <p class="footer-note">
+            Acceso restringido al personal autorizado del HSLV.<br>
+            Si olvidó su contraseña, contacte al administrador del sistema.
+        </p>
+
+    </div>
+
+    <script src="js/login.js"></script>
+
+</body>
+</html>

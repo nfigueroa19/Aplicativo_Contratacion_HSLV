@@ -1678,45 +1678,16 @@ function imprimirChecklistCD1P() {
 
 
 document.addEventListener('DOMContentLoaded', function(){
-
-    // Bloquear scroll mientras splash/login
     document.body.style.overflow = 'hidden';
-
     const splash = document.getElementById('splashScreen');
-    const login = document.getElementById('loginScreen');
-
-    // Mostrar login inmediatamente al finalizar splash
     setTimeout(function(){
-
-        if(splash){
-            splash.style.display = 'none';
-        }
-
-        if(login){
-            login.style.display = 'flex';
-        }
-
+        if (splash) splash.style.display = 'none';
+        document.body.style.overflow = 'auto';
     }, 10000);
-
 });
 
-function validarLogin(){
-
-    const usuario = document.getElementById('usuarioLogin').value;
-    const password = document.getElementById('passwordLogin').value;
-
-    if(usuario === 'ingenieriabiomedica26' && password === 'contra*20260'){
-
-        document.getElementById('loginScreen').style.display = 'none';
-
-        // Restaurar sistema
-        document.body.style.overflow = 'auto';
-
-    }else{
-
-        document.getElementById('loginError').style.display = 'block';
-
-    }
+function validarLogin() {
+    window.location.href = '/login';
 }
 
 function limpiarFormularioProceso() {
