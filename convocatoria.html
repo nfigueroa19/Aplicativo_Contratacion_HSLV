@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convocatoria Pública — HSLV Contratación</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase.js"></script>
+    <script src="/js/auth-guard.js"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+    <button id="sidebar-toggle" style="display:flex;">☰</button>
+    <div class="sidebar"></div>
+
+    <div class="content">
+
+<!-- TOPBAR -->
+<div class="topbar" style="flex-direction:column;align-items:center;
+                            text-align:center;gap:6px;">
+    <div style="font-size:28px;font-weight:900;color:#046A38;
+                letter-spacing:1px;">
+        ÁGORA <span style="color:#123C7B;">HSLV</span>
+    </div>
+    <div style="width:60px;height:3px;
+                background:linear-gradient(90deg,#046A38,#123C7B);
+                border-radius:2px;"></div>
+    <h1 style="margin:0;font-size:20px;font-weight:800;color:#123C7B;">
+        📢 Contratación por Convocatoria Pública
+    </h1>
+</div>
+
+<!-- DATOS DEL PROCESO -->
+<div class="section-card" style="margin-bottom:22px;">
+    <h3 style="color:#123C7B;margin-bottom:16px;">
+        📋 Datos del Proceso
+    </h3>
+
+    <!-- alert-box DENTRO del section-card, con texto azul -->
+    <div class="alert-box"
+         style="margin-bottom:16px;color:#123C7B;font-weight:600;">
+        Registro integral del proceso contractual con checklist
+        documental y carga individual de soportes.
+    </div>
+
+    <div class="grid">
+        <div class="form-group">
+            <label>Objeto Contractual</label>
+            <textarea id="conv_objeto" rows="4"
+                placeholder="Ingrese el objeto contractual"></textarea>
+        </div>
+        <div class="form-group">
+            <label>Área Solicitante</label>
+            <input id="conv_area" type="text"
+                placeholder="Dependencia solicitante">
+        </div>
+    </div>
+</div>
+
+<!-- CHECKLIST DOCUMENTAL -->
+<div class="section-card" style="margin-bottom:22px;">
+    <h3 style="color:#123C7B;margin-bottom:8px;">
+        📂 Checklist Documental del Proceso
+    </h3>
+    <div class="alert-box" style="margin-bottom:16px;">
+        Cada requisito permite cargar un documento independiente
+        como soporte del expediente contractual.
+    </div>
+
+            <div class="checklist-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Documento Requerido</th>
+                            <th>Validación</th>
+                            <th>Carga de Documento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>CERTIFICADO PAA</td>
+                        <td><input type="checkbox" id="conv_chk_1"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_1').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_1" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_1')">
+                            <div id="conv_nom_1" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>2</td>
+                        <td>CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL</td>
+                        <td><input type="checkbox" id="conv_chk_2"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_2').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_2" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_2')">
+                            <div id="conv_nom_2" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>3</td><td>SOLICITUD PARA CONTRATAR</td>
+                        <td><input type="checkbox" id="conv_chk_3"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_3').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_3" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_3')">
+                            <div id="conv_nom_3" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>4</td><td>ESTUDIOS PREVIOS</td>
+                        <td><input type="checkbox" id="conv_chk_4"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_4').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_4" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_4')">
+                            <div id="conv_nom_4" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>5</td><td>MATRIZ DE RIESGO</td>
+                        <td><input type="checkbox" id="conv_chk_5"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_5').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_5" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_5')">
+                            <div id="conv_nom_5" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>6</td><td>AVISO DE CONVOCATORIA</td>
+                        <td><input type="checkbox" id="conv_chk_6"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_6').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_6" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_6')">
+                            <div id="conv_nom_6" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>7</td><td>PLIEGO DE CONDICIONES</td>
+                        <td><input type="checkbox" id="conv_chk_7"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_7').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_7" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_7')">
+                            <div id="conv_nom_7" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>8</td><td>PROPUESTAS RECIBIDAS</td>
+                        <td><input type="checkbox" id="conv_chk_8"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_8').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_8" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_8')">
+                            <div id="conv_nom_8" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>9</td><td>ACTA DE EVALUACIÓN DE PROPUESTAS</td>
+                        <td><input type="checkbox" id="conv_chk_9"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_9').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_9" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_9')">
+                            <div id="conv_nom_9" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>10</td><td>ACTA DE ADJUDICACIÓN</td>
+                        <td><input type="checkbox" id="conv_chk_10"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_10').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_10" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_10')">
+                            <div id="conv_nom_10" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>11</td>
+                        <td>CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN</td>
+                        <td><input type="checkbox" id="conv_chk_11"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_11').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_11" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_11')">
+                            <div id="conv_nom_11" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>12</td>
+                        <td>REGISTRO ÚNICO TRIBUTARIO (RUT)</td>
+                        <td><input type="checkbox" id="conv_chk_12"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_12').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_12" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_12')">
+                            <div id="conv_nom_12" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>13</td>
+                        <td>CERTIFICADO ANTECEDENTES (DISCIPLINARIOS,
+                            FISCALES Y JUDICIALES)</td>
+                        <td><input type="checkbox" id="conv_chk_13"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_13').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_13" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_13')">
+                            <div id="conv_nom_13" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>14</td>
+                        <td>FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT</td>
+                        <td><input type="checkbox" id="conv_chk_14"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_14').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_14" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_14')">
+                            <div id="conv_nom_14" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+
+                        <tr><td>15</td><td>MINUTA DE CONTRATO</td>
+                        <td><input type="checkbox" id="conv_chk_15"></td>
+                        <td><button class="btn" style="padding:10px 14px;font-size:13px;"
+                            onclick="document.getElementById('conv_arch_15').click()">
+                            📎 Cargar Documento</button>
+                            <input type="file" id="conv_arch_15" style="display:none;"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                onchange="conv_mostrarArchivo(this,'conv_nom_15')">
+                            <div id="conv_nom_15" style="margin-top:8px;font-size:12px;
+                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- JURISKILLS IA -->
+        <div class="agente-ia-box" style="margin-bottom:22px;">
+            <div class="agente-ia-header">
+                <div class="agente-ia-info">
+                    <div class="agente-ia-icon">🤖</div>
+                    <div>
+                        <div class="agente-ia-title">
+                            JURISKILLS IA - Análisis Inteligente de Contratación
+                            <span class="beta-tag">BETA</span>
+                        </div>
+                        <div class="agente-ia-text">
+                            Carga documentos en el checklist y JURISKILLS los analiza
+                            con base en el <strong>Acuerdo 015/2024</strong> y la
+                            <strong>Resolución 0456/2024</strong> del HSLV,
+                            Ley 80/1993 y Decreto 1082/2015.
+                        </div>
+                        <div id="conv_iaResumenGlobal"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="conv_iaResultadosContenedor">
+                <div style="text-align:center;padding:30px;color:#9CA3AF;">
+                    <div style="font-size:40px;margin-bottom:10px;">📂</div>
+                    <p>Carga documentos en el checklist para que JURISKILLS
+                       los analice automáticamente.</p>
+                </div>
+            </div>
+            <div class="ia-grid" style="margin-top:18px;">
+                <div>
+                    <div class="ia-section-title">Observaciones adicionales</div>
+                    <textarea class="ia-observaciones" id="conv_iaObservaciones"
+                        placeholder="Escriba observaciones o justificaciones adicionales…"
+                        oninput="document.getElementById('conv_iaCharCount')
+                                     .textContent=this.value.length+'/1000 caracteres'"
+                        maxlength="1000"></textarea>
+                    <div id="conv_iaCharCount"
+                        style="margin-top:6px;color:#6B7280;font-size:12px;">
+                        0/1000 caracteres
+                    </div>
+                </div>
+                <div>
+                    <div class="normativa-box">
+                        <h4>Normativa aplicada por JURISKILLS</h4>
+                        <ul>
+                            <li>Ley 80 de 1993 y Ley 1150 de 2007</li>
+                            <li>Decreto 1082 de 2015</li>
+                            <li><strong>Acuerdo 015/2024 HSLV</strong>
+                                — Estatuto de Contratación</li>
+                            <li><strong>Resolución 0456/2024 HSLV</strong>
+                                — Manual de Contratación</li>
+                            <li>Ley 734/2002 · Ley 610/2000 · Ley 1918/2018</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="agente-ia-footer">
+                ⓘ El análisis es generado por IA con base en el contenido real
+                de cada documento cargado y la normativa contractual vigente.
+                No reemplaza el criterio jurídico del equipo de contratación.
+            </div>
+        </div>
+
+        <!-- BOTONES -->
+        <div style="display:flex;justify-content:flex-end;gap:12px;
+                    flex-wrap:wrap;padding-bottom:32px;">
+            <button class="btn"
+                onclick="window.location.href='/dashboard'"
+                style="background:#F3F4F6;color:#374151;border:none;">
+                ← Volver al Dashboard
+            </button>
+            <button class="btn finalizar-btn"
+                onclick="guardarProcesoHistorial('conv')">
+                💾 Guardar Proceso
+            </button>
+        </div>
+
+    </div><!-- fin content -->
+
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/script.js"></script>
+
+</body>
+</html>

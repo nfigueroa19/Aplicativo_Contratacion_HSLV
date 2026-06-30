@@ -1,2 +1,9 @@
-/login    /login.html    200
-/*        /index.html    200
+/login                   /login.html          200
+/dashboard               /index.html          200
+/contratacion-directa    /contratacion.html   200
+/directa-3-invitaciones  /directa-3p.html     200
+/convocatoria            /convocatoria.html   200
+/subasta                 /subasta.html        200
+/supervision             /supervision.html    200
+/historial               /historial.html      200
+/*                       /index.html          200

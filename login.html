@@ -13,37 +13,65 @@
 <body>
 
     <div class="login-card">
+
         <div class="login-logo">
             <span class="login-badge">🏥 Sistema de Contratación</span>
             <h1>Hospital Susana López<br>de Valencia E.S.E.</h1>
             <p>Ingrese sus credenciales institucionales para acceder</p>
         </div>
 
-        <div class="form-group">
-            <label for="loginEmail">Correo electrónico</label>
-            <input
-                type="email"
-                id="loginEmail"
-                placeholder="correo@hslv.gov.co"
-                onkeydown="if(event.key === 'Enter') validarLogin()"
-            >
-        </div>
+        <form id="loginForm" autocomplete="off" onsubmit="event.preventDefault(); validarLogin();">
 
-        <div class="form-group">
-            <label for="loginPassword">Contraseña</label>
+            <!-- Campos señuelo -->
+            <input
+                type="text"
+                name="fakeuser"
+                autocomplete="username"
+                style="display:none"
+            >
+
             <input
                 type="password"
-                id="loginPassword"
-                placeholder="••••••••"
-                onkeydown="if(event.key === 'Enter') validarLogin()"
+                name="fakepass"
+                autocomplete="current-password"
+                style="display:none"
             >
-        </div>
 
-        <button class="btn-login" id="btnLogin" onclick="validarLogin()">
-            🔐 Iniciar Sesión
-        </button>
+            <div class="form-group">
+                <label for="loginEmail">Correo electrónico</label>
+                <input
+                    type="email"
+                    id="loginEmail"
+                    name="correo_hslv"
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                    placeholder="correo@hslv.gov.co"
+                    onkeydown="if(event.key === 'Enter') validarLogin()"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="loginPassword">Contraseña</label>
+                <input
+                    type="password"
+                    id="loginPassword"
+                    name="clave_hslv"
+                    autocomplete="new-password"
+                    placeholder="••••••••"
+                    onkeydown="if(event.key === 'Enter') validarLogin()"
+                >
+            </div>
+
+            <button class="btn-login" id="btnLogin" type="submit">
+                🔐 Iniciar Sesión
+            </button>
+
+        </form>
 
         <div class="msg error" id="msgError"></div>
+
         <div class="msg pendiente" id="msgPendiente">
             ⏳ Tu cuenta está pendiente de aprobación por el administrador.
             Contacta al responsable del sistema para activar tu acceso.

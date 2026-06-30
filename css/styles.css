@@ -82,12 +82,10 @@
   border-radius: 99px;
   background: linear-gradient(90deg, #0B7A43 0%, #123C7B 50%, #0B7A43 100%);
   background-size: 200% 100%;
-  animation: barFill 10s linear forwards, shimmer 2s linear infinite;
+  animation: shimmer 2s linear infinite;
+  transition: width 0.3s ease;
 }
-@keyframes barFill {
-  from { width: 0%; }
-  to   { width: 100%; }
-}
+
 @keyframes shimmer {
   from { background-position: 200% 0; }
   to   { background-position: -200% 0; }
@@ -1061,18 +1059,65 @@ img{
   box-shadow: 0 4px 12px rgba(0,0,0,.25);
 }
 
-@media (min-width: 993px) {
-  .sidebar {
-    position: fixed !important; left:0; top:0;
-    width: 290px !important; min-width: 290px !important; max-width: 290px !important;
-    height: 100vh !important; overflow-y: auto; z-index: 1000;
-  }
-  .content {
+/* ── Sidebar y contenido: comportamiento push en todas las pantallas ── */
+
+/* Estado inicial: sidebar oculto, contenido ocupa todo */
+.sidebar {
+    position: fixed !important;
+    left: -290px !important;
+    top: 0;
+    width: 290px !important;
+    min-width: 290px !important;
+    max-width: 290px !important;
+    height: 100vh !important;
+    overflow-y: auto;
+    z-index: 99998;
+    transition: left .3s ease;
+    visibility: hidden;
+}
+
+.sidebar.sidebar-open {
+    left: 0 !important;
+    visibility: visible !important;
+}
+
+.content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 22px !important;
+    padding-top: 56px !important;
+    transition: margin-left .3s ease, width .3s ease;
+    overflow-x: hidden;
+}
+
+/* Cuando el sidebar está abierto, el contenido se desplaza */
+body.sidebar-abierto .content {
     margin-left: 290px !important;
     width: calc(100% - 290px) !important;
     max-width: calc(100% - 290px) !important;
-    padding: 22px !important; overflow-x: hidden;
-  }
+}
+
+/* Botón hamburguesa visible siempre */
+#sidebar-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* Eliminar overlay completamente */
+#sidebar-overlay {
+    display: none !important;
+}
+
+/* En pantallas pequeñas el sidebar NO desplaza el contenido */
+@media (max-width: 992px) {
+    body.sidebar-abierto .content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
 }
 
 @media (max-width: 992px) {
@@ -1086,9 +1131,8 @@ img{
   }
   .sidebar.sidebar-open { left: 0 !important; }
   #sidebar-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.5); z-index: 99997;
-  }
+    display: none !important;
+    }
   #sidebar-overlay.active { display: block; }
   .content {
     margin-left: 0 !important; width: 100% !important;
@@ -2158,4 +2202,195 @@ span.rd-ctx {
     #modalProceso .agente-ia-header {
         flex-direction: column;
     }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   JURISKILLS IA — Estilos genéricos para páginas independientes
+   Aplica cuando el bloque NO está dentro de un modal
+   ═══════════════════════════════════════════════════════════════ */
+
+.agente-ia-box {
+    margin-top: 22px;
+    border: 2px solid #86d19d;
+    border-radius: 18px;
+    background: #FCFFFD;
+    padding: 20px;
+    width: 100%;
+    overflow: visible;
+}
+
+.agente-ia-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.agente-ia-info {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+.agente-ia-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #0B7A43;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(11,122,67,.25);
+}
+
+.agente-ia-title {
+    color: #0B7A43;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.agente-ia-text {
+    color: #4B5563;
+    line-height: 1.6;
+    font-size: 13px;
+}
+
+.agente-ia-footer {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #E5E7EB;
+    color: #9CA3AF;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.beta-tag {
+    background: #E8FFF0;
+    color: #0B7A43;
+    border: 1px solid #86d19d;
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 8px;
+}
+
+.ia-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .ia-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ia-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ia-observaciones {
+    width: 100%;
+    min-height: 100px;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    resize: vertical;
+    outline: none;
+    transition: border-color .2s;
+    font-family: inherit;
+}
+
+.ia-observaciones:focus {
+    border-color: #0B7A43;
+}
+
+.normativa-box {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.normativa-box h4 {
+    color: #123C7B;
+    font-size: 13px;
+    font-weight: 800;
+    margin: 0 0 10px;
+}
+
+.normativa-box ul {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.normativa-box ul li {
+    font-size: 12px;
+    color: #374151;
+    margin-bottom: 4px;
+    line-height: 1.5;
+}
+
+.ia-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.badge-ok {
+    background: #DCFCE7;
+    color: #166534;
+}
+
+.badge-warning {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.badge-error {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.badge-analizando {
+    background: #EEF2FF;
+    color: #4338CA;
+}
+
+.btn-actualizar {
+    background: linear-gradient(90deg, #0B7A43, #123C7B);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity .2s;
+}
+
+.btn-actualizar:hover {
+    opacity: 0.9;
+}
+
+.btn-actualizar:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }

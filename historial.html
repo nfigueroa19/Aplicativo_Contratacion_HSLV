@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Procesos — HSLV Contratación</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase.js"></script>
+    <script src="/js/auth-guard.js"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+    <button id="sidebar-toggle" style="display:flex;">☰</button>
+    <div class="sidebar"></div>
+
+    <div class="content">
+
+        <!-- TOPBAR -->
+        <div class="topbar" style="flex-direction:column;align-items:center;
+                                    text-align:center;gap:6px;">
+            <div style="font-size:28px;font-weight:900;color:#046A38;
+                        letter-spacing:1px;">
+                ÁGORA <span style="color:#123C7B;">HSLV</span>
+            </div>
+            <div style="width:60px;height:3px;
+                        background:linear-gradient(90deg,#046A38,#123C7B);
+                        border-radius:2px;"></div>
+            <h1 style="margin:0;font-size:20px;font-weight:800;color:#123C7B;">
+                📂 Historial de Procesos
+            </h1>
+            <p style="margin:0;color:#6B7280;font-size:13px;">
+                Consulta, filtra y gestiona todos los procesos contractuales registrados
+            </p>
+        </div>
+
+        <!-- BARRA DE FILTROS -->
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+                    margin-bottom:18px;padding:16px;background:#F8FAFC;
+                    border-radius:14px;border:1px solid #E5E7EB;">
+
+            <!-- Filtro modalidad -->
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;font-weight:700;color:#374151;">
+                    Modalidad:
+                </span>
+                <select id="hist-filtro-modal" onchange="hist_renderTabla()"
+                    style="padding:8px 12px;border-radius:8px;
+                           border:1.5px solid #CBD5E1;font-size:13px;
+                           outline:none;color:#374151;">
+                    <option value="">Todas</option>
+                    <option value="CD1P">Directa 1 Propuesta</option>
+                    <option value="D3P">Directa 3 Invitaciones</option>
+                    <option value="CONV">Convocatoria Pública</option>
+                    <option value="SUB">Subasta Inversa</option>
+                </select>
+            </div>
+
+            <!-- Filtro búsqueda -->
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;font-weight:700;color:#374151;">🔍</span>
+                <input id="hist-filtro-buscar" type="text"
+                    placeholder="Buscar por objeto o área…"
+                    oninput="hist_renderTabla()"
+                    style="padding:8px 12px;border-radius:8px;
+                           border:1.5px solid #CBD5E1;font-size:13px;
+                           outline:none;min-width:200px;"
+                    onfocus="this.style.borderColor='#123C7B'"
+                    onblur="this.style.borderColor='#CBD5E1'">
+            </div>
+
+            <!-- Filtro responsable -->
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;font-weight:700;color:#374151;">👤</span>
+                <input id="hist-filtro-responsable" type="text"
+                    placeholder="Filtrar por responsable…"
+                    oninput="hist_renderTabla()"
+                    list="hist-responsables-datalist"
+                    style="padding:8px 12px;border-radius:8px;
+                           border:1.5px solid #CBD5E1;font-size:13px;
+                           outline:none;min-width:180px;"
+                    onfocus="this.style.borderColor='#123C7B'"
+                    onblur="this.style.borderColor='#CBD5E1'">
+                <datalist id="hist-responsables-datalist"></datalist>
+                <button
+                    onclick="document.getElementById('hist-filtro-responsable').value='';
+                             hist_renderTabla();"
+                    title="Limpiar filtro responsable"
+                    style="background:none;border:1.5px solid #CBD5E1;
+                           border-radius:8px;padding:5px 9px;cursor:pointer;
+                           font-size:12px;color:#6B7280;transition:.2s;"
+                    onmouseenter="this.style.background='#F1F5F9'"
+                    onmouseleave="this.style.background='none'">✕</button>
+            </div>
+
+            <!-- Contador y exportar -->
+            <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+                <span id="hist-contador"
+                    style="font-size:13px;color:#6B7280;font-weight:600;"></span>
+                <button onclick="hist_exportarCSV()"
+                    style="background:#0B7A43;color:white;border:none;
+                           padding:8px 16px;border-radius:10px;font-size:12px;
+                           font-weight:700;cursor:pointer;">
+                    ⬇ Exportar CSV
+                </button>
+            </div>
+
+        </div>
+
+        <!-- TABLA DE PROCESOS -->
+        <div style="overflow-x:auto;border-radius:14px;
+                    border:1px solid #E5E7EB;margin-bottom:18px;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                    <tr style="background:linear-gradient(90deg,#123C7B,#0B7A43);
+                                color:white;">
+                        <th style="padding:13px 14px;text-align:left;font-weight:700;">
+                            ID Proceso</th>
+                        <th style="padding:13px 14px;text-align:left;font-weight:700;">
+                            Modalidad</th>
+                        <th style="padding:13px 14px;text-align:left;font-weight:700;">
+                            Objeto Contractual</th>
+                        <th style="padding:13px 14px;text-align:left;font-weight:700;">
+                            Área</th>
+                        <th style="padding:13px 14px;text-align:left;font-weight:700;">
+                            👤 Responsable</th>
+                        <th style="padding:13px 14px;text-align:left;font-weight:700;">
+                            Valor</th>
+                        <th style="padding:13px 14px;text-align:left;font-weight:700;">
+                            Docs</th>
+                        <th style="padding:13px 14px;text-align:left;font-weight:700;">
+                            Fecha</th>
+                        <th style="padding:13px 14px;text-align:center;font-weight:700;">
+                            Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="hist-tabla-body"></tbody>
+            </table>
+        </div>
+
+        <!-- ESTADO VACÍO -->
+        <div id="hist-empty" class="hist-empty-state" style="display:none;">
+            <div class="hist-icon">📂</div>
+            <p style="font-size:16px;font-weight:700;color:#374151;margin:0 0 6px;">
+                Sin procesos guardados aún
+            </p>
+            <p style="font-size:13px;margin:0;">
+                Guarde un proceso desde cualquier módulo de contratación
+                y aparecerá aquí.
+            </p>
+        </div>
+
+    </div><!-- fin content -->
+
+    <!-- PANEL LATERAL DE DETALLE -->
+    <!-- Se desliza desde la derecha al hacer clic en "Ver" -->
+    <div id="hist-detalle-panel">
+        <div id="hist-detalle-inner">
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center;margin-bottom:20px;">
+                <h3 id="hist-det-titulo"
+                    style="margin:0;color:#123C7B;font-size:18px;"></h3>
+                <span onclick="document.getElementById('hist-detalle-panel')
+                                   .classList.remove('open')"
+                    style="font-size:28px;cursor:pointer;
+                           color:#6B7280;line-height:1;">&times;</span>
+            </div>
+            <div id="hist-det-body"></div>
+        </div>
+    </div>
+
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/script.js"></script>
+
+    <!-- Inicializar la tabla al cargar la página -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Pequeña pausa para que script.js termine de cargar HIST_BD
+            setTimeout(function() {
+                if (typeof hist_renderTabla === 'function') {
+                    hist_renderTabla();
+                }
+            }, 300);
+        });
+    </script>
+
+</body>
+</html>

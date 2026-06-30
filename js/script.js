@@ -1,49 +1,111 @@
+// DESPUÉS — el botón ya existe en el HTML, solo buscarlo
 document.addEventListener('DOMContentLoaded', function() {
-  var btn = document.createElement('button');
-  btn.id = 'sidebar-toggle'; btn.innerHTML = '☰';
-  document.body.appendChild(btn);
-  var overlay = document.createElement('div');
-  overlay.id = 'sidebar-overlay';
-  document.body.appendChild(overlay);
-  var sidebar = document.querySelector('.sidebar');
-  function cerrar() {
-    sidebar.classList.remove('sidebar-open');
-    overlay.classList.remove('active');
-    btn.innerHTML = '☰';
-  }
-  btn.addEventListener('click', function() {
-    var abierto = sidebar.classList.toggle('sidebar-open');
-    overlay.classList.toggle('active', abierto);
-    btn.innerHTML = abierto ? '✕' : '☰';
-  });
-  overlay.addEventListener('click', cerrar);
-  document.querySelectorAll('.menu-item').forEach(function(item) {
-    item.addEventListener('click', function() {
-      if (window.innerWidth <= 992) cerrar();
+    var btn = document.getElementById('sidebar-toggle');
+
+    var overlay = document.createElement('div');
+    overlay.id = 'sidebar-overlay';
+    document.body.appendChild(overlay);
+
+    var sidebar = document.querySelector('.sidebar');
+
+    function cerrarSidebar() {
+        if (sidebar) sidebar.classList.remove('sidebar-open');
+        document.body.classList.remove('sidebar-abierto');
+        btn.innerHTML = '☰';
+    }
+
+    btn.addEventListener('click', function() {
+        var abierto = sidebar.classList.toggle('sidebar-open');
+        document.body.classList.toggle('sidebar-abierto', abierto);
+        btn.innerHTML = abierto ? '✕' : '☰';
     });
-  });
+
+    overlay.addEventListener('click', cerrarSidebar);
+
+    document.querySelectorAll('.menu-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+            if (window.innerWidth <= 992) cerrarSidebar();
+        });
+    });
 });
 
+// ════════════════════════════════════════════════════
+//  SPLASH — barra sincronizada con carga real
+//  Combina tiempo mínimo (3s) + carga real de la página
+// ════════════════════════════════════════════════════
 (function() {
-  var start = Date.now();
-  var duration = 10000;
-  var percent = document.getElementById('splashPercent');
-  var splash  = document.getElementById('splashScreen');
-  function tick() {
-    var elapsed = Date.now() - start;
-    var pct = Math.min(100, Math.round((elapsed / duration) * 100));
-    if (percent) percent.textContent = pct + '%';
-    if (pct < 100) {
-      requestAnimationFrame(tick);
-    } else {
-      if (percent) percent.textContent = '100%';
-      setTimeout(function() {
-        splash.classList.add('hide');
-        setTimeout(function() { splash.remove(); }, 800);
-      }, 300);
+    // Si ya se mostró el splash en esta sesión, no mostrarlo de nuevo
+    var yaVisto = sessionStorage.getItem('splash_visto');
+    var splash  = document.getElementById('splashScreen');
+
+    if (yaVisto && splash) {
+        splash.remove();
+        document.body.style.overflow = 'auto';
+        document.body.classList.remove('splash-activo');
+        return; // salir sin hacer nada más
     }
-  }
-  requestAnimationFrame(tick);
+
+    // Primera vez — mostrar el splash normalmente
+    document.body.classList.add('splash-activo');
+
+    var percent       = document.getElementById('splashPercent');
+    var bar           = document.getElementById('splashBar');
+    var MIN_MS        = 3000;
+    var start         = Date.now();
+    var paginaCargada = false;
+    var tiempoMinCumplido = false;
+    var pctTiempo     = 0;
+    var pctCarga      = 0;
+
+    function tickTiempo() {
+        var elapsed = Date.now() - start;
+        pctTiempo = Math.min(100, Math.round((elapsed / MIN_MS) * 100));
+        actualizarBarra();
+        if (elapsed < MIN_MS) {
+            requestAnimationFrame(tickTiempo);
+        } else {
+            pctTiempo         = 100;
+            tiempoMinCumplido = true;
+            actualizarBarra();
+            intentarOcultar();
+        }
+    }
+    requestAnimationFrame(tickTiempo);
+
+    window.addEventListener('load', function() {
+        pctCarga      = 100;
+        paginaCargada = true;
+        actualizarBarra();
+        intentarOcultar();
+    });
+
+    function actualizarBarra() {
+        var pctFinal = Math.round((pctTiempo + pctCarga) / 2);
+        if (percent) percent.textContent = pctFinal + '%';
+        if (bar)     bar.style.width     = pctFinal + '%';
+    }
+
+    function intentarOcultar() {
+        if (!paginaCargada || !tiempoMinCumplido) return;
+
+        if (percent) percent.textContent = '100%';
+        if (bar)     bar.style.width     = '100%';
+        document.body.style.overflow     = 'auto';
+
+        setTimeout(function() {
+            if (splash) {
+                splash.classList.add('hide');
+                setTimeout(function() {
+                    if (splash) splash.remove();
+                    document.body.classList.remove('splash-activo');
+
+                    // Marcar como visto para esta sesión
+                    sessionStorage.setItem('splash_visto', '1');
+
+                }, 800);
+            }
+        }, 300);
+    }
 })();
 
 /* ═══════════════════════════════════════════
@@ -1675,16 +1737,6 @@ function imprimirChecklistCD1P() {
     win.document.close();
 }
 
-
-
-document.addEventListener('DOMContentLoaded', function(){
-    document.body.style.overflow = 'hidden';
-    const splash = document.getElementById('splashScreen');
-    setTimeout(function(){
-        if (splash) splash.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }, 10000);
-});
 
 function validarLogin() {
     window.location.href = '/login';

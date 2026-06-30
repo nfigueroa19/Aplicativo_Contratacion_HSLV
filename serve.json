@@ -1,0 +1,12 @@
+{
+    "rewrites": [
+        { "source": "/login",                  "destination": "/login.html"         },
+        { "source": "/dashboard",              "destination": "/index.html"         },
+        { "source": "/contratacion-directa",   "destination": "/contratacion.html"  },
+        { "source": "/directa-3-invitaciones", "destination": "/directa-3p.html"    },
+        { "source": "/convocatoria",           "destination": "/convocatoria.html"  },
+        { "source": "/subasta",               "destination": "/subasta.html"       },
+        { "source": "/supervision",            "destination": "/supervision.html"   },
+        { "source": "/historial",             "destination": "/historial.html"     }
+    ]
+}
