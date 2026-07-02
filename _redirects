@@ -6,4 +6,5 @@
 /subasta                 /subasta.html        200
 /supervision             /supervision.html    200
 /historial               /historial.html      200
+/proceso/:codigo         /proceso-detalle.html  200
 /*                       /index.html          200

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Proceso — HSLV Contratación</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase.js"></script>
+    <script src="/js/auth-guard.js"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+    <button id="sidebar-toggle" style="display:flex;">☰</button>
+    <div class="sidebar"></div>
+
+    <div class="content">
+
+        <!-- TOPBAR -->
+        <div class="topbar" style="flex-direction:column;align-items:center;
+                                    text-align:center;gap:6px;">
+            <div style="font-size:28px;font-weight:900;color:#046A38;
+                        letter-spacing:1px;">
+                ÁGORA <span style="color:#123C7B;">HSLV</span>
+            </div>
+            <div style="width:60px;height:3px;
+                        background:linear-gradient(90deg,#046A38,#123C7B);
+                        border-radius:2px;"></div>
+            <h1 style="margin:0;font-size:20px;font-weight:800;color:#123C7B;">
+                📄 Detalle del Proceso
+            </h1>
+            <p style="margin:0;color:#6B7280;font-size:13px;">
+                <a href="/historial" style="color:#123C7B;text-decoration:none;">← Volver al historial</a>
+            </p>
+        </div>
+
+        <div id="pd-contenido">
+
+            <!-- Información general del proceso (solo lectura) -->
+            <div id="pd-info" style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;
+                                      padding:20px;margin-bottom:20px;">
+                <div style="text-align:center;color:#9CA3AF;padding:20px;">Cargando proceso…</div>
+            </div>
+
+            <!-- Checklist de documentos -->
+            <div style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:20px;">
+                <div style="font-size:11px;color:#123C7B;font-weight:700;text-transform:uppercase;margin-bottom:10px;">
+                    📋 Documentos del Expediente
+                </div>
+                <div style="border-radius:12px;border:1px solid #E5E7EB;overflow:hidden;overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#F8FAFC;">
+                                <th style="padding:8px 10px;font-size:11px;color:#6B7280;text-align:center;">#</th>
+                                <th style="padding:8px 10px;font-size:11px;color:#6B7280;text-align:left;">Documento</th>
+                                <th style="padding:8px 10px;font-size:11px;color:#6B7280;text-align:left;">Versiones cargadas</th>
+                                <th style="padding:8px 10px;font-size:11px;color:#6B7280;text-align:left;">Comentarios</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pd-checklist-body"></tbody>
+                    </table>
+                </div>
+
+                <div id="pd-acciones" style="margin-top:18px;text-align:right;"></div>
+            </div>
+
+            <!-- Recuadro de referencia JURISKILLS (aún no entrenado/conectado a un modelo real) -->
+            <div class="agente-ia-box" style="margin-top:20px;">
+
+                <div class="agente-ia-header">
+                    <div class="agente-ia-info">
+                        <div class="agente-ia-icon">🤖</div>
+                        <div>
+                            <div class="agente-ia-title">
+                                JURISKILLS IA - Análisis Inteligente de Contratación
+                                <span class="beta-tag">BETA</span>
+                            </div>
+                            <div class="agente-ia-text">
+                                Carga documentos en el checklist y JURISKILLS los analiza con base en el
+                                <strong>Acuerdo 015/2024</strong> y la <strong>Resolución 0456/2024</strong>
+                                del HSLV, Ley 80/1993 y Decreto 1082/2015.
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-actualizar" onclick="reAnalizarTodo()">
+                        ⟳ Actualizar análisis
+                    </button>
+                </div>
+
+                <div id="iaResultadosContenedor">
+                    <div style="text-align:center;padding:30px;color:#9CA3AF;">
+                        <div style="font-size:40px;margin-bottom:10px;">📂</div>
+                        <p>Carga documentos en el checklist para que JURISKILLS los analice automáticamente.</p>
+                    </div>
+                </div>
+
+                <div class="ia-grid" style="margin-top:18px;">
+                    <div>
+                        <div class="ia-section-title">Observaciones adicionales</div>
+                        <textarea class="ia-observaciones" id="iaObservaciones"
+                            placeholder="Escriba observaciones o justificaciones adicionales…" autocomplete="off"
+                            oninput="document.getElementById('iaCharCount').textContent=this.value.length+'/1000 caracteres'"
+                            maxlength="1000"></textarea>
+                        <div id="iaCharCount" style="margin-top:6px;color:#6B7280;font-size:12px;">0/1000 caracteres</div>
+                    </div>
+                    <div>
+                        <div class="normativa-box">
+                            <h4>Normativa aplicada por JURISKILLS</h4>
+                            <ul>
+                                <li>Ley 80 de 1993 y Ley 1150 de 2007</li>
+                                <li>Decreto 1082 de 2015</li>
+                                <li><strong>Acuerdo 015/2024 HSLV</strong> – Estatuto de Contratación (base principal)</li>
+                                <li><strong>Resolución 0456/2024 HSLV</strong> – Manual de Contratación (base principal)</li>
+                                <li>Ley 734/2002 · Ley 610/2000 · Ley 1918/2018</li>
+                                <li>Ley 43/1990 · Ley 48/1993</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="agente-ia-footer">
+                    ⓘ El análisis es generado por IA con base en el contenido real de cada documento cargado y la
+                    normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/db.js"></script>
+    <script src="/js/proceso-detalle.js"></script>
+
+</body>
+</html>

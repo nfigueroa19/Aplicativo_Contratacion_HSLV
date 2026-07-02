@@ -21,6 +21,8 @@
             ? 'supervision'
         : path.includes('historial')
             ? 'historial'
+        : path.includes('proceso')
+            ? null   // detalle de un proceso puntual: ningún ítem del menú aplica
         : 'dashboard';
 
     var items = [
@@ -47,7 +49,7 @@
     var sidebarHTML =
         // Logo
         '<div class="sidebar-logo">' +
-            '<img src="/assets/icons/icono_hospital.png" alt="Hospital" ' +
+            '<img src="/assets/img/Agora_HSLV.png" alt="ÁGORA HSLV"  ' +
                 'style="width:90px;margin-bottom:10px;" ' +
                 'onerror="this.style.display=\'none\'">' +
             '<h2>HOSPITAL</h2>' +

@@ -171,6 +171,7 @@
     </div>
 
     <script src="/js/sidebar.js"></script>
+    <script src="/js/db.js"></script>
     <script src="/js/script.js"></script>
 
     <!-- Inicializar la tabla al cargar la página -->
@@ -180,6 +181,14 @@
             setTimeout(function() {
                 if (typeof hist_renderTabla === 'function') {
                     hist_renderTabla();
+                }
+                // Redibujar de nuevo cuando lleguen los datos reales de
+                // Supabase (evita que quede desactualizada si la tabla
+                // se dibujó antes de que terminara de cargar)
+                if (window._dbListo && typeof window._dbListo.then === 'function') {
+                    window._dbListo.then(function() {
+                        if (typeof hist_renderTabla === 'function') hist_renderTabla();
+                    });
                 }
             }, 300);
         });

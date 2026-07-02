@@ -41,16 +41,22 @@
                 documental y carga individual de soportes.
             </div>
             <div class="grid">
-                <div class="form-group">
-                    <label>Objeto Contractual</label>
-                    <textarea rows="4"
-                        placeholder="Ingrese el objeto contractual"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Área Solicitante</label>
-                    <input type="text" placeholder="Dependencia solicitante">
-                </div>
+
+            <div class="form-group">
+                <label>Objeto Contractual</label>
+                <textarea id="mp_objeto" rows="4" placeholder="Ingrese el objeto contractual" autocomplete="off"></textarea>
             </div>
+
+            <div class="form-group">
+                <label>Área Solicitante</label>
+                <input id="mp_area" type="text" placeholder="Dependencia solicitante" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+              <label>Responsable del Área Solicitante</label>
+              <input id="mp_responsable" type="text" placeholder="Nombre del supervisor o responsable" autocomplete="off">
+            </div>
+        </div>
         </div>
 
         <!-- CHECKLIST DOCUMENTAL -->
@@ -175,11 +181,10 @@
                                 </button>
                                 <input type="file" id="i3_arch_4" style="display:none;"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onchange="mostrarArchivo(this,'i3_nom_4');
-                                              registrarVersionDoc(this,4)">
+                                    onchange="mostrarArchivo(this,'i3_nom_4')">
                                 <div id="i3_nom_4" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                <button onclick="toggleHistorial(4)"
+                                <button onclick="histU_toggle('i3_',4)"
                                     style="margin-top:8px;background:none;
                                            border:1px solid #CBD5E1;border-radius:8px;
                                            padding:5px 10px;font-size:11px;color:#123C7B;
@@ -213,11 +218,10 @@
                                 </button>
                                 <input type="file" id="i3_arch_5" style="display:none;"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onchange="mostrarArchivo(this,'i3_nom_5');
-                                              registrarVersionDoc(this,5)">
+                                    onchange="mostrarArchivo(this,'i3_nom_5')">
                                 <div id="i3_nom_5" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                <button onclick="toggleHistorial(5)"
+                                <button onclick="histU_toggle('i3_',5)"
                                     style="margin-top:8px;background:none;
                                            border:1px solid #CBD5E1;border-radius:8px;
                                            padding:5px 10px;font-size:11px;color:#123C7B;
@@ -288,11 +292,10 @@
                                 </button>
                                 <input type="file" id="i3_arch_9" style="display:none;"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onchange="mostrarArchivo(this,'i3_nom_9');
-                                              registrarVersionDoc(this,9)">
+                                    onchange="mostrarArchivo(this,'i3_nom_9')">
                                 <div id="i3_nom_9" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                <button onclick="toggleHistorial(9)"
+                                <button onclick="histU_toggle('i3_',9)"
                                     style="margin-top:8px;background:none;
                                            border:1px solid #CBD5E1;border-radius:8px;
                                            padding:5px 10px;font-size:11px;color:#123C7B;
@@ -783,11 +786,10 @@
                                 </button>
                                 <input type="file" id="i3_arch_23" style="display:none;"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onchange="mostrarArchivo(this,'i3_nom_23');
-                                              registrarVersionDoc(this,23)">
+                                    onchange="mostrarArchivo(this,'i3_nom_23')">
                                 <div id="i3_nom_23" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                <button onclick="toggleHistorial(23)"
+                                <button onclick="histU_toggle('i3_',23)"
                                     style="margin-top:8px;background:none;
                                            border:1px solid #CBD5E1;border-radius:8px;
                                            padding:5px 10px;font-size:11px;color:#123C7B;
@@ -1059,7 +1061,7 @@
                            color:#0B7A43;font-weight:600;"></div>
             </div>
             <div style="display:flex;gap:10px;">
-                <button onclick="guardarSolicitudCDPItem()"
+                <button onclick="i3_guardarSolicitudCDPItem()"
                     style="flex:1;background:linear-gradient(90deg,#0B7A43,#123C7B);
                            color:#fff;border:none;padding:12px;border-radius:12px;
                            font-weight:700;font-size:14px;cursor:pointer;">
@@ -1134,7 +1136,7 @@
                            color:#0B7A43;font-weight:600;"></div>
             </div>
             <div style="display:flex;gap:10px;">
-                <button onclick="guardarCDPItem()"
+                <button onclick="i3_guardarCDPItem()"
                     style="flex:1;background:linear-gradient(90deg,#0B7A43,#123C7B);
                            color:#fff;border:none;padding:12px;border-radius:12px;
                            font-weight:700;font-size:14px;cursor:pointer;">
@@ -1152,6 +1154,7 @@
     </div>
 
     <script src="/js/sidebar.js"></script>
+    <script src="/js/db.js"></script>
     <script src="/js/script.js"></script>
 
 </body>

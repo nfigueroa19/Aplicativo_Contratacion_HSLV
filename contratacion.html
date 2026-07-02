@@ -44,29 +44,18 @@
 
             <div class="form-group">
                 <label>Objeto Contractual</label>
-                <textarea id="mp_objeto" rows="4" placeholder="Ingrese el objeto contractual"></textarea>
-            </div>
-
-            <div class="form-group">
-              <label>Modalidad</label>
-              <select id="mp_modalidad" onchange="cambiarModalidadDesdeMP(this.value)">
-                <option value="Contratación Directa (1) Propuesta">Contratación Directa (1) Propuesta</option>
-                <option value="Contratación Directa (3) Propuestas">Contratación Directa (3) Propuestas</option>
-                <option value="Contratación por Convocatoria Pública">Contratación por Convocatoria Pública</option>
-                <option value="Subasta Inversa">Subasta Inversa</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Responsable del Proceso</label>
-              <input id="mp_responsable" type="text" placeholder="Nombre del supervisor o responsable">
+                <textarea id="mp_objeto" rows="4" placeholder="Ingrese el objeto contractual" autocomplete="off"></textarea>
             </div>
 
             <div class="form-group">
                 <label>Área Solicitante</label>
-                <input id="mp_area" type="text" placeholder="Dependencia solicitante">
+                <input id="mp_area" type="text" placeholder="Dependencia solicitante" autocomplete="off">
             </div>
 
+            <div class="form-group">
+              <label>Responsable del Área Solicitante</label>
+              <input id="mp_responsable" type="text" placeholder="Nombre del supervisor o responsable" autocomplete="off">
+            </div>
         </div>
         </div><!-- fin section-card Datos del Proceso -->
 
@@ -139,7 +128,7 @@
                 Código(s) UNSPSC
             </label>
             <input id="paa-unspsc-input" type="text"
-                placeholder="Ej: 42142500, 81112100"
+                placeholder="Ej: 42142500, 81112100" autocomplete="off"
                 style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
             <div style="font-size:11px;color:#6B7280;margin-top:4px;">Separe múltiples códigos con coma.</div>
         </div>
@@ -148,19 +137,25 @@
                 Detalle / Descripción
             </label>
             <textarea id="paa-detalle-input" rows="3"
-                placeholder="Descripción del bien o servicio incluido en el PAA…"
+                placeholder="Descripción del bien o servicio incluido en el PAA…" autocomplete="off"
                 style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;"></textarea>
         </div>
         <div style="margin-bottom:18px;">
             <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:6px;font-size:13px;">
                 Documento PAA
             </label>
-            <button onclick="document.getElementById('archivo_1').click()"
+            <button onclick="document.getElementById('paa_archivo_temp').click()"
                 style="width:100%;background:#F8FAFC;border:1.5px dashed #94A3B8;color:#374151;
                 padding:11px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;">
                 📎 Seleccionar archivo
             </button>
-            <div id="nombreArchivo_1_modal" style="margin-top:6px;font-size:12px;color:#0B7A43;font-weight:600;"></div>
+            <input type="file" id="paa_archivo_temp" style="display:none;"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                onchange="paa_mostrarNombreTemporal(this)">
+            <div id="paa_nombre_temp"
+                style="margin-top:6px;font-size:12px;color:#6B7280;font-style:italic;">
+                Sin archivo seleccionado
+            </div>
         </div>
         <div style="display:flex;gap:10px;">
             <button onclick="guardarPAAItem()"
@@ -226,21 +221,21 @@
         <!-- Rubro -->
         <div style="margin-bottom:13px;">
             <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Nombre del Rubro</label>
-            <input id="scdp-rubro" type="text" placeholder="Ej: Servicios Personales Indirectos"
+            <input id="scdp-rubro" type="text" placeholder="Ej: Servicios Personales Indirectos" autocomplete="off"
                 style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
         </div>
 
         <!-- Número rubro -->
         <div style="margin-bottom:13px;">
             <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Número del Rubro</label>
-            <input id="scdp-numrubro" type="text" placeholder="Ej: 2-1-01-01"
+            <input id="scdp-numrubro" type="text" placeholder="Ej: 2-1-01-01" autocomplete="off"
                 style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
         </div>
 
         <!-- Valor en número -->
         <div style="margin-bottom:13px;">
             <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Valor de la Propuesta (en números)</label>
-            <input id="scdp-valor-num" type="number" placeholder="Ej: 15000000"
+            <input id="scdp-valor-num" type="number" placeholder="Ej: 15000000" autocomplete="off"
                 style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"
                 oninput="scdpAutoLetras()">
         </div>
@@ -248,7 +243,7 @@
         <!-- Valor en letras -->
         <div style="margin-bottom:13px;">
             <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Valor de la Propuesta (en letras)</label>
-            <input id="scdp-valor-letras" type="text" placeholder="Se genera automáticamente o escríbalo manualmente"
+            <input id="scdp-valor-letras" type="text" placeholder="Se genera automáticamente o escríbalo manualmente" autocomplete="off"
                 style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
         </div>
 
@@ -347,7 +342,7 @@
         <!-- Número CDP -->
         <div style="margin-bottom:13px;">
             <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Número de CDP</label>
-            <input id="cdp-num" type="text" placeholder="Ej: CDP-2025-001"
+            <input id="cdp-num" type="text" placeholder="Ej: CDP-2025-001" autocomplete="off"
                 style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
         </div>
 
@@ -362,7 +357,7 @@
         <div style="margin-bottom:18px;">
             <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Objeto del CDP</label>
             <textarea id="cdp-objeto" rows="3"
-                placeholder="Describa el objeto para el cual se expide el CDP…"
+                placeholder="Describa el objeto para el cual se expide el CDP…" autocomplete="off"
                 style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;"></textarea>
         </div>
 
@@ -410,7 +405,7 @@
             id="archivo_4"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_4'); registrarVersionDoc(this, 4)">
+            onchange="mostrarArchivo(this,'nombreArchivo_4')">
 
             <div id="nombreArchivo_4"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -447,7 +442,7 @@
             id="archivo_5"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_5'); registrarVersionDoc(this, 5)">
+            onchange="mostrarArchivo(this,'nombreArchivo_5')">
 
             <div id="nombreArchivo_5"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -586,17 +581,17 @@
             <div id="sub_botones_carga" style="display:none;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
                 <div id="sub_btn_mercado" style="display:none;">
                     <button class="btn" style="padding:10px 14px;font-size:13px;" onclick="document.getElementById('archivo_9_mercado').click()">📎 Cargar Estudio de Mercado</button>
-                    <input type="file" id="archivo_9_mercado" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_mercado'); registrarVersionDoc(this, '9_mercado')">
+                    <input type="file" id="archivo_9_mercado" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_mercado')">
                     <div id="nombreArchivo_9_mercado" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                 </div>
                 <div id="sub_btn_propuestas" style="display:none;">
                     <button class="btn" style="padding:10px 14px;font-size:13px;" onclick="document.getElementById('archivo_9_propuestas').click()">📎 Cargar Propuestas de Proveedores</button>
-                    <input type="file" id="archivo_9_propuestas" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_propuestas'); registrarVersionDoc(this, '9_propuestas')">
+                    <input type="file" id="archivo_9_propuestas" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_propuestas')">
                     <div id="nombreArchivo_9_propuestas" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                 </div>
                 <div id="sub_btn_carta" style="display:none;">
                     <button class="btn" style="padding:10px 14px;font-size:13px;" onclick="document.getElementById('archivo_9_carta').click()">📎 Cargar Carta de Distribuidor</button>
-                    <input type="file" id="archivo_9_carta" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_carta'); registrarVersionDoc(this, '9_carta')">
+                    <input type="file" id="archivo_9_carta" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_carta')">
                     <div id="nombreArchivo_9_carta" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                 </div>
             </div>
@@ -735,7 +730,7 @@
                     </select>
                     <div id="justif_13_otro_wrap" style="display:none;margin-top:6px;">
                         <input type="text" id="justif_13_otro"
-                               placeholder="Describa el motivo..."
+                               placeholder="Describa el motivo..." autocomplete="off"
                                oninput="actualizarJustif13()"
                                style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid #FCD34D;
                                       font-size:12px;background:#FFFBEB;color:#374151;">
@@ -1174,7 +1169,7 @@
             id="archivo_23"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_23'); registrarVersionDoc(this, 23)">
+            onchange="mostrarArchivo(this,'nombreArchivo_23')">
 
             <div id="nombreArchivo_23"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -1240,7 +1235,7 @@
         <div>
             <div class="ia-section-title">Observaciones adicionales</div>
             <textarea class="ia-observaciones" id="iaObservaciones"
-                placeholder="Escriba observaciones o justificaciones adicionales…"
+                placeholder="Escriba observaciones o justificaciones adicionales…" autocomplete="off"
                 oninput="document.getElementById('iaCharCount').textContent=this.value.length+'/1000 caracteres'"
                 maxlength="1000"></textarea>
             <div id="iaCharCount" style="margin-top:6px;color:#6B7280;font-size:12px;">0/1000 caracteres</div>
@@ -1296,6 +1291,7 @@
     </div><!-- fin content -->
 
     <script src="/js/sidebar.js"></script>
+    <script src="/js/db.js"></script>
     <script src="/js/script.js"></script>
 
 </body>

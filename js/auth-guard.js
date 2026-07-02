@@ -152,7 +152,5 @@ async function cerrarSesion() {
     if (!confirm('¿Confirma que desea cerrar sesión?')) return;
     clearTimeout(_timerInactividad);
     clearTimeout(_timerAviso);
-    sessionStorage.removeItem('splash_visto'); // ← agregar esta línea
-    await supabaseClient.auth.signOut();
-    window.location.href = LOGIN_URL;
+    await cerrarSesionConLimpieza();
 }

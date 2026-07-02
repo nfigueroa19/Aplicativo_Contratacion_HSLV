@@ -45,17 +45,22 @@
             </div>
 
             <div class="grid">
-                <div class="form-group">
-                    <label>Objeto Contractual</label>
-                    <textarea id="sub_objeto" rows="4"
-                        placeholder="Ingrese el objeto contractual"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Área Solicitante</label>
-                    <input id="sub_area" type="text"
-                        placeholder="Dependencia solicitante">
-                </div>
+
+            <div class="form-group">
+                <label>Objeto Contractual</label>
+                <textarea id="mp_objeto" rows="4" placeholder="Ingrese el objeto contractual" autocomplete="off"></textarea>
             </div>
+
+            <div class="form-group">
+                <label>Área Solicitante</label>
+                <input id="mp_area" type="text" placeholder="Dependencia solicitante" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+              <label>Responsable del Área Solicitante</label>
+              <input id="mp_responsable" type="text" placeholder="Nombre del supervisor o responsable" autocomplete="off">
+            </div>
+        </div>
         </div>
 
         <!-- CHECKLIST DOCUMENTAL -->
@@ -359,6 +364,10 @@
                 style="background:#F3F4F6;color:#374151;border:none;">
                 ← Volver al Dashboard
             </button>
+            <button class="btn" style="background:linear-gradient(90deg,#0e7490,#0B7A43);"
+                onclick="imprimirChecklistSub()">
+                🖨️ Descargar Checklist
+            </button>
             <button class="btn finalizar-btn"
                 onclick="guardarProcesoHistorial('sub')">
                 💾 Guardar Proceso
@@ -368,6 +377,7 @@
     </div><!-- fin content -->
 
     <script src="/js/sidebar.js"></script>
+    <script src="/js/db.js"></script>
     <script src="/js/script.js"></script>
 
 </body>

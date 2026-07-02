@@ -1,5 +1,17 @@
 // DESPUÉS — el botón ya existe en el HTML, solo buscarlo
 document.addEventListener('DOMContentLoaded', function() {
+    // Guardar la promesa de la carga real de datos para que cualquier
+    // tabla (historial, modal del dashboard) pueda esperarla y
+    // redibujarse sola cuando los datos reales terminen de llegar.
+    window._dbListo = new Promise(function(resolve) {
+        setTimeout(function() {
+            if (typeof db_inicializar === 'function') {
+                db_inicializar().then(resolve).catch(resolve);
+            } else {
+                resolve();
+            }
+        }, 500);
+    });
     var btn = document.getElementById('sidebar-toggle');
 
     var overlay = document.createElement('div');
@@ -26,6 +38,95 @@ document.addEventListener('DOMContentLoaded', function() {
         item.addEventListener('click', function() {
             if (window.innerWidth <= 992) cerrarSidebar();
         });
+    });
+});
+
+// ════════════════════════════════════════════════════
+//  COMENTARIOS EN EL CHECKLIST (al crear un proceso)
+//  Se agregan con JS a cada fila para no editar los HTML
+//  gigantes de cada módulo. Se guardan al presionar
+//  Guardar/Crear Proceso, junto con el resto de los datos.
+// ════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+    var path = window.location.pathname;
+    var prefijoComentario =
+        path.includes('contratacion-directa') ? '' :
+        path.includes('directa-3')            ? 'i3_' :
+        path.includes('convocatoria')         ? 'conv_' :
+        path.includes('subasta')              ? 'sub_' :
+        null;
+
+    if (prefijoComentario === null) return; // no es una página de creación de proceso
+
+    var tabla = document.querySelector('.checklist-wrapper table');
+    if (!tabla) return;
+
+    tabla.querySelectorAll('tbody > tr').forEach(function(fila) {
+        var celdas = fila.children;
+        if (!celdas || celdas.length < 4) return;
+
+        var num = parseInt((celdas[0].textContent || '').trim());
+        if (!num) return;
+
+        var celdaCarga = celdas[celdas.length - 1];
+
+        // "Ver historial" desde el inicio (mostrando 0), igual en los 4 módulos.
+        // Los ítems que ya traían su propio contenedor en el HTML original
+        // (4, 5, 9, 23 de Contratación Directa 1 / Directa 3 Invitaciones)
+        // se dejan tal cual, no se duplican.
+        if (!document.getElementById(prefijoComentario + 'historial_' + num)) {
+            var inputArchivo = celdaCarga.querySelector('input[type="file"]');
+            if (inputArchivo) {
+                var bloqueHist = document.createElement('div');
+                bloqueHist.className = 'checklist-historial';
+                bloqueHist.style.cssText = 'margin-top:8px;';
+                bloqueHist.innerHTML =
+                    '<button onclick="histU_toggle(\'' + prefijoComentario + '\',' + num + ')" ' +
+                        'style="background:none;border:1px solid #CBD5E1;border-radius:8px;' +
+                        'padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;' +
+                        'display:flex;align-items:center;gap:5px;">' +
+                        '🕓 Ver historial <span id="' + prefijoComentario + 'badge_hist_' + num + '" ' +
+                            'style="background:#123C7B;color:white;border-radius:10px;' +
+                            'padding:1px 7px;font-size:10px;">0</span>' +
+                    '</button>' +
+                    '<div id="' + prefijoComentario + 'historial_' + num + '" ' +
+                        'style="display:none;margin-top:8px;max-height:160px;overflow-y:auto;' +
+                        'border:1px solid #E5E7EB;border-radius:10px;font-size:11px;background:#F8FAFC;">' +
+                        '<div style="padding:8px 10px;color:#6B7280;font-style:italic;" ' +
+                            'id="' + prefijoComentario + 'historial_empty_' + num + '">' +
+                            'Sin cargas registradas aún.' +
+                        '</div>' +
+                    '</div>';
+                celdaCarga.appendChild(bloqueHist);
+            }
+        }
+
+        if (celdaCarga.querySelector('.checklist-comentario')) return; // ya se agregó
+
+        var bloque = document.createElement('div');
+        bloque.className = 'checklist-comentario';
+        bloque.style.cssText = 'margin-top:10px;border-top:1px dashed #E5E7EB;padding-top:8px;';
+        bloque.innerHTML =
+            '<div style="font-size:10px;color:#6B7280;font-weight:700;' +
+                'text-transform:uppercase;margin-bottom:4px;">💬 Comentarios</div>' +
+            '<textarea id="' + prefijoComentario + 'coment_' + num + '" rows="2" ' +
+                'placeholder="Escribir un comentario para este documento…" autocomplete="off" ' +
+                'style="width:100%;font-size:12px;padding:6px 8px;border:1px solid #CBD5E1;' +
+                'border-radius:8px;resize:vertical;box-sizing:border-box;"></textarea>';
+        celdaCarga.appendChild(bloque);
+    });
+});
+
+// ════════════════════════════════════════════════════
+//  REVISIÓN ORTOGRÁFICA — se activa en todos los recuadros
+//  de texto de cualquier página, para no depender de si el
+//  navegador lo activa solo por defecto o no.
+// ════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('textarea, input[type="text"], input:not([type])').forEach(function(campo) {
+        if (campo.getAttribute('spellcheck') !== 'false') {
+            campo.setAttribute('spellcheck', 'true');
+        }
     });
 });
 
@@ -115,6 +216,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function dash_actualizar() {
     if (typeof HIST_BD === 'undefined') return;
+
+    // Las tarjetas del dashboard solo existen en index.html — en otras
+    // páginas (historial, proceso-detalle, etc.) esta función no debe hacer nada.
+    if (!document.getElementById('dash-total')) return;
 
     var total = HIST_BD.length;
     var cd1p  = HIST_BD.filter(function(p){ return p.tipo === 'CD1P'; }).length;
@@ -256,7 +361,11 @@ function dash_abrirHistorial(filtroTipo) {
     };
 })();
 
-// También parchar guardarProceso (CD1P) si existe, para que registre en HIST_BD y actualice dashboard
+// Nota: la reconstrucción de HIST_BD desde Supabase ya la hace por completo
+// db_inicializar() (en js/db.js), incluyendo los campos de responsable
+// asignado. Antes había aquí una segunda copia de esa misma lógica (sin esos
+// campos) que competía con db_inicializar() y a veces "ganaba" la carrera,
+// dejando el responsable asignado sin mostrar. Se quitó esa copia duplicada.
 document.addEventListener('DOMContentLoaded', function() {
     dash_actualizar();
     actualizarContadorAlertas();
@@ -1483,10 +1592,11 @@ function mostrarNombreArchivo(input, elementoId){
 // ═══════════════════════════════════════════════════════════
 const BD_PROCESOS = [];
 
-function guardarProceso() {
-    const objeto    = (document.getElementById('mp_objeto')    || {}).value || '';
-    const modalidad = (document.getElementById('mp_modalidad') || {}).value || '';
-    const area      = (document.getElementById('mp_area')      || {}).value || '';
+async function guardarProceso() {
+
+    // ── Validaciones básicas ──────────────────────────
+    var objeto = (document.getElementById('mp_objeto') || {}).value || '';
+    var area   = (document.getElementById('mp_area')   || {}).value || '';
 
     if (!objeto.trim()) {
         alert('⚠️ Debe ingresar el Objeto Contractual antes de guardar.');
@@ -1497,43 +1607,33 @@ function guardarProceso() {
         return;
     }
 
-    // Recopilar checkboxes del checklist (ítems 1–23)
-    const checklistEstado = {};
-    const checkboxes = document.querySelectorAll('#modalProceso input[type="checkbox"]');
-    checkboxes.forEach((cb, i) => { checklistEstado[i + 1] = cb.checked; });
+    // ── Verificar perfil antes de continuar ───────────
+    var perfil = await db_perfil();
+    if (!perfil) return;
 
-    // Recopilar archivos cargados
-    const documentosCargados = [];
-    for (let i = 1; i <= 23; i++) {
-        const inp = document.getElementById('archivo_' + i);
-        if (inp && inp.files && inp.files[0]) {
-            documentosCargados.push({ item: i, nombre: inp.files[0].name, tamano: formatearTamanoProc(inp.files[0].size) });
-        }
+    if (perfil.area !== 'biomedica' && perfil.rol !== 'admin') {
+        alert('⚠️ Solo el área Biomédica puede crear procesos.');
+        return;
     }
 
-    const ahora    = new Date();
-    const idProceso = 'CD1P-' + String(BD_PROCESOS.length + 1).padStart(4, '0') + '-' + ahora.getFullYear();
+    // ── Deshabilitar botón mientras guarda ────────────
+    var btnGuardar = document.querySelector(
+        'button[onclick="guardarProceso()"], ' +
+        'button[onclick="guardarProceso()"]'
+    );
+    if (btnGuardar) {
+        btnGuardar.disabled    = true;
+        btnGuardar.textContent = '⏳ Guardando...';
+    }
 
-    const proceso = {
-        id:          idProceso,
-        objeto:      objeto.trim(),
-        modalidad,
-        area:        area.trim(),
-        fecha:       ahora.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-        hora:        ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        timestamp:   ahora.getTime(),
-        checklist:   checklistEstado,
-        documentos:  documentosCargados,
-        docsTotal:   documentosCargados.length,
-        checkOk:     Object.values(checklistEstado).filter(Boolean).length
-    };
+    // ── Recopilar datos del formulario ─────────────────
+    var responsable = (document.getElementById('mp_responsable') || {}).value || '';
 
-    BD_PROCESOS.unshift(proceso); // más reciente primero
+    // ── Ítems que Biomédica NO puede ver ni subir ─────
+    var ITEMS_RESTRINGIDOS = [15, 20, 21, 22];
 
-    // ── Registrar en historial de procesos (ANTES de limpiar el formulario) ──
-    (function() {
-      // Recopilar nombres visibles de archivos desde los divs de nombre
-      var LABELS_CD1P = [
+    // Labels de los 23 ítems
+    var LABELS = [
         'CERTIFICADO PAA',
         'SOLICITUD DE CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',
         'CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',
@@ -1557,51 +1657,112 @@ function guardarProceso() {
         'CERTIFICACIÓN Y PLANILLAS DE SEGURIDAD SOCIAL',
         'FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT',
         'ACTA DE EVALUACIÓN'
-      ];
-      var checkboxes2 = document.querySelectorAll('#modalProceso input[type="checkbox"]');
-      var histChecklist = [];
-      LABELS_CD1P.forEach(function(lbl, i) {
-        var cb = checkboxes2[i];
-        var archEl = document.getElementById('nombreArchivo_' + (i+1));
-        var archNom = '';
-        if (archEl) {
-          var txt = archEl.textContent.replace(/📄\s*/g,'').trim();
-          if (txt && txt !== 'Sin archivo cargado') archNom = txt;
+    ];
+
+    // ── Recopilar checklist con archivos ──────────────
+    var checklist = [];
+
+    LABELS.forEach(function(label, i) {
+        var num = i + 1;
+
+        // Obtener checkbox según el ítem
+        var cbIds = { 13:'check_13', 15:'check_15', 20:'check_20', 21:'check_21' };
+        var cbId  = cbIds[num] || null;
+        var cb    = cbId
+            ? document.getElementById(cbId)
+            : (function(){
+                var todos = document.querySelectorAll(
+                    '#modalProceso input[type="checkbox"], ' +
+                    '.content input[type="checkbox"]'
+                );
+                return todos[i] || null;
+              })();
+        var ok = cb ? cb.checked : false;
+
+        // Obtener archivo del ítem
+        var archivo = null;
+
+        // Ítems simples
+        var archSimple = document.getElementById('archivo_' + num);
+        if (archSimple && archSimple.files && archSimple.files[0]) {
+            archivo = archSimple.files[0];
         }
-        histChecklist.push({ num: i+1, label: lbl, ok: cb ? cb.checked : false, archivo: archNom });
-      });
-      var ahora2 = new Date();
-      if (typeof HIST_BD !== 'undefined' && typeof hist_genId === 'function') {
-        var rEl_cd1p = document.getElementById('mp_responsable');
-        HIST_BD.unshift({
-          id: hist_genId('CD1P'), tipo: 'CD1P',
-          objeto: objeto.trim(), area: area.trim(), valor: '',
-          responsable: rEl_cd1p ? rEl_cd1p.value.trim() : '',
-          fecha: ahora2.toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'}),
-          hora:  ahora2.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}),
-          timestamp: ahora2.getTime(),
-          checksOk: histChecklist.filter(function(c){return c.ok;}).length,
-          checksTotal: histChecklist.length,
-          checklist: histChecklist
+
+        if (!archivo && num === 1) {
+          var archPaaTemp = document.getElementById('paa_archivo_temp');
+          if (archPaaTemp && archPaaTemp.files && archPaaTemp.files[0]) {
+            archivo = archPaaTemp.files[0];
+          }
+        }
+
+        // Ítems con sub-archivos (15, 20, 21)
+        var subSufijos = {
+            15: ['15a','15b','15c'],
+            20: ['20a','20b','20c'],
+            21: ['21a','21b']
+        };
+        if (!archivo && subSufijos[num]) {
+            subSufijos[num].forEach(function(sufijo) {
+                if (!archivo) {
+                    var inp = document.getElementById('archivo_' + sufijo);
+                    if (inp && inp.files && inp.files[0]) {
+                        archivo = inp.files[0];
+                    }
+                }
+            });
+        }
+
+        var comentEl  = document.getElementById('coment_' + num);
+        var comentario = comentEl ? comentEl.value.trim() : '';
+
+        checklist.push({
+            num:           num,
+            label:         label,
+            ok:            ok,
+            archivo:       archivo,
+            esRestringido: ITEMS_RESTRINGIDOS.indexOf(num) !== -1,
+            comentario:    comentario
         });
-      }
-    })();
+    });
 
-    // ── Limpiar todos los campos del formulario ──
+    // ── Llamar a db.js ────────────────────────────────
+    var resultado = await db_guardarProceso({
+        tipo:        'CD1P',
+        objeto:      objeto.trim(),
+        area:        area.trim(),
+        valor:       '',
+        responsable: responsable.trim(),
+        checklist:   checklist
+    });
+
+    // ── Restaurar botón ───────────────────────────────
+    if (btnGuardar) {
+        btnGuardar.disabled    = false;
+        btnGuardar.textContent = '💾 Guardar Proceso';
+    }
+
+    if (!resultado) return;
+
+    // ── Limpiar formulario ────────────────────────────
     limpiarFormularioProceso();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // ── Feedback ──
-    const toast = document.createElement('div');
-    toast.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:99998;
-        background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;
-        padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;
-        box-shadow:0 8px 24px rgba(0,0,0,.3);animation:fadeInUp .3s ease;`;
-    toast.innerHTML = `✅ Proceso <strong>${idProceso}</strong> guardado correctamente`;
+    // ── Actualizar dashboard ──────────────────────────
+    if (typeof dash_actualizar === 'function') {
+        setTimeout(dash_actualizar, 300);
+    }
+
+    // ── Toast de éxito ────────────────────────────────
+    var toast = document.createElement('div');
+    toast.style.cssText =
+        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
+        'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
+        'box-shadow:0 8px 24px rgba(0,0,0,.3);';
+    toast.innerHTML = '✅ Proceso <strong>' + resultado.codigo +
+                      '</strong> guardado correctamente';
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
-
-    // Actualizar indicadores del dashboard
-    if (typeof dash_actualizar === 'function') setTimeout(dash_actualizar, 200);
+    setTimeout(function(){ toast.remove(); }, 4000);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1735,6 +1896,116 @@ function imprimirChecklistCD1P() {
     var win = window.open('', '_blank');
     win.document.write(html);
     win.document.close();
+}
+
+// ── Versión genérica de "Descargar Checklist" para Convocatoria y Subasta
+//    (no lo traían en su HTML original) ──
+function imprimirChecklistGenerico(prefijo, labels, tituloModalidad) {
+    var objeto = (document.getElementById('mp_objeto') || {}).value || '—';
+    var area   = (document.getElementById('mp_area')   || {}).value || '—';
+
+    var totalMarcados = 0;
+    var filas = '';
+
+    labels.forEach(function(label, i) {
+        var num = i + 1;
+        var chk = document.getElementById(prefijo + 'chk_' + num);
+        var nom = document.getElementById(prefijo + 'nom_' + num);
+        var marcado = chk ? chk.checked : false;
+        var archivo = nom ? nom.textContent.replace(/[📄✅]\s*/g, '').trim() : '';
+        if (archivo === 'Sin archivo cargado') archivo = '';
+        if (marcado) totalMarcados++;
+
+        var rowBg = marcado ? '#F0FDF4' : '#FFFAFA';
+        var estadoHTML = marcado
+            ? '<span style="color:#166534;font-weight:700;">&#10004; Verificado</span>'
+            : '<span style="color:#991B1B;font-weight:700;">&#10008; Pendiente</span>';
+        var archHTML = archivo
+            ? '<span style="color:#0B7A43;font-size:11px;">&#128196; ' + archivo + '</span>'
+            : '<span style="color:#9CA3AF;font-size:11px;font-style:italic;">Sin archivo cargado</span>';
+
+        filas += '<tr style="background:' + rowBg + ';">'
+            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;text-align:center;font-weight:700;color:#374151;">' + num + '</td>'
+            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;font-size:12px;color:#1F2937;line-height:1.4;">' + label + '</td>'
+            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;text-align:center;">' + estadoHTML + '</td>'
+            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;">' + archHTML + '</td>'
+            + '</tr>';
+    });
+
+    var pct    = Math.round((totalMarcados / labels.length) * 100);
+    var pctCol = pct >= 80 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626';
+    var ahora  = new Date().toLocaleString('es-CO');
+
+    var html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+        + '<title>Checklist ' + tituloModalidad + '</title>'
+        + '<style>'
+        + '*{margin:0;padding:0;box-sizing:border-box;}'
+        + 'body{font-family:Segoe UI,Arial,sans-serif;color:#1F2937;background:#fff;padding:30px 36px;}'
+        + 'h1{color:#046A38;font-size:20px;border-bottom:3px solid #046A38;padding-bottom:8px;margin-bottom:4px;}'
+        + 'h2{color:#123C7B;font-size:15px;margin-bottom:16px;}'
+        + '.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}'
+        + '.meta-item{background:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;padding:10px 14px;}'
+        + '.lbl{font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;margin-bottom:3px;}'
+        + '.val{font-size:13px;font-weight:700;color:#1F2937;}'
+        + '.pb-wrap{background:#E5E7EB;border-radius:10px;height:14px;overflow:hidden;margin:6px 0 2px;}'
+        + '.pb-fill{height:14px;border-radius:10px;background:' + pctCol + ';width:' + pct + '%;}'
+        + 'table{width:100%;border-collapse:collapse;margin-top:12px;}'
+        + 'thead th{background:#046A38;color:white;padding:10px;font-size:12px;text-align:left;}'
+        + 'thead th:nth-child(1){width:36px;text-align:center;}'
+        + 'thead th:nth-child(3){width:120px;text-align:center;}'
+        + 'thead th:nth-child(4){width:190px;}'
+        + '.footer{margin-top:24px;border-top:1px solid #E5E7EB;padding-top:10px;color:#9CA3AF;font-size:10px;display:flex;justify-content:space-between;}'
+        + '@media print{body{padding:14px 18px;}}'
+        + '</style>'
+        + '</head><body>'
+        + '<h1>Hospital Susana Lopez de Valencia E.S.E.</h1>'
+        + '<h2>Checklist Documental &mdash; ' + tituloModalidad + '</h2>'
+        + '<div class="meta">'
+        +   '<div class="meta-item" style="grid-column:1/-1;"><div class="lbl">Objeto Contractual</div><div class="val" style="font-weight:400;line-height:1.5;">' + objeto + '</div></div>'
+        +   '<div class="meta-item"><div class="lbl">Area Solicitante</div><div class="val">' + area + '</div></div>'
+        +   '<div class="meta-item"><div class="lbl">Fecha de generacion</div><div class="val">' + ahora + '</div></div>'
+        +   '<div class="meta-item" style="grid-column:1/-1;">'
+        +     '<div class="lbl">Cumplimiento &mdash; ' + totalMarcados + ' de ' + labels.length + ' items verificados (' + pct + '%)</div>'
+        +     '<div class="pb-wrap"><div class="pb-fill"></div></div>'
+        +     '<div style="font-size:11px;color:' + pctCol + ';font-weight:700;margin-top:2px;">' + pct + '% completado</div>'
+        +   '</div>'
+        + '</div>'
+        + '<table><thead><tr>'
+        +   '<th>#</th><th>Documento Requerido</th><th>Verificacion</th><th>Documento Cargado</th>'
+        + '</tr></thead><tbody>' + filas + '</tbody></table>'
+        + '<div class="footer">'
+        +   '<span>Generado por Aplicativo HSLV &middot; JURISKILLS IA &middot; ' + ahora + '</span>'
+        +   '<span>' + tituloModalidad + '</span>'
+        + '</div>'
+        + '<script>window.print();<\/script>'
+        + '</body></html>';
+
+    var win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+}
+
+function imprimirChecklistConv() {
+    imprimirChecklistGenerico('conv_', [
+        'CERTIFICADO PAA', 'CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL', 'SOLICITUD PARA CONTRATAR',
+        'ESTUDIOS PREVIOS', 'MATRIZ DE RIESGO', 'AVISO DE CONVOCATORIA', 'PLIEGO DE CONDICIONES',
+        'PROPUESTAS RECIBIDAS', 'ACTA DE EVALUACIÓN DE PROPUESTAS', 'ACTA DE ADJUDICACIÓN',
+        'CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN', 'REGISTRO ÚNICO TRIBUTARIO (RUT)',
+        'CERTIFICADO ANTECEDENTES (DISCIPLINARIOS, FISCALES Y JUDICIALES)',
+        'FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT', 'MINUTA DE CONTRATO'
+    ], 'Convocatoria Pública');
+}
+
+function imprimirChecklistSub() {
+    imprimirChecklistGenerico('sub_', [
+        'CERTIFICADO PAA', 'CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL', 'SOLICITUD PARA CONTRATAR',
+        'ESTUDIOS PREVIOS', 'MATRIZ DE RIESGO', 'AVISO DE CONVOCATORIA / INVITACIÓN SUBASTA',
+        'REGLAS DE LA SUBASTA (PLIEGO)', 'ACTA DE HABILITACIÓN DE PROPONENTES',
+        'CONFIGURACIÓN DEL EVENTO DE SUBASTA (SECOP II)', 'ACTA DE CIERRE Y RESULTADO DE SUBASTA',
+        'CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN', 'REGISTRO ÚNICO TRIBUTARIO (RUT)',
+        'CERTIFICADO ANTECEDENTES (DISCIPLINARIOS, FISCALES Y JUDICIALES)',
+        'FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT', 'MINUTA DE CONTRATO'
+    ], 'Subasta Inversa');
 }
 
 
@@ -2079,30 +2350,43 @@ if (_arch1) {
 }
 
 function guardarPAAItem() {
-    const unspsc = document.getElementById('paa-unspsc-input').value.trim();
-    const detalle = document.getElementById('paa-detalle-input').value.trim();
-    const archivo = document.getElementById('archivo_1');
+    var unspsc  = document.getElementById('paa-unspsc-input').value.trim();
+    var detalle = document.getElementById('paa-detalle-input').value.trim();
+    var archTemp = document.getElementById('paa_archivo_temp');
 
     if (!unspsc) {
         alert('Por favor ingrese al menos un código UNSPSC.');
         return;
     }
 
-    // Guardar en localStorage
-    localStorage.setItem('paa_unspsc', unspsc);
-    localStorage.setItem('paa_detalle', detalle);
-
-    // Mostrar preview en la celda
-    document.getElementById('paa-unspsc-label').textContent = unspsc;
+    // Guardar preview UNSPSC en la celda de la tabla
+    document.getElementById('paa-unspsc-label').textContent  = unspsc;
     document.getElementById('paa-detalle-label').textContent = detalle || '—';
     document.getElementById('paa-unspsc-preview').style.display = 'block';
 
-    // Disparar análisis si hay archivo
-    if (archivo.files && archivo.files.length > 0) {
-        mostrarArchivo(archivo, 'nombreArchivo_1');
+    // Solo AHORA mostrar el nombre del archivo en la tabla exterior
+    if (archTemp && archTemp.files && archTemp.files[0]) {
+        mostrarArchivo(archTemp, 'nombreArchivo_1');
     }
 
+    // Cerrar modal
     document.getElementById('modalPAAItem').style.display = 'none';
+}
+
+// Solo actualiza el nombre DENTRO del modal — no toca la tabla
+function paa_mostrarNombreTemporal(input) {
+    var div = document.getElementById('paa_nombre_temp');
+    if (!div) return;
+    if (input.files && input.files[0]) {
+        div.style.color      = '#0B7A43';
+        div.style.fontStyle  = 'normal';
+        div.style.fontWeight = '600';
+        div.textContent      = '📄 ' + input.files[0].name;
+    } else {
+        div.style.color      = '#6B7280';
+        div.style.fontStyle  = 'italic';
+        div.textContent      = 'Sin archivo seleccionado';
+    }
 }
 
 // Restaurar valores guardados al cargar
@@ -2290,31 +2574,72 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// NOTA: esta función tenía un bug — usaba los IDs de Contratación Directa 1
+// Propuesta (sin prefijo) en vez de los de Directa 3 Invitaciones (i3_),
+// por lo que el botón "Guardar" de este mini-modal nunca funcionaba ahí.
 function i3_guardarPAAItem() {
-    const unspsc = document.getElementById('paa-unspsc-input').value.trim();
-    const detalle = document.getElementById('paa-detalle-input').value.trim();
-    const archivo = document.getElementById('archivo_1');
+    const unspsc  = document.getElementById('i3_paa_unspsc_input').value.trim();
+    const detalle = document.getElementById('i3_paa_detalle_input').value.trim();
 
     if (!unspsc) {
         alert('Por favor ingrese al menos un código UNSPSC.');
         return;
     }
 
-    // Guardar en localStorage
-    localStorage.setItem('paa_unspsc', unspsc);
-    localStorage.setItem('paa_detalle', detalle);
-
     // Mostrar preview en la celda
-    document.getElementById('paa-unspsc-label').textContent = unspsc;
-    document.getElementById('paa-detalle-label').textContent = detalle || '—';
-    document.getElementById('paa-unspsc-preview').style.display = 'block';
+    document.getElementById('i3_paa_unspsc_label').textContent  = unspsc;
+    document.getElementById('i3_paa_detalle_label').textContent = detalle || '—';
+    var preview = document.getElementById('i3_paa_unspsc_preview');
+    if (preview) preview.style.display = 'block';
+    if (typeof histU_actualizarExtra === 'function') histU_actualizarExtra('i3_', 1);
 
-    // Disparar análisis si hay archivo
-    if (archivo.files && archivo.files.length > 0) {
-        mostrarArchivo(archivo, 'nombreArchivo_1');
+    document.getElementById('i3_modalPAAItem').style.display = 'none';
+}
+
+// Igual que i3_guardarPAAItem: faltaban por completo (Directa 3 Invitaciones
+// usaba las funciones de Contratación Directa 1, con IDs que no existen ahí).
+function i3_guardarSolicitudCDPItem() {
+    const rubro    = document.getElementById('i3_scdp_rubro').value.trim();
+    const numrubro = document.getElementById('i3_scdp_numrubro').value.trim();
+    const valNum   = document.getElementById('i3_scdp_valor-num').value.trim();
+    const valLetra = document.getElementById('i3_scdp_valor-letras').value.trim();
+    const fecha    = document.getElementById('i3_scdp_fecha').value;
+
+    if (!rubro || !numrubro || !valNum || !fecha) {
+        alert('Por favor complete: Nombre del rubro, Número del rubro, Valor y Fecha de solicitud.');
+        return;
     }
 
-    document.getElementById('modalPAAItem').style.display = 'none';
+    var valorFmt = parseInt(valNum).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+    document.getElementById('i3_scdp_rubro-label').textContent    = rubro;
+    document.getElementById('i3_scdp_numrubro-label').textContent = numrubro;
+    document.getElementById('i3_scdp_valor-label').textContent    = valorFmt + (valLetra ? ' (' + valLetra + ')' : '');
+    document.getElementById('i3_scdp_fecha-label').textContent    = fecha;
+    var preview = document.getElementById('i3_scdp_preview');
+    if (preview) preview.style.display = 'block';
+    if (typeof histU_actualizarExtra === 'function') histU_actualizarExtra('i3_', 2);
+
+    document.getElementById('i3_modalSolicitudCDPItem').style.display = 'none';
+}
+
+function i3_guardarCDPItem() {
+    const num    = document.getElementById('i3_cdp_num').value.trim();
+    const fecha  = document.getElementById('i3_cdp_fecha').value;
+    const objeto = document.getElementById('i3_cdp_objeto').value.trim();
+
+    if (!num || !fecha || !objeto) {
+        alert('Por favor complete: Número de CDP, Fecha y Objeto.');
+        return;
+    }
+
+    document.getElementById('i3_cdp_num-label').textContent    = num;
+    document.getElementById('i3_cdp_fecha-label').textContent  = fecha;
+    document.getElementById('i3_cdp_objeto-label').textContent = objeto.slice(0, 70) + (objeto.length > 70 ? '…' : '');
+    var preview = document.getElementById('i3_cdp_preview');
+    if (preview) preview.style.display = 'block';
+    if (typeof histU_actualizarExtra === 'function') histU_actualizarExtra('i3_', 3);
+
+    document.getElementById('i3_modalCDPItem').style.display = 'none';
 }
 
 function d3p_mostrarArchivo(input, labelId, miniLabelId) {
@@ -2459,80 +2784,137 @@ function hist_checklistCount(tipo) {
   return { checks: checks, total: total };
 }
 
-function guardarProcesoHistorial(tipo) {
-  var tipoKey = tipo.toUpperCase() === 'D3P'  ? 'D3P'  :
-                tipo.toUpperCase() === 'CONV' ? 'CONV' :
-                tipo.toUpperCase() === 'SUB'  ? 'SUB'  : 'D3P';
+async function guardarProcesoHistorial(tipo) {
+    var tipoKey = tipo.toUpperCase() === 'D3P'  ? 'D3P'  :
+                  tipo.toUpperCase() === 'CONV' ? 'CONV' :
+                  tipo.toUpperCase() === 'SUB'  ? 'SUB'  : 'D3P';
 
-  var objeto = '', area = '', valor = '', responsable = '';
+    // ── Verificar perfil ──────────────────────────────
+    var perfil = await db_perfil();
+    if (!perfil) return;
 
-  if (tipoKey === 'D3P') {
-    // modalDirecta3P — campos sin ID específico en la versión principal,
-    // intentar leer del modal duplicado (sección 10600+)
-    var oEl = document.getElementById('mp_objeto');
-    var aEl = document.getElementById('mp_area');
-    // Si están vacíos intentar otros
-    objeto = (oEl && oEl.value.trim()) ? oEl.value.trim() : '(sin objeto)';
-    area   = (aEl && aEl.value.trim()) ? aEl.value.trim() : '(sin área)';
-    var vEl = document.getElementById('mp_valor'); valor = vEl ? vEl.value : '';
-    var mEl = document.getElementById('d3p_modalidad');
-    var rEl = document.getElementById('d3p_responsable'); responsable = rEl ? rEl.value.trim() : '';
-  } else if (tipoKey === 'CONV') {
-    var oEl = document.getElementById('conv_objeto');
-    var aEl = document.getElementById('conv_area');
-    var vEl = document.getElementById('conv_valor');
-    objeto = (oEl && oEl.value.trim()) ? oEl.value.trim() : '(sin objeto)';
-    area   = (aEl && aEl.value.trim()) ? aEl.value.trim() : '(sin área)';
-    valor  = vEl ? vEl.value : '';
-    var rEl = document.getElementById('conv_responsable'); responsable = rEl ? rEl.value.trim() : '';
-  } else if (tipoKey === 'SUB') {
-    var oEl = document.getElementById('sub_objeto');
-    var aEl = document.getElementById('sub_area');
-    var vEl = document.getElementById('sub_valor');
-    objeto = (oEl && oEl.value.trim()) ? oEl.value.trim() : '(sin objeto)';
-    area   = (aEl && aEl.value.trim()) ? aEl.value.trim() : '(sin área)';
-    valor  = vEl ? vEl.value : '';
-    var rEl = document.getElementById('sub_responsable'); responsable = rEl ? rEl.value.trim() : '';
-  }
+    if (perfil.area !== 'biomedica' && perfil.rol !== 'admin') {
+        alert('⚠️ Solo el área Biomédica puede crear procesos.');
+        return;
+    }
 
-  var cl = hist_checklistCount(tipoKey === 'D3P' ? 'D3P' : tipoKey === 'CONV' ? 'CONV' : 'SUB');
-  var ahora = new Date();
-  var id = hist_genId(tipoKey);
+    // ── Recopilar datos según módulo ──────────────────
+    var objeto = '', area = '', valor = '', responsable = '';
 
-  var proceso = {
-    id:        id,
-    tipo:      tipoKey,
-    objeto:    objeto,
-    area:      area,
-    valor:     valor,
-    responsable: responsable,
-    fecha:     ahora.toLocaleDateString('es-CO', {day:'2-digit',month:'2-digit',year:'numeric'}),
-    hora:      ahora.toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'}),
-    timestamp: ahora.getTime(),
-    checksOk:  cl.checks,
-    checksTotal: cl.total
-  };
+    // Los 3 módulos comparten los mismos IDs para estos campos (mp_objeto,
+    // mp_area, mp_responsable) — ninguno tiene campo de "valor" propio.
+    var campos = {
+        D3P:  { obj:'mp_objeto', area:'mp_area', val:null, resp:'mp_responsable' },
+        CONV: { obj:'mp_objeto', area:'mp_area', val:null, resp:'mp_responsable' },
+        SUB:  { obj:'mp_objeto', area:'mp_area', val:null, resp:'mp_responsable' }
+    };
 
-  HIST_BD.unshift(proceso);
+    var c = campos[tipoKey];
+    if (c) {
+        var oEl = document.getElementById(c.obj);
+        var aEl = document.getElementById(c.area);
+        var vEl = c.val ? document.getElementById(c.val) : null;
+        var rEl = document.getElementById(c.resp);
+        objeto      = (oEl && oEl.value) ? oEl.value.trim() : '(sin objeto)';
+        area        = (aEl && aEl.value) ? aEl.value.trim() : '(sin área)';
+        valor       = (vEl && vEl.value) ? vEl.value.trim() : '';
+        responsable = (rEl && rEl.value) ? rEl.value.trim() : '';
+    }
 
-  // También registrar en BD_PROCESOS si existe (para compatibilidad CD1P)
-  if (typeof BD_PROCESOS !== 'undefined' && tipoKey === 'CD1P') {
-    BD_PROCESOS.unshift(proceso);
-  }
+    if (!objeto || objeto === '(sin objeto)') {
+        alert('⚠️ Debe ingresar el Objeto Contractual antes de guardar.');
+        return;
+    }
 
-  // Cerrar modal de origen
-  var modalMap = { D3P:'modalDirecta3P', CONV:'modalConvocatoria', SUB:'modalSubasta' };
-  if (typeof closeModal === 'function') closeModal(modalMap[tipoKey]);
+    // ── Recopilar checklist según módulo ──────────────
+    var prefijos = { D3P:'i3', CONV:'conv', SUB:'sub' };
+    var pref     = prefijos[tipoKey];
+    var ITEMS_RESTRINGIDOS = [15, 20, 21, 22];
+    var checklist = [];
 
-  // Toast
-  var toast = document.createElement('div');
-  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99998;'+
-    'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;'+
-    'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;'+
-    'box-shadow:0 8px 24px rgba(0,0,0,.3);';
-  toast.innerHTML = '✅ Proceso <strong>' + id + '</strong> guardado en el historial';
-  document.body.appendChild(toast);
-  setTimeout(function(){ toast.remove(); }, 3500);
+    // Recopilar archivos por número de ítem (1-23)
+    for (var n = 1; n <= 23; n++) {
+        var archivo = null;
+
+        // Intentar archivo simple con prefijo del módulo
+        var archEl = document.getElementById(pref + '_arch_' + n);
+        if (archEl && archEl.files && archEl.files[0]) {
+            archivo = archEl.files[0];
+        }
+
+        // Sub-archivos para ítems 15, 20, 21
+        if (!archivo) {
+            var subSufijos = {
+                15: ['15a','15b','15c'],
+                20: ['20a','20b','20c'],
+                21: ['21a','21b']
+            };
+            if (subSufijos[n]) {
+                subSufijos[n].forEach(function(s) {
+                    if (!archivo) {
+                        var si = document.getElementById(pref + '_arch_' + s);
+                        if (si && si.files && si.files[0]) archivo = si.files[0];
+                    }
+                });
+            }
+        }
+
+        // Checkbox del ítem
+        var cbEl = document.getElementById(pref + '_chk_' + n) ||
+                   document.getElementById('i3_check_' + n);
+        var ok = cbEl ? cbEl.checked : false;
+
+        var comentEl2  = document.getElementById(pref + '_coment_' + n);
+        var comentario = comentEl2 ? comentEl2.value.trim() : '';
+
+        checklist.push({
+            num:           n,
+            label:         'Ítem ' + n,
+            ok:            ok,
+            archivo:       archivo,
+            esRestringido: ITEMS_RESTRINGIDOS.indexOf(n) !== -1,
+            comentario:    comentario
+        });
+    }
+
+    // ── Guardar en Supabase ───────────────────────────
+    var resultado = await db_guardarProceso({
+        tipo:        tipoKey,
+        objeto:      objeto,
+        area:        area,
+        valor:       valor,
+        responsable: responsable,
+        checklist:   checklist
+    });
+
+    if (!resultado) return;
+
+    // ── Cerrar modal del módulo ───────────────────────
+    var modalMap = {
+        D3P:  'modalDirecta3P',
+        CONV: 'modalConvocatoria',
+        SUB:  'modalSubasta'
+    };
+    if (typeof closeModal === 'function' && modalMap[tipoKey]) {
+        closeModal(modalMap[tipoKey]);
+    }
+
+    // ── Actualizar dashboard ──────────────────────────
+    if (typeof dash_actualizar === 'function') {
+        setTimeout(dash_actualizar, 300);
+    }
+
+    // ── Toast ─────────────────────────────────────────
+    var toast = document.createElement('div');
+    toast.style.cssText =
+        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
+        'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
+        'box-shadow:0 8px 24px rgba(0,0,0,.3);';
+    toast.innerHTML = '✅ Proceso <strong>' + resultado.codigo +
+                      '</strong> guardado correctamente';
+    document.body.appendChild(toast);
+    setTimeout(function(){ toast.remove(); }, 4000);
 }
 
 // Registrar CD1P en el historial al guardar (llamado desde guardarProceso original)
@@ -2665,27 +3047,76 @@ function hist_renderTabla() {
     var t = HIST_TIPOS[p.tipo] || HIST_TIPOS['D3P'];
     var pct = p.checksTotal > 0 ? Math.round((p.checksOk / p.checksTotal) * 100) : 0;
     var bg = i % 2 === 0 ? '#fff' : '#F9FAFB';
-    var responsableCell = '<div style="display:flex;align-items:center;gap:6px;min-width:170px;">' +
-      '<input type="text" ' +
-        'id="resp_input_' + p.id + '" ' +
-        'value="' + (p.responsable || '') + '" ' +
-        'placeholder="Asignar responsable…" ' +
-        'onkeydown="if(event.key===\'Enter\')hist_asignarResponsable(\'' + p.id + '\')" ' +
-        'style="flex:1;padding:5px 9px;border-radius:8px;border:1.5px solid #BFDBFE;' +
-               'font-size:12px;color:#123C7B;outline:none;min-width:110px;' +
-               'background:#F8FAFF;transition:border .2s;" ' +
-        'onfocus="this.style.borderColor=\'#123C7B\'" ' +
-        'onblur="this.style.borderColor=\'#BFDBFE\'">' +
-      '<button onclick="hist_asignarResponsable(\'' + p.id + '\')" ' +
-        'title="Guardar responsable" ' +
-        'style="background:#123C7B;color:white;border:none;border-radius:7px;' +
-               'padding:5px 9px;font-size:13px;cursor:pointer;flex-shrink:0;' +
-               'transition:background .2s;" ' +
-        'onmouseover="this.style.background=\'#0B7A43\'" ' +
-        'onmouseout="this.style.background=\'#123C7B\'">✔</button>' +
-    '</div>';
+    // Construir celda de responsable según perfil del usuario actual
+  var responsableCell;
+
+  if (_perfilCache && _perfilCache.rol === 'admin') {
+    // Admin ve un selector con usuarios jurídicos
+      var opcionesHTML = '<option value="">— Seleccione —</option>';
+      if (window._usuariosJuridicos && window._usuariosJuridicos.length > 0) {
+          window._usuariosJuridicos.forEach(function(u) {
+              var seleccionado = (p.responsable_asignado === u.id) ? 'selected' : '';
+              opcionesHTML += '<option value="' + u.id + '" ' + seleccionado + '>' +
+                            (u.nombre || u.email) + '</option>';
+          });
+    }
+
+      var textoAsignadoPor = p.responsable_asignado_por_nombre
+          ? '<div style="font-size:10px;color:#6B7280;margin-bottom:4px;">' +
+            'Asignado por: ' + p.responsable_asignado_por_nombre + '</div>'
+          : '';
+
+      var textoAsignado = p.responsable_asignado_nombre
+          ? '<div style="font-size:11px;color:#0B7A43;font-weight:700;margin-bottom:2px;">' +
+            '✅ Asignado: ' + p.responsable_asignado_nombre + '</div>' + textoAsignadoPor
+           : '<div style="font-size:11px;color:#9CA3AF;font-style:italic;margin-bottom:6px;">' +
+            'Sin responsable asignado</div>';
+
+      responsableCell =
+          '<div style="min-width:200px;">' +
+              textoAsignado +
+              '<div style="display:flex;gap:6px;align-items:center;">' +
+                  '<select id="resp_select_' + p.id + '" ' +
+                      'style="flex:1;padding:6px 9px;border-radius:8px;' +
+                           'border:1.5px solid #BFDBFE;font-size:11px;' +
+                           'color:#123C7B;outline:none;background:#F8FAFF;">' +
+                    opcionesHTML +
+                '</select>' +
+                '<button id="resp_btn_' + p.id + '" ' +
+                    'onclick="hist_asignarResponsable(\'' + p.id + '\',\'' +
+                             (p.supabase_id || '') + '\')" ' +
+                    'title="Guardar responsable" ' +
+                    'style="background:#123C7B;color:white;border:none;' +
+                           'border-radius:7px;padding:6px 10px;font-size:13px;' +
+                           'cursor:pointer;flex-shrink:0;transition:background .2s;" ' +
+                    'onmouseover="this.style.background=\'#0B7A43\'" ' +
+                    'onmouseout="this.style.background=\'#123C7B\'">✔</button>' +
+            '</div>' +
+        '</div>';
+
+  } else {
+    // No admin: solo ver el nombre del responsable asignado
+      var textoAsignadoPorNoAdmin = p.responsable_asignado_por_nombre
+          ? '<div style="font-size:10px;color:#6B7280;margin-top:3px;">' +
+            'Asignado por: ' + p.responsable_asignado_por_nombre + '</div>'
+          : '';
+      responsableCell =
+        '<div style="font-size:13px;color:#374151;">' +
+            (p.responsable_asignado_nombre
+                ? '<span style="display:inline-flex;align-items:center;gap:4px;' +
+                  'background:#EFF6FF;color:#123C7B;border:1px solid #BFDBFE;' +
+                  'border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;">' +
+                  '👤 ' + p.responsable_asignado_nombre + '</span>' + textoAsignadoPorNoAdmin
+                : '<span style="color:#9CA3AF;font-style:italic;font-size:11px;">' +
+                  'Sin asignar</span>') +
+        '</div>';
+      }
     html += '<tr style="background:' + bg + ';border-bottom:1px solid #E5E7EB;">' +
-      '<td style="padding:12px 14px;font-weight:700;color:#123C7B;font-size:12px;white-space:nowrap;">' + p.id + '</td>' +
+      '<td style="padding:12px 14px;font-weight:700;font-size:12px;white-space:nowrap;">' +
+        '<a href="/proceso/' + encodeURIComponent(p.id) + '" ' +
+          'style="color:#123C7B;text-decoration:underline;" ' +
+          'title="Ver detalle y documentos de este proceso">' + p.id + '</a>' +
+      '</td>' +
       '<td style="padding:12px 14px;"><span class="hist-badge ' + t.badge + '">' + t.label + '</span></td>' +
       '<td style="padding:12px 14px;max-width:260px;"><span title="' + (p.objeto||'') + '" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + (p.objeto || '—') + '</span></td>' +
       '<td style="padding:12px 14px;color:#374151;white-space:nowrap;">' + (p.area || '—') + '</td>' +
@@ -2949,37 +3380,70 @@ function hist_eliminar(id) {
   hist_renderTabla();
 }
 
-function hist_asignarResponsable(id) {
-  var input = document.getElementById('resp_input_' + id);
-  if (!input) return;
-  var nombre = input.value.trim();
-  var proceso = HIST_BD.find(function(p){ return p.id === id; });
-  if (!proceso) return;
-  proceso.responsable = nombre;
+// ── Asignar responsable jurídico a un proceso ──
+async function hist_asignarResponsable(procesoId, supabaseId) {
 
-  // Feedback visual en el botón
-  var btn = input.nextElementSibling;
-  if (btn) {
-    var orig = btn.innerHTML;
-    btn.innerHTML = '✅';
-    btn.style.background = '#0B7A43';
-    setTimeout(function() {
-      btn.innerHTML = orig;
-      btn.style.background = '#123C7B';
-    }, 1200);
-  }
+    // Obtener el select correspondiente a este proceso
+    var selectEl = document.getElementById('resp_select_' + procesoId);
+    if (!selectEl) return;
 
-  // Toast pequeño
-  var toast = document.createElement('div');
-  toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99998;' +
-    'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
-    'padding:12px 20px;border-radius:12px;font-weight:700;font-size:13px;' +
-    'box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:1;transition:opacity .4s;';
-  toast.innerHTML = nombre
-    ? '👤 Responsable <strong>' + nombre + '</strong> asignado a <strong>' + id + '</strong>'
-    : '🗑 Responsable removido de <strong>' + id + '</strong>';
-  document.body.appendChild(toast);
-  setTimeout(function(){ toast.style.opacity = '0'; setTimeout(function(){ toast.remove(); }, 400); }, 2200);
+    var usuarioId = selectEl.value;
+    var nombreSeleccionado = selectEl.options[selectEl.selectedIndex]
+                                     ? selectEl.options[selectEl.selectedIndex].text
+                                     : '';
+
+    if (!usuarioId) {
+        alert('Por favor seleccione un responsable de la lista.');
+        return;
+    }
+
+    // Feedback visual
+    var btnEl = document.getElementById('resp_btn_' + procesoId);
+    if (btnEl) {
+        btnEl.disabled    = true;
+        btnEl.textContent = '⏳';
+    }
+
+    // Si el proceso está en Supabase, guardar allí
+    if (supabaseId && typeof db_asignarResponsable === 'function') {
+        var ok = await db_asignarResponsable(supabaseId, usuarioId);
+        if (!ok) {
+            if (btnEl) {
+                btnEl.disabled    = false;
+                btnEl.textContent = '✔';
+            }
+            return;
+        }
+    }
+
+    // Actualizar también en HIST_BD local
+    var proceso = HIST_BD.find(function(p) {
+        return p.id === procesoId || p.supabase_id === supabaseId;
+    });
+    if (proceso) {
+        proceso.responsable_asignado    = usuarioId;
+        proceso.responsable_asignado_nombre = nombreSeleccionado;
+        proceso.responsable_asignado_por = (_perfilCache || {}).id || '';
+        proceso.responsable_asignado_por_nombre = (_perfilCache || {}).nombre || 'Admin';
+        proceso.responsable_asignado_fecha = new Date().toISOString();
+    }
+
+    // Feedback de éxito en el botón
+    if (btnEl) {
+        btnEl.disabled    = false;
+        btnEl.textContent = '✅';
+        btnEl.style.background = '#0B7A43';
+        setTimeout(function() {
+            btnEl.textContent      = '✔';
+            btnEl.style.background = '#123C7B';
+        }, 2000);
+    }
+
+    // Actualizar datalist para que coincida
+    hist_actualizarDatalistResponsables();
+
+    // Refrescar tabla sin cerrar el panel
+    hist_renderTabla();
 }
 
 function hist_exportarCSV() {
@@ -3017,6 +3481,12 @@ var _origOpenModal = typeof openModal === 'function' ? openModal : null;
       var fr = document.getElementById('hist-filtro-responsable');
       if (fr && !fr.value) fr.value = '';
       hist_renderTabla();
+      // Si los datos reales todavía no habían llegado, redibujar
+      // apenas terminen de cargar (evita que quede "Sin asignar"
+      // mostrado por error si el modal se abrió muy rápido tras F5)
+      if (window._dbListo && typeof window._dbListo.then === 'function') {
+        window._dbListo.then(function() { hist_renderTabla(); });
+      }
     }
     if (typeof __open === 'function') __open(id);
   };
@@ -3191,6 +3661,177 @@ async function mostrarArchivo(input, elementoId) {
         if (typeof cd1p_actualizarAvance === 'function') cd1p_actualizarAvance();
     }
 }
+
+// ════════════════════════════════════════════════════
+//  HISTORIAL DE VERSIONES — UNIVERSAL
+//  Antes solo 4 de 23 ítems de Contratación Directa 1 y
+//  Directa 3 Invitaciones tenían "Ver historial" (y en
+//  Directa 3 Invitaciones ni siquiera funcionaba, por un
+//  desajuste de nombres). Este sistema envuelve mostrarArchivo()
+//  para que TODOS los ítems de los 4 módulos lo tengan,
+//  incluyendo los datos capturados en mini-modales (PAA,
+//  Solicitud CDP, CDP).
+// ════════════════════════════════════════════════════
+var _histU_datos = {}; // clave: prefijo+num → array de versiones
+
+function _histU_parsear(elementoId) {
+    var m;
+    if ((m = elementoId.match(/^i3_nom_(\d+)/)))          return { prefijo: 'i3_',  num: parseInt(m[1]) };
+    if ((m = elementoId.match(/^conv_nom_(\d+)/)))        return { prefijo: 'conv_', num: parseInt(m[1]) };
+    if ((m = elementoId.match(/^sub_nom_(\d+)/)))         return { prefijo: 'sub_',  num: parseInt(m[1]) };
+    if ((m = elementoId.match(/^nombreArchivo_(\d+)/)))   return { prefijo: '',     num: parseInt(m[1]) };
+    return null;
+}
+
+function _histU_infoMiniModal(prefijo, num) {
+    function txt(id) { var el = document.getElementById(id); return el ? el.textContent.trim() : ''; }
+    if (num === 1) {
+        var unspsc  = txt(prefijo === 'i3_' ? 'i3_paa_unspsc_label'  : 'paa-unspsc-label');
+        var detalle = txt(prefijo === 'i3_' ? 'i3_paa_detalle_label' : 'paa-detalle-label');
+        return unspsc ? ('UNSPSC: ' + unspsc + (detalle && detalle !== '—' ? ' · ' + detalle : '')) : '';
+    }
+    if (num === 2) {
+        var rubro = txt(prefijo === 'i3_' ? 'i3_scdp_rubro-label' : 'scdp-rubro-label');
+        var valor = txt(prefijo === 'i3_' ? 'i3_scdp_valor-label' : 'scdp-valor-label');
+        return rubro ? ('Rubro: ' + rubro + (valor ? ' · ' + valor : '')) : '';
+    }
+    if (num === 3) {
+        var numCdp = txt(prefijo === 'i3_' ? 'i3_cdp_num-label' : 'cdp-num-label');
+        return numCdp ? ('N° CDP: ' + numCdp) : '';
+    }
+    return '';
+}
+
+function _histU_asegurarContenedor(prefijo, num, inputEl) {
+    if (document.getElementById(prefijo + 'historial_' + num)) return; // ya existe
+
+    var celda = inputEl.closest('td');
+    if (!celda) return;
+
+    var bloque = document.createElement('div');
+    bloque.className = 'historial-universal-inyectado';
+    bloque.style.cssText = 'margin-top:8px;';
+    bloque.innerHTML =
+        '<button onclick="histU_toggle(\'' + prefijo + '\',' + num + ')" ' +
+            'style="background:none;border:1px solid #CBD5E1;border-radius:8px;' +
+            'padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;' +
+            'display:flex;align-items:center;gap:5px;">' +
+            '🕓 Ver historial <span id="' + prefijo + 'badge_hist_' + num + '" ' +
+                'style="background:#123C7B;color:white;border-radius:10px;padding:1px 7px;font-size:10px;">0</span>' +
+        '</button>' +
+        '<div id="' + prefijo + 'historial_' + num + '" ' +
+            'style="display:none;margin-top:8px;max-height:160px;overflow-y:auto;' +
+            'border:1px solid #E5E7EB;border-radius:10px;font-size:11px;background:#F8FAFC;">' +
+            '<div style="padding:8px 10px;color:#6B7280;font-style:italic;" ' +
+                'id="' + prefijo + 'historial_empty_' + num + '">Sin cargas registradas aún.</div>' +
+        '</div>';
+    celda.appendChild(bloque);
+}
+
+function histU_registrar(input, elementoId) {
+    if (!input.files || !input.files[0]) return;
+    var info = _histU_parsear(elementoId);
+    if (!info) return;
+
+    _histU_asegurarContenedor(info.prefijo, info.num, input);
+
+    var clave = info.prefijo + info.num;
+    if (!_histU_datos[clave]) _histU_datos[clave] = [];
+    var hist = _histU_datos[clave];
+
+    var f = input.files[0];
+
+    // Algunos mini-modales disparan esto dos veces para el mismo archivo
+    // (una al seleccionarlo, otra al presionar Guardar) — evitar duplicar
+    // la versión y solo actualizar los datos extra en ese caso.
+    var ultima = hist[hist.length - 1];
+    if (ultima && ultima.nombre === f.name && ultima.tamanoBytes === f.size) {
+        ultima.extra = _histU_infoMiniModal(info.prefijo, info.num);
+        histU_render(info.prefijo, info.num);
+        return;
+    }
+
+    var ahora = new Date();
+    var tam = f.size < 1048576
+        ? (f.size / 1024).toFixed(1) + ' KB'
+        : (f.size / 1048576).toFixed(2) + ' MB';
+
+    hist.push({
+        version:     hist.length + 1,
+        nombre:      f.name,
+        tamanoBytes: f.size,
+        tamano:      tam,
+        fecha:       ahora.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        hora:        ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        extra:       _histU_infoMiniModal(info.prefijo, info.num)
+    });
+
+    histU_render(info.prefijo, info.num);
+}
+
+function histU_render(prefijo, num) {
+    var clave = prefijo + num;
+    var hist  = _histU_datos[clave] || [];
+    var c  = document.getElementById(prefijo + 'historial_' + num);
+    var b  = document.getElementById(prefijo + 'badge_hist_' + num);
+    var em = document.getElementById(prefijo + 'historial_empty_' + num);
+    if (!c) return;
+    if (b)  b.textContent = hist.length;
+    if (em) em.style.display = hist.length ? 'none' : 'block';
+    c.querySelectorAll('.hist-entrada').forEach(function(e) { e.remove(); });
+    hist.slice().reverse().forEach(function(e, idx) {
+        var div = document.createElement('div');
+        div.className = 'hist-entrada';
+        var esPrimera = e.version === 1;
+        div.innerHTML =
+            '<div class="hist-num ' + (esPrimera ? 'hist-num-v1' : 'hist-num-vN') + '">' + e.version + '</div>' +
+            '<div class="hist-info">' +
+                '<div class="hist-nombre">📄 ' + e.nombre +
+                    (esPrimera ? '<span class="hist-tag-v1">v1 · Inicial</span>' : '<span class="hist-tag-vN">v' + e.version + '</span>') +
+                    (idx === 0 ? '<span class="hist-tag-last">⬆ Actual</span>' : '') +
+                '</div>' +
+                (e.extra ? '<div class="hist-meta">ℹ️ ' + e.extra + '</div>' : '') +
+                '<div class="hist-meta">📅 ' + e.fecha + ' &nbsp;·&nbsp; 🕐 ' + e.hora + ' &nbsp;·&nbsp; 💾 ' + e.tamano + '</div>' +
+            '</div>';
+        c.appendChild(div);
+    });
+    c.style.display = 'block';
+}
+
+function histU_toggle(prefijo, num) {
+    var c = document.getElementById(prefijo + 'historial_' + num);
+    if (c) c.style.display = c.style.display === 'none' ? 'block' : 'none';
+}
+
+// Para mini-modales donde el archivo real se selecciona ANTES de guardar
+// los datos extra (UNSPSC, N° de CDP, etc.) — actualiza la última versión
+// ya registrada en vez de crear una nueva.
+function histU_actualizarExtra(prefijo, num) {
+    var hist = _histU_datos[prefijo + num];
+    if (!hist || hist.length === 0) return;
+    hist[hist.length - 1].extra = _histU_infoMiniModal(prefijo, num);
+    histU_render(prefijo, num);
+}
+
+// Envolver mostrarArchivo para que TODO ítem registre su historial,
+// sin importar si llega por carga directa o por un mini-modal.
+(function() {
+    var _mostrarArchivoOriginal = mostrarArchivo;
+    window.mostrarArchivo = async function(input, elementoId) {
+        await _mostrarArchivoOriginal(input, elementoId);
+        histU_registrar(input, elementoId);
+    };
+})();
+
+// Ítems con sub-documentos (15, 20, 21) usan mostrarArchivoSub en vez de
+// mostrarArchivo — se envuelve igual para que también tengan historial.
+(function() {
+    var _mostrarArchivoSubOriginal = mostrarArchivoSub;
+    window.mostrarArchivoSub = async function(input, divId, checkId, todosIds) {
+        await _mostrarArchivoSubOriginal(input, divId, checkId, todosIds);
+        histU_registrar(input, divId);
+    };
+})();
 
 // Leer el archivo como texto o base64
 async function leerArchivo(archivo) {
@@ -4958,15 +5599,21 @@ function _mostrarToast(nombre) {
 })();
 
 
+// Nota: el historial de versiones de Convocatoria y Subasta ahora se maneja
+// con el mismo sistema universal (histU_*) que usan los otros 2 módulos —
+// ver la sección "HISTORIAL DE VERSIONES — UNIVERSAL" más arriba en este archivo.
+
 function conv_mostrarArchivo(input, labelId) {
   if (!input.files || !input.files[0]) return;
   var el = document.getElementById(labelId);
-  if (el) el.innerHTML = '📄 <strong style="color:#1F2937;">' + input.files[0].name + '</strong>';
+  if (el) el.innerHTML = '✅ <strong style="color:#1F2937;">' + input.files[0].name + '</strong>';
+  histU_registrar(input, labelId);
 }
 function sub_mostrarArchivo(input, labelId) {
   if (!input.files || !input.files[0]) return;
   var el = document.getElementById(labelId);
-  if (el) el.innerHTML = '📄 <strong style="color:#1F2937;">' + input.files[0].name + '</strong>';
+  if (el) el.innerHTML = '✅ <strong style="color:#1F2937;">' + input.files[0].name + '</strong>';
+  histU_registrar(input, labelId);
 }
 
 /* ── Reemplazar las funciones de cambio de modalidad para usar los nuevos modales ── */
