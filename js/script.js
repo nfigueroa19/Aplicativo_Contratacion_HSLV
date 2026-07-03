@@ -1312,10 +1312,38 @@ window.onclick = function(event){
             );
             if(!modalAbierto){
               document.getElementById('btnApiKeyFlotante').style.display = 'flex';
-            } 
+            }
         }
     });
-}
+};
+
+// ── Ocultar el botón flotante "Skills Inteligentes Jurídicos" mientras haya
+//    CUALQUIER modal del dashboard abierto (historial, SECOP, el suyo propio,
+//    etc.), para que no se superponga y tape contenido del modal. Se vigilan
+//    todos los modales con un solo observador en vez de tocar cada función
+//    que abre/cierra uno — así cubre también los que se agreguen a futuro. ──
+(function () {
+    const btnFlotante = document.getElementById('btnApiKeyFlotante');
+    if (!btnFlotante) return; // esta página no tiene el botón (solo existe en el dashboard)
+
+    function hayModalAbierto() {
+        return Array.prototype.some.call(
+            document.querySelectorAll('.modal, #modalApiKey'),
+            function (m) { return getComputedStyle(m).display !== 'none'; }
+        );
+    }
+
+    function actualizarVisibilidadBoton() {
+        btnFlotante.style.display = hayModalAbierto() ? 'none' : 'flex';
+    }
+
+    const observador = new MutationObserver(actualizarVisibilidadBoton);
+    document.querySelectorAll('.modal, #modalApiKey').forEach(function (modal) {
+        observador.observe(modal, { attributes: true, attributeFilter: ['style'] });
+    });
+
+    actualizarVisibilidadBoton();
+})();
 
 let registrosPAA = JSON.parse(localStorage.getItem('registrosPAA')) || [];
 
@@ -2826,6 +2854,16 @@ async function guardarProcesoHistorial(tipo) {
         return;
     }
 
+    // ── Deshabilitar botón mientras guarda (mismo patrón que guardarProceso,
+    //    evita que un doble clic cree el mismo proceso dos veces) ──────
+    var btnGuardar = document.querySelector(
+        'button[onclick="guardarProcesoHistorial(\'' + tipo + '\')"]'
+    );
+    if (btnGuardar) {
+        btnGuardar.disabled    = true;
+        btnGuardar.textContent = '⏳ Guardando...';
+    }
+
     // ── Recopilar checklist según módulo ──────────────
     var prefijos = { D3P:'i3', CONV:'conv', SUB:'sub' };
     var pref     = prefijos[tipoKey];
@@ -2886,6 +2924,12 @@ async function guardarProcesoHistorial(tipo) {
         responsable: responsable,
         checklist:   checklist
     });
+
+    // ── Restaurar botón ───────────────────────────────
+    if (btnGuardar) {
+        btnGuardar.disabled    = false;
+        btnGuardar.textContent = '💾 Guardar Proceso';
+    }
 
     if (!resultado) return;
 

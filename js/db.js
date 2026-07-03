@@ -219,6 +219,32 @@ async function db_guardarProceso(datos) {
         //    notifica al jurídico específico cuando el Admin lo asigne
         //    (ver db_asignarResponsable), ya que hasta ese momento
         //    Jurídica no debe tener visibilidad del proceso.
+        //    En cambio, el Admin SÍ debe enterarse de inmediato de que
+        //    hay un proceso nuevo pendiente de asignar responsable.
+        try {
+            var { data: admins } = await supabaseClient
+                .from('profiles')
+                .select('id')
+                .eq('rol', 'admin')
+                .eq('estado', 'aprobado');
+
+            if (admins && admins.length > 0) {
+                var notifsAdmin = admins.map(function (a) {
+                    return {
+                        usuario_id: a.id,
+                        tipo:       'proceso_pendiente_asignacion',
+                        mensaje:    'Nuevo proceso ' + codigo + ' creado por Biomédica. ' +
+                                    'Tienes pendiente asignar un responsable jurídico.',
+                        proceso_id: procesoId,
+                        leida:      false
+                    };
+                });
+                await supabaseClient.from('notificaciones').insert(notifsAdmin);
+            }
+        } catch (errNotifAdmin) {
+            // No bloquear el guardado del proceso si esto falla
+            console.error('Error notificando a administradores:', errNotifAdmin);
+        }
 
         // 8. Resultado
         if (erroresArchivos.length > 0) {
@@ -499,7 +525,7 @@ async function db_asignarResponsable(procesoId, usuarioId) {
         // Notificar al responsable asignado
         var { data: proceso } = await supabaseClient
             .from('procesos')
-            .select('codigo')
+            .select('codigo, creado_por')
             .eq('id', procesoId)
             .single();
 
@@ -513,6 +539,27 @@ async function db_asignarResponsable(procesoId, usuarioId) {
                 proceso_id: procesoId,
                 leida:      false
             });
+
+        // Notificar también a quien creó el proceso (Biomédica), indicando
+        // quién quedó como responsable jurídico
+        if (proceso && proceso.creado_por) {
+            var { data: juridico } = await supabaseClient
+                .from('profiles')
+                .select('nombre')
+                .eq('id', usuarioId)
+                .single();
+
+            await supabaseClient
+                .from('notificaciones')
+                .insert({
+                    usuario_id: proceso.creado_por,
+                    tipo:       'responsable_asignado',
+                    mensaje:    'Se asignó a ' + (juridico ? juridico.nombre : 'un responsable') +
+                                ' como responsable jurídico de tu proceso ' + proceso.codigo + '.',
+                    proceso_id: procesoId,
+                    leida:      false
+                });
+        }
 
         return true;
 
@@ -707,7 +754,32 @@ async function db_cargarNotificaciones() {
             .limit(20);
 
         if (error) return [];
-        return data || [];
+        var notifs = data || [];
+
+        // Adjuntar el código visible del proceso (CD1P-2026-...) a cada
+        // notificación, para poder enlazar a /proceso/CODIGO al hacer clic.
+        // Se hace con una consulta aparte (no un join embebido) para no
+        // depender de que exista una relación FK declarada entre
+        // notificaciones.proceso_id y procesos.id.
+        var idsProcesos = notifs
+            .map(function (n) { return n.proceso_id; })
+            .filter(function (id, i, arr) { return id && arr.indexOf(id) === i; });
+
+        if (idsProcesos.length > 0) {
+            var { data: procesos } = await supabaseClient
+                .from('procesos')
+                .select('id, codigo')
+                .in('id', idsProcesos);
+
+            var mapaCodigos = {};
+            (procesos || []).forEach(function (p) { mapaCodigos[p.id] = p.codigo; });
+
+            notifs.forEach(function (n) {
+                n.proceso_codigo = mapaCodigos[n.proceso_id] || null;
+            });
+        }
+
+        return notifs;
 
     } catch (err) {
         return [];
@@ -795,6 +867,7 @@ async function db_inicializar() {
 async function cerrarSesionConLimpieza() {
     db_limpiarCache();
     sessionStorage.removeItem('splash_visto');
+    localStorage.removeItem('hslv_ultima_actividad');
     await supabaseClient.auth.signOut();
     window.location.href = '/login';
 }

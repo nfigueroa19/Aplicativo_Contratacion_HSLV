@@ -9,6 +9,38 @@ var LOGIN_URL = (window.location.hostname === 'localhost' ||
                 ? '/login.html'
                 : '/login';
 
+// ════════════════════════════════════════════════════
+//  MONITOR DE INACTIVIDAD
+//  Cierra sesión tras 10 minutos sin actividad
+//  (declarado ANTES del guardián principal porque este
+//  último necesita _MS_LIMITE y _CLAVE_ACTIVIDAD ya listos)
+// ════════════════════════════════════════════════════
+
+var _timerInactividad   = null;
+var _timerAviso         = null;
+var _MINUTOS_LIMITE     = 10;
+var _MINUTOS_AVISO      = 8;    // aviso 2 minutos antes de cerrar
+var _MS_LIMITE          = _MINUTOS_LIMITE * 60 * 1000;
+var _MS_AVISO           = _MINUTOS_AVISO  * 60 * 1000;
+var _CLAVE_ACTIVIDAD    = 'hslv_ultima_actividad';
+
+// Guarda en localStorage la marca de tiempo de la última actividad.
+// A diferencia del setTimeout de abajo, esto SÍ sobrevive a cerrar la pestaña.
+function _marcarActividad() {
+    localStorage.setItem(_CLAVE_ACTIVIDAD, Date.now().toString());
+}
+
+// ── Cierre de sesión en cadena entre pestañas ──
+// Cuando CUALQUIER pestaña con esta misma sesión hace signOut() (manual o por
+// inactividad), Supabase borra su token de localStorage. El navegador dispara
+// automáticamente un evento "storage" en las DEMÁS pestañas abiertas (no en la
+// que hizo el cambio) — con esto cada pestaña se entera y se redirige sola.
+supabaseClient.auth.onAuthStateChange(function(event) {
+    if (event === 'SIGNED_OUT') {
+        window.location.replace(LOGIN_URL);
+    }
+});
+
 // ── Guardián principal ──
 (async function verificarAcceso() {
 
@@ -31,28 +63,26 @@ var LOGIN_URL = (window.location.hostname === 'localhost' ||
         return;
     }
 
-    if (window.location.pathname === '/' || 
+    // ── Verificar inactividad real (cubre el caso de haber cerrado
+    //    la pestaña sin cerrar sesión y volver después de 10+ minutos) ──
+    const ultimaActividad = localStorage.getItem(_CLAVE_ACTIVIDAD);
+    if (ultimaActividad && (Date.now() - Number(ultimaActividad) > _MS_LIMITE)) {
+        localStorage.removeItem(_CLAVE_ACTIVIDAD);
+        await supabaseClient.auth.signOut();
+        window.location.replace(LOGIN_URL);
+        return;
+    }
+
+    if (window.location.pathname === '/' ||
     window.location.pathname === '/index.html') {
     history.replaceState(null, '', '/dashboard');
     }
 
-    // Sesión válida — iniciar el monitor de inactividad
+    // Sesión válida — refrescar la marca de actividad e iniciar el monitor
+    _marcarActividad();
     iniciarMonitorInactividad();
 
 })();
-
-
-// ════════════════════════════════════════════════════
-//  MONITOR DE INACTIVIDAD
-//  Cierra sesión tras 10 minutos sin actividad
-// ════════════════════════════════════════════════════
-
-var _timerInactividad   = null;
-var _timerAviso         = null;
-var _MINUTOS_LIMITE     = 10;
-var _MINUTOS_AVISO      = 8;    // aviso 2 minutos antes de cerrar
-var _MS_LIMITE          = _MINUTOS_LIMITE * 60 * 1000;
-var _MS_AVISO           = _MINUTOS_AVISO  * 60 * 1000;
 
 function iniciarMonitorInactividad() {
 
@@ -71,11 +101,28 @@ function iniciarMonitorInactividad() {
         document.addEventListener(evento, reiniciarContador, { passive: true });
     });
 
+    // Si otra pestaña con la misma sesión registra actividad, refrescar
+    // los temporizadores de ESTA pestaña también — así, con varias pestañas
+    // abiertas, basta con estar activo en UNA para que ninguna se cierre sola.
+    // No se vuelve a escribir en localStorage aquí (solo se reinician los
+    // timers) para no generar un eco infinito de escrituras entre pestañas.
+    window.addEventListener('storage', function(evento) {
+        if (evento.key === _CLAVE_ACTIVIDAD && evento.newValue) {
+            _reiniciarTimers();
+        }
+    });
+
     // Arrancar el contador por primera vez
     reiniciarContador();
 }
 
 function reiniciarContador() {
+    // Refrescar la marca de actividad real (localStorage) y los timers
+    _marcarActividad();
+    _reiniciarTimers();
+}
+
+function _reiniciarTimers() {
 
     // Cancelar temporizadores anteriores
     clearTimeout(_timerInactividad);
@@ -96,6 +143,7 @@ function reiniciarContador() {
 }
 
 async function cerrarSesionPorInactividad() {
+    localStorage.removeItem(_CLAVE_ACTIVIDAD);
     await supabaseClient.auth.signOut();
     window.location.href = LOGIN_URL;
 }

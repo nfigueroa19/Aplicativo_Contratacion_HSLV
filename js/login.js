@@ -12,6 +12,10 @@ var LOGIN_URL = (window.location.hostname === 'localhost' ||
                 : '/login';
 
 
+// Misma clave que usa js/auth-guard.js para registrar la última actividad real
+var _CLAVE_ACTIVIDAD = 'hslv_ultima_actividad';
+var _MS_LIMITE_SESION = 10 * 60 * 1000; // 10 minutos
+
 // ── Al cargar: si ya hay sesión activa y está aprobado,
 //    ir directo al dashboard sin mostrar el formulario ──
 (async function verificarSesionPrevia() {
@@ -20,6 +24,16 @@ var LOGIN_URL = (window.location.hostname === 'localhost' ||
 
     // Sin sesión → mostrar el formulario normalmente
     if (!session) return;
+
+    // Sesión "viva" según Supabase, pero si ya pasaron 10+ minutos desde
+    // la última actividad real (p. ej. se cerró la pestaña sin cerrar sesión),
+    // se fuerza el cierre en vez de dejar entrar en automático.
+    const ultimaActividad = localStorage.getItem(_CLAVE_ACTIVIDAD);
+    if (!ultimaActividad || (Date.now() - Number(ultimaActividad) > _MS_LIMITE_SESION)) {
+        localStorage.removeItem(_CLAVE_ACTIVIDAD);
+        await supabaseClient.auth.signOut();
+        return;
+    }
 
     // Hay sesión → verificar si está aprobado
     const { data: perfil } = await supabaseClient
@@ -116,7 +130,8 @@ async function validarLogin() {
     }
 
     if (perfil.estado === 'aprobado') {
-        // Todo en orden → ir al dashboard
+        // Todo en orden → registrar el inicio de la actividad e ir al dashboard
+        localStorage.setItem(_CLAVE_ACTIVIDAD, Date.now().toString());
         window.location.href = DASHBOARD_URL;
         return;
     }
