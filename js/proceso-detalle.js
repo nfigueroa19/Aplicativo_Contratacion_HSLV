@@ -72,7 +72,9 @@ CHECKLISTS_POR_TIPO.D3P = CHECKLISTS_POR_TIPO.CD1P; // mismo checklist de 23 ít
 // Nota: la lista de ítems restringidos (solo Jurídica/Admin) sigue pendiente
 // de confirmar cuáles aplican en Convocatoria/Subasta — se deja igual que
 // antes por ahora, a la espera de esa confirmación.
-var ITEMS_RESTRINGIDOS_DETALLE = [15, 20, 21, 22];
+// (única fuente de verdad: ITEMS_RESTRINGIDOS_GLOBAL en js/db.js, que esta
+// página carga antes que este archivo)
+var ITEMS_RESTRINGIDOS_DETALLE = ITEMS_RESTRINGIDOS_GLOBAL;
 
 var HIST_TIPOS_DETALLE = {
     'CD1P': { label: 'Directa 1 Propuesta',    badge: 'hist-badge-cd1p' },
@@ -87,6 +89,7 @@ var _documentosActuales  = [];
 var _comentariosActuales = [];
 var _archivosPendientes  = {}; // { itemNum: File }
 var _comentariosPendientes = {}; // { itemNum: texto sin guardar todavía }
+var _usuariosJuridicosActuales = []; // solo se llena si el usuario actual es Admin
 
 function escapeHTML(texto) {
     var div = document.createElement('div');
@@ -150,6 +153,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     _procesoActual = proceso;
 
+    // Solo el Admin puede asignar/reasignar responsable jurídico —
+    // cargar la lista de jurídicos únicamente en ese caso.
+    if (_perfilActual && _perfilActual.rol === 'admin') {
+        _usuariosJuridicosActuales = await db_cargarUsuariosJuridicos();
+    }
+
     _documentosActuales = await db_cargarDocumentos(proceso.id);
     _comentariosActuales = await db_cargarComentarios(proceso.id);
 
@@ -166,14 +175,22 @@ function obtenerCodigoDeURL() {
 }
 
 function mostrarError(msg) {
+    // No se deja al usuario "atascado" viendo un mensaje fijo: se le explica
+    // brevemente el motivo y se le redirige solo al dashboard. Como este
+    // mismo mensaje se usa tanto para "el código no existe" como para "no
+    // tienes permiso para verlo" (ver db_obtenerProcesoPorCodigo), no se
+    // revela cuál de los dos casos ocurrió.
     var cont = document.getElementById('pd-contenido');
     if (cont) {
         cont.innerHTML =
             '<div style="padding:60px 20px;text-align:center;color:#DC2626;font-weight:700;">' +
                 '⚠️ ' + msg +
-                '<div style="margin-top:16px;"><a href="/historial" style="color:#123C7B;">← Volver al historial</a></div>' +
+                '<div style="margin-top:16px;color:#6B7280;font-weight:400;font-size:13px;">Redirigiendo al dashboard…</div>' +
             '</div>';
     }
+    setTimeout(function() {
+        window.location.href = '/dashboard';
+    }, 2500);
 }
 
 function puedeEditarProceso(proceso, perfil) {
@@ -243,6 +260,34 @@ function renderizarInfo(p) {
               : '')
         : '<span style="color:#9CA3AF;font-style:italic;">Sin asignar</span>';
 
+    // Solo el Admin ve el selector para asignar/reasignar; los demás roles
+    // solo ven el texto de solo lectura (igual que en /historial).
+    var bloqueResponsable;
+    if (_perfilActual && _perfilActual.rol === 'admin') {
+        var opcionesHTML = '<option value="">— Seleccione —</option>';
+        (_usuariosJuridicosActuales || []).forEach(function(u) {
+            var seleccionado = (p.responsable_asignado === u.id) ? 'selected' : '';
+            opcionesHTML += '<option value="' + u.id + '" ' + seleccionado + '>' +
+                            (u.nombre || u.email) + '</option>';
+        });
+
+        bloqueResponsable =
+            '<div style="font-size:14px;margin-bottom:8px;">' + responsableAsignadoHTML + '</div>' +
+            '<div style="display:flex;gap:8px;align-items:center;max-width:380px;">' +
+                '<select id="pd-resp-select" style="flex:1;padding:7px 10px;border-radius:8px;' +
+                    'border:1.5px solid #BFDBFE;font-size:12px;color:#123C7B;outline:none;background:#F8FAFF;">' +
+                    opcionesHTML +
+                '</select>' +
+                '<button id="pd-resp-btn" onclick="pd_asignarResponsable()" ' +
+                    'style="background:#123C7B;color:white;border:none;border-radius:8px;' +
+                    'padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">' +
+                    (p.responsable_asignado ? '🔄 Reasignar' : '✔ Asignar') +
+                '</button>' +
+            '</div>';
+    } else {
+        bloqueResponsable = '<div style="font-size:14px;">' + responsableAsignadoHTML + '</div>';
+    }
+
     document.getElementById('pd-info').innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:18px;">' +
             '<div>' +
@@ -261,8 +306,54 @@ function renderizarInfo(p) {
             '<div style="font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;margin-bottom:4px;">' +
                 'Responsable jurídico asignado' +
             '</div>' +
-            '<div style="font-size:14px;">' + responsableAsignadoHTML + '</div>' +
+            bloqueResponsable +
         '</div>';
+}
+
+async function pd_asignarResponsable() {
+    var selectEl = document.getElementById('pd-resp-select');
+    if (!selectEl) return;
+
+    var usuarioId = selectEl.value;
+    if (!usuarioId) {
+        alert('Por favor seleccione un responsable de la lista.');
+        return;
+    }
+    var nombreSeleccionado = selectEl.options[selectEl.selectedIndex].text;
+
+    var btnEl = document.getElementById('pd-resp-btn');
+    if (btnEl) {
+        btnEl.disabled    = true;
+        btnEl.textContent = '⏳';
+    }
+
+    var ok = await db_asignarResponsable(_procesoActual.id, usuarioId);
+
+    if (!ok) {
+        if (btnEl) {
+            btnEl.disabled    = false;
+            btnEl.textContent = _procesoActual.responsable_asignado ? '🔄 Reasignar' : '✔ Asignar';
+        }
+        alert('❌ No se pudo asignar el responsable. Intente de nuevo.');
+        return;
+    }
+
+    _procesoActual.responsable_asignado          = usuarioId;
+    _procesoActual.responsable_asignado_nombre   = nombreSeleccionado;
+    _procesoActual.responsable_asignado_por_nombre = (_perfilActual || {}).nombre || 'Admin';
+
+    renderizarInfo(_procesoActual);
+    renderizarChecklist();
+
+    var toast = document.createElement('div');
+    toast.style.cssText =
+        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
+        'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
+        'box-shadow:0 8px 24px rgba(0,0,0,.3);';
+    toast.textContent = '✅ Responsable asignado correctamente';
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 4000);
 }
 
 function renderizarChecklist() {
@@ -353,6 +444,11 @@ function renderizarChecklist() {
                         '<div class="hist-nombre">' +
                             '⏳ ' + escapeHTML(pendiente.name) +
                             '<span class="hist-tag-vN">v' + (maxVersion + 1) + '</span>' +
+                            '<button onclick="pd_quitarPendiente(' + num + ')" title="Quitar este archivo" ' +
+                                'style="margin-left:8px;background:none;border:1px solid #DC2626;color:#DC2626;' +
+                                'border-radius:6px;padding:1px 7px;font-size:10.5px;cursor:pointer;font-weight:600;">' +
+                                '🗑️ Quitar' +
+                            '</button>' +
                         '</div>' +
                         '<div class="hist-meta">' +
                             '📅 ' + fechaHoy + ' &nbsp;·&nbsp; 🕐 ' + horaHoy +
@@ -486,6 +582,18 @@ function pd_toggleHistorial(num) {
 function pd_archivoElegido(num, inputEl) {
     if (!inputEl.files || !inputEl.files[0]) return;
     _archivosPendientes[num] = inputEl.files[0];
+    renderizarChecklist();
+}
+
+// Quitar un archivo elegido por error, mientras siga pendiente (todavía no
+// se ha presionado "Guardar" y por lo tanto no se ha subido a Supabase).
+function pd_quitarPendiente(num) {
+    if (!confirm('¿Quitar este archivo? Deberá volver a seleccionarlo si lo necesita.')) return;
+    delete _archivosPendientes[num];
+
+    var inp = document.getElementById('pd-file-' + num);
+    if (inp) inp.value = '';
+
     renderizarChecklist();
 }
 

@@ -473,6 +473,92 @@ table td{
     min-width:180px;
 }
 
+/* ===== Checklist de Contratación Directa 1 Propuesta =====
+   La regla genérica de arriba (min-width:180px en TODAS las columnas)
+   desperdicia espacio horizontal en columnas angostas como "#" y
+   "Validación" (que solo llevan un número o un checkbox). Aquí se ajustan
+   esas dos columnas a su contenido real, y las otras dos (que si necesitan
+   espacio: el nombre del documento y el botón de carga + nombre de
+   archivo) se reparten el espacio que queda. El texto largo se envuelve
+   hacia abajo (más alto) en vez de estirar la columna a lo ancho — así
+   también queda listo para agregar una columna nueva más adelante sin
+   que la tabla se vea desbalanceada. */
+#cd1p-checklist table{
+    table-layout:auto;
+}
+#cd1p-checklist th,
+#cd1p-checklist td{
+    min-width:0;
+    white-space:normal;
+    border:2px solid #94A3B8;
+}
+#cd1p-checklist th:nth-child(1),
+#cd1p-checklist td:nth-child(1){
+    width:1%;
+    white-space:nowrap;
+    text-align:center;
+}
+/* Columna "Validación": el checkbox sigue funcionando igual por dentro
+   (se marca solo al subir el archivo, alimenta la barra de progreso "X de 23
+   verificados"), solo se oculta visualmente porque no aporta nada útil a la
+   vista — no se borra del HTML para no romper cd1p_marcarCheckboxPorItem(),
+   cd1p_actualizarAvance() ni guardarProceso(), que sí leen su estado. */
+#cd1p-checklist th:nth-child(3),
+#cd1p-checklist td:nth-child(3){
+    display:none;
+}
+/* Columna "Documento Requerido": se veía demasiado ancha — se fija un ancho
+   explícito (no basta con max-width en table-layout:auto, ver nota arriba)
+   para que reduzca a la mitad aprox. y el texto largo (ej. "Certificado
+   antecedentes (disciplinarios, fiscales y judiciales)") se envuelva en
+   varias líneas en vez de estirar la columna. */
+#cd1p-checklist th:nth-child(2),
+#cd1p-checklist td:nth-child(2){
+    width:24ch;
+}
+/* Recuadros de sub-documentos (ítems 15, 20 y 21): sin este tope quedaban
+   más anchos que el recuadro de comentarios y estiraban toda la columna
+   "Carga de Documento" — se igualan al mismo ancho (44ch). El verdadero
+   causante era el texto largo de los botones de adentro (ej. "📎 Cargar
+   Antecedentes Disciplinarios"), que no estaba limitado — por eso se
+   agrega "width" (no solo "max-width") tanto al recuadro como al botón. */
+#cd1p-checklist .subdoc-bloque{
+    width:44ch;
+    max-width:44ch;
+    box-sizing:border-box;
+}
+#cd1p-checklist .subdoc-bloque .btn{
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+    white-space:normal;
+}
+/* Barra "📁 Documentos cargados: 0 / N" de los ítems 15/20/21: por defecto
+   ocupaba todo el ancho disponible de la celda — se iguala al mismo ancho
+   (44ch) que las cajas de carga de su propia sección. */
+#cd1p-checklist .subdoc-progreso{
+    width:44ch;
+    max-width:44ch;
+    box-sizing:border-box;
+}
+/* Ítem 13 (Libreta Militar): mismo motivo — el recuadro azul de selección
+   y el banner rojo de "No aplica" con el motivo elegido */
+#selector_13_wrap,
+#noaplica_13_banner{
+    width:44ch;
+    max-width:44ch;
+    box-sizing:border-box;
+}
+/* Panel "Ver historial" (los "Sin cargas registradas aún.") de los 23 ítems:
+   se genera por dos rutas distintas en script.js según el caso, con dos
+   nombres de clase distintos — se limitan ambos al mismo ancho de 44ch. */
+#cd1p-checklist .checklist-historial,
+#cd1p-checklist .historial-universal-inyectado{
+    width:44ch;
+    max-width:44ch;
+    box-sizing:border-box;
+}
+
 /* ===== FORMS ===== */
 
 input,
@@ -2393,4 +2479,152 @@ span.rd-ctx {
 .btn-actualizar:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE CONSOLIDADO — 6 jul 2026
+   Enfocado en la página /contratacion-directa (contratacion.html),
+   que es una página independiente y NO está dentro de #modalProceso —
+   por eso ninguna de las reglas responsive de los modales le aplicaba
+   y el checklist se veía recortado en pantallas angostas.
+
+   Sistema único de puntos de quiebre del proyecto:
+     · ≥ 993px  → escritorio  (NO SE TOCA: ninguna regla de este bloque
+                  aplica ahí — todo va dentro de @media max-width)
+     · 769–992  → tablet
+     · 481–768  → tablet vertical / móvil grande
+     · ≤ 480px  → móvil pequeño
+
+   Este bloque va AL FINAL del archivo a propósito: en CSS, ante reglas
+   de igual peso gana la que aparece más abajo — así estas reglas
+   corrigen a las antiguas contradictorias sin necesidad de borrarlas.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── TABLET Y MENORES (≤ 992px) ── */
+@media (max-width: 992px) {
+
+    /* 1. El checklist de CD1P scrollea horizontalmente DENTRO de su
+          recuadro. Sin esto, la tabla (con sus recuadros de 44ch y la
+          columna JURISKILLS) desbordaba la página y quedaba recortada,
+          porque .content tiene overflow-x:hidden. Ningún botón ni
+          recuadro se pierde: lo que no quepa se ve deslizando. */
+    #cd1p-checklist {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* La tabla conserva un ancho mínimo legible; menos que esto y las
+       columnas se aplastan hasta quedar inusables */
+    #cd1p-checklist table {
+        min-width: 880px;
+    }
+
+    /* Aviso sutil de que la tabla se puede deslizar (sticky para que se
+       quede fijo a la izquierda mientras se desliza) */
+    #cd1p-checklist::before {
+        content: '⟷ Deslice horizontalmente para ver toda la tabla';
+        position: sticky;
+        left: 0;
+        display: inline-block;
+        font-size: 11px;
+        color: #6B7280;
+        padding: 8px 12px 0;
+    }
+
+    /* 2. Panel general de JURISKILLS: el botón "⟳ Actualizar análisis"
+          baja a su propia línea con ancho completo, en vez de quedar
+          apretado al lado del título */
+    .agente-ia-header {
+        flex-direction: column;
+    }
+    .agente-ia-header .btn-actualizar {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+/* ── MÓVIL GRANDE / TABLET VERTICAL (≤ 768px) ── */
+@media (max-width: 768px) {
+
+    /* Márgenes laterales del contenido más aprovechables, conservando
+       el espacio superior para el botón hamburguesa ☰ */
+    .content {
+        padding: 14px !important;
+        padding-top: 56px !important;
+    }
+
+    /* Checklist: celdas más compactas para reducir el ancho a deslizar */
+    #cd1p-checklist table {
+        min-width: 780px;
+    }
+    #cd1p-checklist th,
+    #cd1p-checklist td {
+        padding: 10px !important;
+        font-size: 12.5px;
+    }
+
+    /* Panel JURISKILLS más compacto */
+    .agente-ia-icon {
+        width: 46px;
+        height: 46px;
+        font-size: 22px;
+    }
+    .agente-ia-title {
+        font-size: 16px;
+    }
+    .agente-ia-box {
+        padding: 16px;
+    }
+
+    /* Botones finales (Volver / Descargar / Guardar) apilados de lleno,
+       con separación pareja — la regla genérica .btn{width:100%} de más
+       arriba ya los estira, esto solo ordena el apilado */
+    .acciones-modal-final {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .acciones-modal-final .btn {
+        width: 100%;
+        margin-bottom: 0;
+    }
+}
+
+/* ── MÓVIL PEQUEÑO (≤ 480px) ── */
+@media (max-width: 480px) {
+
+    .content {
+        padding: 10px !important;
+        padding-top: 54px !important;
+    }
+
+    .topbar {
+        padding: 14px !important;
+    }
+
+    /* Checklist aún más compacto (pantallas de ~360-412px) */
+    #cd1p-checklist table {
+        min-width: 720px;
+    }
+    #cd1p-checklist th,
+    #cd1p-checklist td {
+        padding: 8px !important;
+        font-size: 12px;
+    }
+
+    /* Panel JURISKILLS y caja de normativa */
+    .agente-ia-box {
+        padding: 12px;
+    }
+    .normativa-box {
+        padding: 12px;
+    }
+    .agente-ia-text {
+        font-size: 12px;
+    }
+
+    /* Barra "Avance Documental" */
+    #cd1p-avance-bar {
+        padding: 12px 14px !important;
+    }
 }

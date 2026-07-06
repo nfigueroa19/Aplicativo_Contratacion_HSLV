@@ -109,10 +109,11 @@ document.addEventListener('DOMContentLoaded', function() {
         bloque.innerHTML =
             '<div style="font-size:10px;color:#6B7280;font-weight:700;' +
                 'text-transform:uppercase;margin-bottom:4px;">💬 Comentarios</div>' +
-            '<textarea id="' + prefijoComentario + 'coment_' + num + '" rows="2" ' +
+            '<textarea id="' + prefijoComentario + 'coment_' + num + '" rows="1" ' +
                 'placeholder="Escribir un comentario para este documento…" autocomplete="off" ' +
-                'style="width:100%;font-size:12px;padding:6px 8px;border:1px solid #CBD5E1;' +
-                'border-radius:8px;resize:vertical;box-sizing:border-box;"></textarea>';
+                'oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\';" ' +
+                'style="width:44ch;max-width:100%;font-size:12px;padding:6px 8px;border:1px solid #CBD5E1;' +
+                'border-radius:8px;resize:none;overflow:hidden;box-sizing:border-box;"></textarea>';
         celdaCarga.appendChild(bloque);
     });
 });
@@ -1658,7 +1659,8 @@ async function guardarProceso() {
     var responsable = (document.getElementById('mp_responsable') || {}).value || '';
 
     // ── Ítems que Biomédica NO puede ver ni subir ─────
-    var ITEMS_RESTRINGIDOS = [15, 20, 21, 22];
+    // (única fuente de verdad: ITEMS_RESTRINGIDOS_GLOBAL en js/db.js)
+    var ITEMS_RESTRINGIDOS = ITEMS_RESTRINGIDOS_GLOBAL;
 
     // Labels de los 23 ítems
     var LABELS = [
@@ -1707,35 +1709,30 @@ async function guardarProceso() {
               })();
         var ok = cb ? cb.checked : false;
 
-        // Obtener archivo del ítem
-        var archivo = null;
+        // Obtener archivo(s) del ítem — se guardan TODOS los archivos de los
+        // ítems con varios recuadros, no solo el primero (antes se perdían).
+        var archivos = [];
 
         // Ítems simples
         var archSimple = document.getElementById('archivo_' + num);
         if (archSimple && archSimple.files && archSimple.files[0]) {
-            archivo = archSimple.files[0];
+            archivos.push(archSimple.files[0]);
         }
 
-        if (!archivo && num === 1) {
-          var archPaaTemp = document.getElementById('paa_archivo_temp');
-          if (archPaaTemp && archPaaTemp.files && archPaaTemp.files[0]) {
-            archivo = archPaaTemp.files[0];
-          }
-        }
-
-        // Ítems con sub-archivos (15, 20, 21)
+        // Ítems con sub-archivos. El ítem 9 (Estudio de Mercado) tiene 3
+        // recuadros propios y NO existe un "archivo_9" simple — por eso antes
+        // este ítem nunca guardaba ningún archivo en la base de datos.
         var subSufijos = {
+            9:  ['9_mercado','9_propuestas','9_carta'],
             15: ['15a','15b','15c'],
             20: ['20a','20b','20c'],
             21: ['21a','21b']
         };
-        if (!archivo && subSufijos[num]) {
+        if (subSufijos[num]) {
             subSufijos[num].forEach(function(sufijo) {
-                if (!archivo) {
-                    var inp = document.getElementById('archivo_' + sufijo);
-                    if (inp && inp.files && inp.files[0]) {
-                        archivo = inp.files[0];
-                    }
+                var inp = document.getElementById('archivo_' + sufijo);
+                if (inp && inp.files && inp.files[0]) {
+                    archivos.push(inp.files[0]);
                 }
             });
         }
@@ -1747,7 +1744,8 @@ async function guardarProceso() {
             num:           num,
             label:         label,
             ok:            ok,
-            archivo:       archivo,
+            archivo:       archivos[0] || null,
+            archivos:      archivos,
             esRestringido: ITEMS_RESTRINGIDOS.indexOf(num) !== -1,
             comentario:    comentario
         });
@@ -2132,13 +2130,7 @@ function limpiarFormularioProceso() {
         }
     });
 
-    // Limpiar panel JURISKILLS IA
-    const iaPanel = document.getElementById('iaResultadosContenedor');
-    if (iaPanel) iaPanel.innerHTML = `
-        <div style="text-align:center;padding:30px;color:#9CA3AF;">
-            <div style="font-size:40px;margin-bottom:10px;">📂</div>
-            <p>Carga documentos en el checklist para que JURISKILLS los analice automáticamente.</p>
-        </div>`;
+    // Limpiar panel JURISKILLS IA (contador global + la celda de análisis de cada fila)
     if (typeof estadoDocumentos !== 'undefined') {
         Object.keys(estadoDocumentos).forEach(k => delete estadoDocumentos[k]);
     }
@@ -2148,12 +2140,9 @@ function limpiarFormularioProceso() {
     if (badge2) badge2.style.display = 'none';
     const resG = document.getElementById('iaResumenGlobal');
     if (resG) resG.textContent = '';
-
-    // Limpiar observaciones
-    const obs = document.getElementById('iaObservaciones');
-    if (obs) obs.value = '';
-    const charC = document.getElementById('iaCharCount');
-    if (charC) charC.textContent = '0/1000 caracteres';
+    document.querySelectorAll('[id^="ia-item-"]').forEach(function(celda) {
+        celda.innerHTML = '<span style="color:#9CA3AF;font-style:italic;font-size:12px;">Sin analizar aún.</span>';
+    });
 
     // Radio libreta militar
     const radios = document.querySelectorAll('input[name="aplica_13"]');
@@ -2377,59 +2366,6 @@ if (_arch1) {
     });
 }
 
-function guardarPAAItem() {
-    var unspsc  = document.getElementById('paa-unspsc-input').value.trim();
-    var detalle = document.getElementById('paa-detalle-input').value.trim();
-    var archTemp = document.getElementById('paa_archivo_temp');
-
-    if (!unspsc) {
-        alert('Por favor ingrese al menos un código UNSPSC.');
-        return;
-    }
-
-    // Guardar preview UNSPSC en la celda de la tabla
-    document.getElementById('paa-unspsc-label').textContent  = unspsc;
-    document.getElementById('paa-detalle-label').textContent = detalle || '—';
-    document.getElementById('paa-unspsc-preview').style.display = 'block';
-
-    // Solo AHORA mostrar el nombre del archivo en la tabla exterior
-    if (archTemp && archTemp.files && archTemp.files[0]) {
-        mostrarArchivo(archTemp, 'nombreArchivo_1');
-    }
-
-    // Cerrar modal
-    document.getElementById('modalPAAItem').style.display = 'none';
-}
-
-// Solo actualiza el nombre DENTRO del modal — no toca la tabla
-function paa_mostrarNombreTemporal(input) {
-    var div = document.getElementById('paa_nombre_temp');
-    if (!div) return;
-    if (input.files && input.files[0]) {
-        div.style.color      = '#0B7A43';
-        div.style.fontStyle  = 'normal';
-        div.style.fontWeight = '600';
-        div.textContent      = '📄 ' + input.files[0].name;
-    } else {
-        div.style.color      = '#6B7280';
-        div.style.fontStyle  = 'italic';
-        div.textContent      = 'Sin archivo seleccionado';
-    }
-}
-
-// Restaurar valores guardados al cargar
-window.addEventListener('DOMContentLoaded', function() {
-    const u = localStorage.getItem('paa_unspsc');
-    const d = localStorage.getItem('paa_detalle');
-    if (u) {
-        document.getElementById('paa-unspsc-input').value = u;
-        document.getElementById('paa-detalle-input').value = d || '';
-        document.getElementById('paa-unspsc-label').textContent = u;
-        document.getElementById('paa-detalle-label').textContent = d || '—';
-        document.getElementById('paa-unspsc-preview').style.display = 'block';
-    }
-});
-
 // Conversión número a letras (pesos colombianos)
 function numeroALetras(num) {
     const unidades = ['','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve',
@@ -2468,139 +2404,6 @@ function scdpAutoLetras() {
         document.getElementById('scdp-valor-letras').value = numeroALetras(val);
     }
 }
-
-// Sincronizar nombre archivo
-var _arch2 = document.getElementById('archivo_2');
-if (_arch2) {
-    _arch2.addEventListener('change', function() {
-        const nombre = this.files[0] ? this.files[0].name : '';
-        const lbl = document.getElementById('nombreArchivo_2_modal');
-        if (lbl) lbl.textContent = nombre ? '📄 ' + nombre : '';
-    });
-}
-
-function scdpMostrarSolicitud(input) {
-    const nombre = input.files[0] ? input.files[0].name : '';
-    document.getElementById('scdp-solicitud-archivo').textContent = nombre ? '📄 ' + nombre : '';
-    localStorage.setItem('scdp_solicitud_nombre', nombre);
-}
-
-function guardarSolicitudCDPItem() {
-    const rubro    = document.getElementById('scdp-rubro').value.trim();
-    const numrubro = document.getElementById('scdp-numrubro').value.trim();
-    const valNum   = document.getElementById('scdp-valor-num').value.trim();
-    const valLetra = document.getElementById('scdp-valor-letras').value.trim();
-    const fecha    = document.getElementById('scdp-fecha').value;
-    const solicitudNombre = localStorage.getItem('scdp_solicitud_nombre') || '';
-    const archivo  = document.getElementById('archivo_2');
-
-    if (!rubro || !numrubro || !valNum || !fecha) {
-        alert('Por favor complete: Nombre del rubro, Número del rubro, Valor y Fecha de solicitud.');
-        return;
-    }
-
-    // Guardar
-    localStorage.setItem('scdp_rubro', rubro);
-    localStorage.setItem('scdp_numrubro', numrubro);
-    localStorage.setItem('scdp_valor', valNum);
-    localStorage.setItem('scdp_letras', valLetra);
-    localStorage.setItem('scdp_fecha', fecha);
-
-    // Preview en celda
-    const valorFmt = parseInt(valNum).toLocaleString('es-CO', {style:'currency', currency:'COP', maximumFractionDigits:0});
-    document.getElementById('scdp-rubro-label').textContent = rubro;
-    document.getElementById('scdp-numrubro-label').textContent = numrubro;
-    document.getElementById('scdp-valor-label').textContent = valorFmt + ' (' + valLetra + ')';
-    document.getElementById('scdp-fecha-label').textContent = fecha;
-    document.getElementById('scdp-solicitud-label').textContent = solicitudNombre || '—';
-    document.getElementById('scdp-preview').style.display = 'block';
-
-    // Disparar análisis si hay archivo principal
-    if (archivo.files && archivo.files.length > 0) {
-        mostrarArchivo(archivo, 'nombreArchivo_2');
-    }
-    // Disparar análisis del archivo de solicitud si existe
-    const archivo2b = document.getElementById('archivo_2b');
-    if (archivo2b.files && archivo2b.files.length > 0) {
-        mostrarArchivo(archivo2b, 'nombreArchivo_2');
-    }
-
-    document.getElementById('modalSolicitudCDPItem').style.display = 'none';
-}
-
-// Restaurar al cargar
-window.addEventListener('DOMContentLoaded', function() {
-    const r = localStorage.getItem('scdp_rubro');
-    if (r) {
-        document.getElementById('scdp-rubro').value = r;
-        document.getElementById('scdp-numrubro').value = localStorage.getItem('scdp_numrubro') || '';
-        document.getElementById('scdp-valor-num').value  = localStorage.getItem('scdp_valor') || '';
-        document.getElementById('scdp-valor-letras').value = localStorage.getItem('scdp_letras') || '';
-        document.getElementById('scdp-fecha').value = localStorage.getItem('scdp_fecha') || '';
-        const solicitudNombre = localStorage.getItem('scdp_solicitud_nombre') || '';
-        if (solicitudNombre) document.getElementById('scdp-solicitud-archivo').textContent = '📄 ' + solicitudNombre;
-        const valNum = localStorage.getItem('scdp_valor') || '';
-        const valLetra = localStorage.getItem('scdp_letras') || '';
-        const fecha = localStorage.getItem('scdp_fecha') || '';
-        const valorFmt = valNum ? parseInt(valNum).toLocaleString('es-CO', {style:'currency', currency:'COP', maximumFractionDigits:0}) : '';
-        document.getElementById('scdp-rubro-label').textContent = r;
-        document.getElementById('scdp-numrubro-label').textContent = localStorage.getItem('scdp_numrubro') || '';
-        document.getElementById('scdp-valor-label').textContent = valorFmt + (valLetra ? ' (' + valLetra + ')' : '');
-        document.getElementById('scdp-fecha-label').textContent = fecha;
-        document.getElementById('scdp-solicitud-label').textContent = solicitudNombre || '—';
-        document.getElementById('scdp-preview').style.display = 'block';
-    }
-});
-
-var _arch3 = document.getElementById('archivo_3');
-if (_arch3) {
-    _arch3.addEventListener('change', function() {
-        const nombre = this.files[0] ? this.files[0].name : '';
-        const lbl = document.getElementById('nombreArchivo_3_modal');
-        if (lbl) lbl.textContent = nombre ? '📄 ' + nombre : '';
-    });
-}
-
-function guardarCDPItem() {
-    const num    = document.getElementById('cdp-num').value.trim();
-    const fecha  = document.getElementById('cdp-fecha').value;
-    const objeto = document.getElementById('cdp-objeto').value.trim();
-    const archivo = document.getElementById('archivo_3');
-
-    if (!num || !fecha || !objeto) {
-        alert('Por favor complete: Número de CDP, Fecha y Objeto.');
-        return;
-    }
-
-    localStorage.setItem('cdp_num', num);
-    localStorage.setItem('cdp_fecha', fecha);
-    localStorage.setItem('cdp_objeto', objeto);
-
-    document.getElementById('cdp-num-label').textContent = num;
-    document.getElementById('cdp-fecha-label').textContent = fecha;
-    document.getElementById('cdp-objeto-label').textContent = objeto.slice(0, 70) + (objeto.length > 70 ? '…' : '');
-    document.getElementById('cdp-preview').style.display = 'block';
-
-    if (archivo.files && archivo.files.length > 0) {
-        mostrarArchivo(archivo, 'nombreArchivo_3');
-    }
-
-    document.getElementById('modalCDPItem').style.display = 'none';
-}
-
-window.addEventListener('DOMContentLoaded', function() {
-    const n = localStorage.getItem('cdp_num');
-    if (n) {
-        document.getElementById('cdp-num').value = n;
-        document.getElementById('cdp-fecha').value = localStorage.getItem('cdp_fecha') || '';
-        document.getElementById('cdp-objeto').value = localStorage.getItem('cdp_objeto') || '';
-        const objeto = localStorage.getItem('cdp_objeto') || '';
-        document.getElementById('cdp-num-label').textContent = n;
-        document.getElementById('cdp-fecha-label').textContent = localStorage.getItem('cdp_fecha') || '';
-        document.getElementById('cdp-objeto-label').textContent = objeto.slice(0, 70) + (objeto.length > 70 ? '…' : '');
-        document.getElementById('cdp-preview').style.display = 'block';
-    }
-});
 
 // NOTA: esta función tenía un bug — usaba los IDs de Contratación Directa 1
 // Propuesta (sin prefijo) en vez de los de Directa 3 Invitaciones (i3_),
@@ -2812,6 +2615,72 @@ function hist_checklistCount(tipo) {
   return { checks: checks, total: total };
 }
 
+// ── Etiquetas reales de los checklists, por tipo de proceso ──
+// Misma lista que CHECKLISTS_POR_TIPO en js/proceso-detalle.js (esa página
+// no carga script.js, por eso mantiene su propia copia). D3P comparte el
+// checklist de 23 ítems de CD1P; Convocatoria y Subasta tienen 15 propios.
+var CHECKLIST_LABELS_POR_TIPO = {
+    D3P: [
+        'CERTIFICADO PAA',
+        'SOLICITUD DE CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',
+        'CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',
+        'SOLICITUD PARA CONTRATAR',
+        'ESTUDIOS PREVIOS',
+        'MATRIZ DE RIESGO',
+        'ANEXO IO PRESENTACIÓN DE LA PROPUESTA',
+        'PROPUESTA',
+        'ESTUDIO DE MERCADO',
+        'EXPERIENCIA',
+        'CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN',
+        'CÉDULA DE CIUDADANÍA',
+        'LIBRETA MILITAR (si aplica)',
+        'REGISTRO ÚNICO TRIBUTARIO',
+        'CERTIFICADO ANTECEDENTES (DISCIPLINARIOS, FISCALES Y JUDICIALES)',
+        'CERTIFICADO ANTECEDENTES DE DELITOS SEXUALES',
+        'CERTIFICADO INEXISTENCIA DE INHABILIDADES E INCOMPATIBILIDADES',
+        'CERTIFICADO DE MEDIDAS CORRECTIVAS',
+        'CERTIFICADO REDAM',
+        'REVISOR FISCAL (CÉDULA, ANTECEDENTES, TARJETA PROFESIONAL)',
+        'CERTIFICACIÓN Y PLANILLAS DE SEGURIDAD SOCIAL',
+        'FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT',
+        'ACTA DE EVALUACIÓN'
+    ],
+    CONV: [
+        'CERTIFICADO PAA',
+        'CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',
+        'SOLICITUD PARA CONTRATAR',
+        'ESTUDIOS PREVIOS',
+        'MATRIZ DE RIESGO',
+        'AVISO DE CONVOCATORIA',
+        'PLIEGO DE CONDICIONES',
+        'PROPUESTAS RECIBIDAS',
+        'ACTA DE EVALUACIÓN DE PROPUESTAS',
+        'ACTA DE ADJUDICACIÓN',
+        'CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN',
+        'REGISTRO ÚNICO TRIBUTARIO (RUT)',
+        'CERTIFICADO ANTECEDENTES (DISCIPLINARIOS, FISCALES Y JUDICIALES)',
+        'FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT',
+        'MINUTA DE CONTRATO'
+    ],
+    SUB: [
+        'CERTIFICADO PAA',
+        'CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',
+        'SOLICITUD PARA CONTRATAR',
+        'ESTUDIOS PREVIOS',
+        'MATRIZ DE RIESGO',
+        'AVISO DE CONVOCATORIA / INVITACIÓN SUBASTA',
+        'REGLAS DE LA SUBASTA (PLIEGO)',
+        'ACTA DE HABILITACIÓN DE PROPONENTES',
+        'CONFIGURACIÓN DEL EVENTO DE SUBASTA (SECOP II)',
+        'ACTA DE CIERRE Y RESULTADO DE SUBASTA',
+        'CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN',
+        'REGISTRO ÚNICO TRIBUTARIO (RUT)',
+        'CERTIFICADO ANTECEDENTES (DISCIPLINARIOS, FISCALES Y JUDICIALES)',
+        'FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT',
+        'MINUTA DE CONTRATO'
+    ]
+};
+
 async function guardarProcesoHistorial(tipo) {
     var tipoKey = tipo.toUpperCase() === 'D3P'  ? 'D3P'  :
                   tipo.toUpperCase() === 'CONV' ? 'CONV' :
@@ -2867,34 +2736,43 @@ async function guardarProcesoHistorial(tipo) {
     // ── Recopilar checklist según módulo ──────────────
     var prefijos = { D3P:'i3', CONV:'conv', SUB:'sub' };
     var pref     = prefijos[tipoKey];
-    var ITEMS_RESTRINGIDOS = [15, 20, 21, 22];
+    // (única fuente de verdad: ITEMS_RESTRINGIDOS_GLOBAL en js/db.js)
+    var ITEMS_RESTRINGIDOS = ITEMS_RESTRINGIDOS_GLOBAL;
     var checklist = [];
 
-    // Recopilar archivos por número de ítem (1-23)
-    for (var n = 1; n <= 23; n++) {
-        var archivo = null;
+    // Etiquetas reales de cada checklist (D3P comparte los 23 ítems de CD1P;
+    // Convocatoria y Subasta tienen su propio checklist de 15 ítems). Antes
+    // se guardaba el label genérico "Ítem N" y se recorrían siempre 23 ítems,
+    // aunque CONV/SUB solo tienen 15 (inflaba el conteo del historial).
+    var labelsModulo = (typeof CHECKLIST_LABELS_POR_TIPO !== 'undefined' &&
+                        CHECKLIST_LABELS_POR_TIPO[tipoKey])
+        ? CHECKLIST_LABELS_POR_TIPO[tipoKey]
+        : null;
+    var totalItems = labelsModulo ? labelsModulo.length
+                                  : (tipoKey === 'D3P' ? 23 : 15);
+
+    for (var n = 1; n <= totalItems; n++) {
+        // Se guardan TODOS los archivos de los ítems con varios recuadros
+        // (antes solo se guardaba el primero y los demás se perdían)
+        var archivos = [];
 
         // Intentar archivo simple con prefijo del módulo
         var archEl = document.getElementById(pref + '_arch_' + n);
         if (archEl && archEl.files && archEl.files[0]) {
-            archivo = archEl.files[0];
+            archivos.push(archEl.files[0]);
         }
 
-        // Sub-archivos para ítems 15, 20, 21
-        if (!archivo) {
-            var subSufijos = {
-                15: ['15a','15b','15c'],
-                20: ['20a','20b','20c'],
-                21: ['21a','21b']
-            };
-            if (subSufijos[n]) {
-                subSufijos[n].forEach(function(s) {
-                    if (!archivo) {
-                        var si = document.getElementById(pref + '_arch_' + s);
-                        if (si && si.files && si.files[0]) archivo = si.files[0];
-                    }
-                });
-            }
+        // Sub-archivos para ítems 15, 20, 21 (solo existen en D3P)
+        var subSufijos = {
+            15: ['15a','15b','15c'],
+            20: ['20a','20b','20c'],
+            21: ['21a','21b']
+        };
+        if (subSufijos[n]) {
+            subSufijos[n].forEach(function(s) {
+                var si = document.getElementById(pref + '_arch_' + s);
+                if (si && si.files && si.files[0]) archivos.push(si.files[0]);
+            });
         }
 
         // Checkbox del ítem
@@ -2907,9 +2785,10 @@ async function guardarProcesoHistorial(tipo) {
 
         checklist.push({
             num:           n,
-            label:         'Ítem ' + n,
+            label:         labelsModulo ? labelsModulo[n - 1] : ('Ítem ' + n),
             ok:            ok,
-            archivo:       archivo,
+            archivo:       archivos[0] || null,
+            archivos:      archivos,
             esRestringido: ITEMS_RESTRINGIDOS.indexOf(n) !== -1,
             comentario:    comentario
         });
@@ -2967,14 +2846,14 @@ function hist_registrarCD1P() {}  // vacía — la lógica real está dentro de 
 // ── Avance Documental en tiempo real (CD1P) ──────────────────────
 function cd1p_actualizarAvance() {
   // ── Conteo: 23 ítems en total ─────────────────────────────────────────────
-  // - Ítems simples (1-12, 13, 14, 16-19, 22-23): verificado = archivo cargado
-  // - Ítems multi-archivo (15, 20, 21): verificado = al menos 1 sub-archivo cargado
+  // - Ítems simples (1-8, 10-12, 14, 16-19, 22-23): verificado = archivo cargado
+  // - Ítems multi-archivo (9, 15, 20, 21): verificado = al menos 1 sub-archivo cargado
   // - Ítem 13 (Libreta Militar "si aplica"): verificado = checkbox marcado manualmente
   var TOTAL = 23;
   var ok = 0;
 
   // Ítems simples: verificar por div de nombre de archivo
-  var itemsSimples = [1,2,3,4,5,6,7,8,9,10,11,12,14,16,17,18,19,22,23];
+  var itemsSimples = [1,2,3,4,5,6,7,8,10,11,12,14,16,17,18,19,22,23];
   itemsSimples.forEach(function(n) {
     var div = document.getElementById('nombreArchivo_' + n);
     if (div) {
@@ -2987,8 +2866,12 @@ function cd1p_actualizarAvance() {
   var cb13 = document.getElementById('check_13');
   if (cb13 && cb13.checked) ok++;
 
-  // Ítems multi-archivo: verificado si al menos 1 sub-archivo está cargado
+  // Ítems multi-archivo: verificado si al menos 1 sub-archivo está cargado.
+  // El ítem 9 (Estudio de mercado) también es multi-archivo (mercado/
+  // propuestas/carta) — no tiene un "nombreArchivo_9" único, por eso antes
+  // nunca contaba como verificado en itemsSimples ni al subir ni al quitar.
   var multiItems = {
+    9:  ['nombreArchivo_9_mercado','nombreArchivo_9_propuestas','nombreArchivo_9_carta'],
     15: ['nombreArchivo_15a','nombreArchivo_15b','nombreArchivo_15c'],
     20: ['nombreArchivo_20a','nombreArchivo_20b','nombreArchivo_20c'],
     21: ['nombreArchivo_21a','nombreArchivo_21b']
@@ -3070,6 +2953,21 @@ function hist_actualizarDatalistResponsables() {
   }).join('');
 }
 
+// ── Escape de HTML para texto escrito por usuarios ──
+// Convierte < > & " ' en sus versiones inofensivas antes de inyectar el
+// texto con innerHTML. Sin esto, un "Objeto Contractual" que contenga
+// código HTML/JavaScript se ejecutaría en el navegador de quien abra el
+// historial (ataque conocido como XSS). Misma idea que ya usan
+// js/notificaciones.js y js/proceso-detalle.js.
+function escaparHTML(texto) {
+    return String(texto == null ? '' : texto)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function hist_renderTabla() {
   var tbody = document.getElementById('hist-tabla-body');
   var empty = document.getElementById('hist-empty');
@@ -3101,18 +2999,18 @@ function hist_renderTabla() {
           window._usuariosJuridicos.forEach(function(u) {
               var seleccionado = (p.responsable_asignado === u.id) ? 'selected' : '';
               opcionesHTML += '<option value="' + u.id + '" ' + seleccionado + '>' +
-                            (u.nombre || u.email) + '</option>';
+                            escaparHTML(u.nombre || u.email) + '</option>';
           });
     }
 
       var textoAsignadoPor = p.responsable_asignado_por_nombre
           ? '<div style="font-size:10px;color:#6B7280;margin-bottom:4px;">' +
-            'Asignado por: ' + p.responsable_asignado_por_nombre + '</div>'
+            'Asignado por: ' + escaparHTML(p.responsable_asignado_por_nombre) + '</div>'
           : '';
 
       var textoAsignado = p.responsable_asignado_nombre
           ? '<div style="font-size:11px;color:#0B7A43;font-weight:700;margin-bottom:2px;">' +
-            '✅ Asignado: ' + p.responsable_asignado_nombre + '</div>' + textoAsignadoPor
+            '✅ Asignado: ' + escaparHTML(p.responsable_asignado_nombre) + '</div>' + textoAsignadoPor
            : '<div style="font-size:11px;color:#9CA3AF;font-style:italic;margin-bottom:6px;">' +
             'Sin responsable asignado</div>';
 
@@ -3142,7 +3040,7 @@ function hist_renderTabla() {
     // No admin: solo ver el nombre del responsable asignado
       var textoAsignadoPorNoAdmin = p.responsable_asignado_por_nombre
           ? '<div style="font-size:10px;color:#6B7280;margin-top:3px;">' +
-            'Asignado por: ' + p.responsable_asignado_por_nombre + '</div>'
+            'Asignado por: ' + escaparHTML(p.responsable_asignado_por_nombre) + '</div>'
           : '';
       responsableCell =
         '<div style="font-size:13px;color:#374151;">' +
@@ -3150,7 +3048,7 @@ function hist_renderTabla() {
                 ? '<span style="display:inline-flex;align-items:center;gap:4px;' +
                   'background:#EFF6FF;color:#123C7B;border:1px solid #BFDBFE;' +
                   'border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;">' +
-                  '👤 ' + p.responsable_asignado_nombre + '</span>' + textoAsignadoPorNoAdmin
+                  '👤 ' + escaparHTML(p.responsable_asignado_nombre) + '</span>' + textoAsignadoPorNoAdmin
                 : '<span style="color:#9CA3AF;font-style:italic;font-size:11px;">' +
                   'Sin asignar</span>') +
         '</div>';
@@ -3162,8 +3060,8 @@ function hist_renderTabla() {
           'title="Ver detalle y documentos de este proceso">' + p.id + '</a>' +
       '</td>' +
       '<td style="padding:12px 14px;"><span class="hist-badge ' + t.badge + '">' + t.label + '</span></td>' +
-      '<td style="padding:12px 14px;max-width:260px;"><span title="' + (p.objeto||'') + '" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + (p.objeto || '—') + '</span></td>' +
-      '<td style="padding:12px 14px;color:#374151;white-space:nowrap;">' + (p.area || '—') + '</td>' +
+      '<td style="padding:12px 14px;max-width:260px;"><span title="' + escaparHTML(p.objeto||'') + '" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + (p.objeto ? escaparHTML(p.objeto) : '—') + '</span></td>' +
+      '<td style="padding:12px 14px;color:#374151;white-space:nowrap;">' + (p.area ? escaparHTML(p.area) : '—') + '</td>' +
       '<td style="padding:10px 14px;">' + responsableCell + '</td>' +
       '<td style="padding:12px 14px;white-space:nowrap;color:#0B7A43;font-weight:600;">' + hist_formatMoney(p.valor) + '</td>' +
       '<td style="padding:12px 14px;">' +
@@ -3209,7 +3107,7 @@ function hist_verDetalle(id) {
         '<div style="display:flex;flex-direction:column;gap:4px;">' +
           '<div id="hist-arch-nom-' + id + '-' + item.num + '" style="font-size:11px;' +
             (archivoGuardado ? 'color:#0B7A43;font-weight:600;' : 'color:#9CA3AF;font-style:italic;') + '">' +
-            (archivoGuardado ? '📄 ' + archivoGuardado : 'Sin archivo') +
+            (archivoGuardado ? '📄 ' + escaparHTML(archivoGuardado) : 'Sin archivo') +
           '</div>' +
           '<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">' +
             '<button onclick="hist_triggerUpload(\'' + id + '\',' + item.num + ')" ' +
@@ -3233,7 +3131,7 @@ function hist_verDetalle(id) {
       filasCheck +=
         '<tr style="background:' + rowBg + ';border-bottom:1px solid #E5E7EB;">' +
           '<td style="padding:8px 10px;text-align:center;font-weight:700;color:#6B7280;font-size:12px;width:32px;">' + item.num + '</td>' +
-          '<td style="padding:8px 10px;font-size:12px;color:#1F2937;">' + item.label + '</td>' +
+          '<td style="padding:8px 10px;font-size:12px;color:#1F2937;">' + escaparHTML(item.label) + '</td>' +
           '<td style="padding:8px 10px;text-align:center;width:36px;">' + estadoIcon + '</td>' +
           '<td style="padding:8px 10px;min-width:180px;">' + archCell + '</td>' +
         '</tr>';
@@ -3271,11 +3169,11 @@ function hist_verDetalle(id) {
       '</div>' +
       '<div style="background:#F8FAFC;border-radius:12px;padding:14px;border:1px solid #E5E7EB;">' +
         '<div style="font-size:11px;color:#6B7280;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Área Solicitante</div>' +
-        '<div style="font-weight:600;color:#374151;">' + (p.area || '—') + '</div>' +
+        '<div style="font-weight:600;color:#374151;">' + (p.area ? escaparHTML(p.area) : '—') + '</div>' +
       '</div>' +
       '<div style="background:#EFF6FF;border-radius:12px;padding:14px;border:1px solid #BFDBFE;">' +
         '<div style="font-size:11px;color:#123C7B;font-weight:700;text-transform:uppercase;margin-bottom:4px;">👤 Responsable del Proceso</div>' +
-        '<div style="font-weight:700;color:#123C7B;font-size:14px;">' + (p.responsable || '<span style="color:#9CA3AF;font-style:italic;font-weight:400;">Sin asignar</span>') + '</div>' +
+        '<div style="font-weight:700;color:#123C7B;font-size:14px;">' + (p.responsable ? escaparHTML(p.responsable) : '<span style="color:#9CA3AF;font-style:italic;font-weight:400;">Sin asignar</span>') + '</div>' +
       '</div>' +
       '<div style="background:#F0FDF4;border-radius:12px;padding:14px;border:1px solid #BBF7D0;grid-column:span 2;">' +
         '<div style="font-size:11px;color:#0B7A43;font-weight:700;text-transform:uppercase;margin-bottom:6px;">✅ Avance Documental</div>' +
@@ -3290,7 +3188,7 @@ function hist_verDetalle(id) {
     '</div>' +
     '<div style="background:#F8FAFC;border-radius:12px;padding:14px;border:1px solid #E5E7EB;margin-bottom:4px;">' +
       '<div style="font-size:11px;color:#6B7280;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Objeto Contractual</div>' +
-      '<div style="color:#1F2937;font-size:14px;line-height:1.6;">' + (p.objeto || '—') + '</div>' +
+      '<div style="color:#1F2937;font-size:14px;line-height:1.6;">' + (p.objeto ? escaparHTML(p.objeto) : '—') + '</div>' +
     '</div>' +
     checklistHTML +
     '<div style="text-align:right;margin-top:20px;">' +
@@ -3306,12 +3204,32 @@ function hist_triggerUpload(procId, itemNum) {
   if (inp) inp.click();
 }
 
-function hist_guardarArchivo(procId, itemNum, inputEl) {
+async function hist_guardarArchivo(procId, itemNum, inputEl) {
   if (!inputEl.files || !inputEl.files[0]) return;
   var archivo = inputEl.files[0];
   var nombre  = archivo.name;
   var p = HIST_BD.find(function(x){ return x.id === procId; });
   if (!p) return;
+
+  // Subir de verdad a Supabase. Antes esta función solo guardaba el nombre
+  // en memoria (el archivo desaparecía al recargar la página), aunque el
+  // aviso del panel decía "se asocia al proceso de forma permanente".
+  if (p.supabase_id) {
+    var itemCk   = p.checklist
+        ? p.checklist.find(function(c){ return c.num === itemNum; })
+        : null;
+    var etiqueta = (itemCk && itemCk.label) ? itemCk.label : ('Ítem ' + itemNum);
+    var esRestr  = itemCk
+        ? !!itemCk.esRestringido
+        : (ITEMS_RESTRINGIDOS_GLOBAL.indexOf(itemNum) !== -1);
+
+    var docSubido = await db_subirDocumento(p.supabase_id, itemNum, etiqueta, archivo, esRestr);
+    if (!docSubido) {
+      alert('❌ No se pudo guardar el documento. Intente de nuevo.');
+      inputEl.value = '';
+      return;
+    }
+  }
 
   if (!p._archivos) p._archivos = {};
   p._archivos[itemNum] = nombre;
@@ -3375,7 +3293,7 @@ function hist_guardarArchivo(procId, itemNum, inputEl) {
     'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
     'padding:12px 20px;border-radius:12px;font-weight:700;font-size:13px;' +
     'box-shadow:0 6px 20px rgba(0,0,0,.25);animation:fadeInUp .3s ease;';
-  toast.innerHTML = '✅ Documento <strong>' + nombre + '</strong> cargado en ítem ' + itemNum;
+  toast.innerHTML = '✅ Documento <strong>' + escaparHTML(nombre) + '</strong> cargado en ítem ' + itemNum;
   document.body.appendChild(toast);
   setTimeout(function(){ toast.style.opacity='0'; toast.style.transition='opacity .4s'; setTimeout(function(){ toast.remove(); }, 400); }, 2500);
 }
@@ -3383,7 +3301,12 @@ function hist_guardarArchivo(procId, itemNum, inputEl) {
 function hist_eliminarArchivo(procId, itemNum) {
   var p = HIST_BD.find(function(x){ return x.id === procId; });
   if (!p) return;
-  if (!confirm('¿Quitar el archivo del ítem ' + itemNum + '?')) return;
+  // Nada se borra de la base de datos (todo queda trazable): esto solo quita
+  // el archivo de la vista actual. Si ya se había guardado en el sistema,
+  // seguirá visible en la página de detalle del proceso.
+  if (!confirm('¿Quitar el archivo del ítem ' + itemNum + ' de esta vista?\n\n' +
+               'Si el archivo ya se guardó en el sistema, NO se elimina: ' +
+               'seguirá visible en el detalle del proceso.')) return;
 
   if (p._archivos) delete p._archivos[itemNum];
   if (p.checklist) {
@@ -3419,7 +3342,13 @@ function hist_eliminarArchivo(procId, itemNum) {
 }
 
 function hist_eliminar(id) {
-  if (!confirm('¿Eliminar el proceso ' + id + ' del historial?')) return;
+  // Nota: por diseño del sistema NADA se borra de la base de datos (todo es
+  // trazable). Este botón solo oculta el proceso de la vista actual — al
+  // recargar la página volverá a aparecer. El mensaje lo aclara para no
+  // hacerle creer al usuario que eliminó algo de verdad.
+  if (!confirm('¿Ocultar el proceso ' + id + ' de esta vista?\n\n' +
+               'El proceso NO se elimina del sistema: al recargar la página ' +
+               'volverá a aparecer (nada se borra, todo queda trazable).')) return;
   HIST_BD = HIST_BD.filter(function(p){ return p.id !== id; });
   hist_renderTabla();
 }
@@ -3578,10 +3507,66 @@ document.querySelectorAll('.modal').forEach(modal=>{
 });
 
 
+// ════════════════════════════════════════════════════
+//  COLUMNA "ANÁLISIS JURISKILLS" — Contratación Directa 1 Propuesta
+//  Se agrega por JS a cada una de las 23 filas (no se editó el HTML a
+//  mano, para no arriesgar el balance de <div>/<tr>). El contenido de
+//  cada celda lo llena actualizarPanelAgente() más abajo.
+// ════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+    var wrapper = document.getElementById('cd1p-checklist');
+    if (!wrapper) return; // esta página no es Contratación Directa 1 Propuesta
+
+    wrapper.querySelectorAll('table tbody > tr').forEach(function(fila, i) {
+        var num = i + 1;
+        if (document.getElementById('ia-item-' + num)) return; // ya existe
+
+        var celda = document.createElement('td');
+        celda.id = 'ia-item-' + num;
+        celda.style.cssText = 'min-width:260px;max-width:340px;vertical-align:top;';
+        celda.innerHTML = '<span style="color:#9CA3AF;font-style:italic;font-size:12px;">Sin analizar aún.</span>';
+        fila.appendChild(celda);
+    });
+
+    // Modal compartido para ver el detalle completo de un análisis JURISKILLS
+    // (uno solo para las 23 filas, se rellena según el "Ver análisis completo"
+    // que se haya presionado — ver juriskillsAbrirModal()).
+    if (!document.getElementById('juriskillsModal')) {
+        var modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'juriskillsModal';
+        modal.innerHTML =
+            '<div class="modal-content" style="max-width:640px;max-height:85vh;overflow-y:auto;">' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+                '<h2 id="juriskillsModalTitulo" style="margin:0;font-size:16px;color:#123C7B;">🤖 Análisis JURISKILLS</h2>' +
+                '<button type="button" onclick="juriskillsCerrarModal()" style="border:none;background:none;font-size:22px;line-height:1;cursor:pointer;color:#6B7280;">&times;</button>' +
+              '</div>' +
+              '<div id="juriskillsModalContenido"></div>' +
+            '</div>';
+        document.body.appendChild(modal);
+        modal.addEventListener('click', function(e) { if (e.target === modal) juriskillsCerrarModal(); });
+    }
+});
+
+function juriskillsAbrirModal(clave) {
+    const val = estadoDocumentos[clave];
+    if (!val || !val.analisis) return;
+    document.getElementById('juriskillsModalTitulo').textContent = '🤖 Análisis JURISKILLS — ' + (val.archivo?.name || '');
+    document.getElementById('juriskillsModalContenido').innerHTML = _renderContenidoCompletoAnalisis(val);
+    document.getElementById('juriskillsModal').style.display = 'flex';
+}
+
+function juriskillsCerrarModal() {
+    document.getElementById('juriskillsModal').style.display = 'none';
+}
+
 /* =====================================================================
-   AGENTE IA HSLV – ANÁLISIS REAL DE DOCUMENTOS CARGADOS
-   Usa la API de Claude para analizar cada documento según el ítem
-   del checklist contractual y genera notificaciones jurídicas reales.
+   AGENTE IA HSLV – ANÁLISIS DE DOCUMENTOS CARGADOS (MOTOR LOCAL)
+   IMPORTANTE: pese al nombre, esto NO llama a ninguna IA por internet —
+   es una búsqueda de palabras clave hecha en JavaScript, 100% local (ver
+   ejecutarSkillJuridico() más abajo). El comentario anterior mencionaba
+   la API de Claude, pero eso nunca llegó a implementarse; se corrige aquí
+   para que quede claro mientras se decide cómo conectar una IA real.
    ===================================================================== */
 
 // Mapa de ítems: número → nombre y criterios jurídicos de validación
@@ -3600,10 +3585,10 @@ const ITEMS_CHECKLIST = {
   12: { nombre: "Cédula de ciudadanía", criterios: "Verifica: legibilidad, documento vigente, coincidencia del número con el RUT y demás documentos del expediente. Aplica normas de identificación." },
   13: { nombre: "Libreta militar", criterios: "Verifica: aplica para hombres menores de 50 años, documento vigente, coincidencia con la persona contratista o representante legal. Aplica Ley 48/1993." },
   14: { nombre: "Registro Único Tributario (RUT)", criterios: "Verifica: NIT correcto, actividad económica (código CIIU) compatible con el objeto, responsabilidades tributarias activas, fecha de inscripción. Aplica DIAN." },
-  15: { nombre: "Certificado antecedentes (disciplinarios, fiscales y judiciales)", criterios: "Verifica: nombre completo del contratista o representante legal, fecha de consulta (no mayor a 30 días), resultado sin antecedentes disciplinarios (Procuraduría), fiscales (Contraloría) ni judiciales. Aplica Ley 734/2002, Ley 610/2000." },
+  15: { nombre: "Certificado antecedentes (disciplinarios, fiscales y judiciales)", criterios: "Verifica: nombre completo del contratista o representante legal, fecha de consulta (no mayor a 30 días), resultado sin antecedentes disciplinarios (Procuraduría), fiscales (Contraloría) ni judiciales. Aplica Ley 734/2002, Ley 610/2000 y, para el antecedente judicial, Decreto 1070/2015 (Certificado Judicial Policía Nacional)." }, // SUGERENCIA SIN CONFIRMAR: cita del antecedente judicial agregada por IA, revisar con Jurídica
   16: { nombre: "Certificado antecedentes de delitos sexuales", criterios: "Verifica: nombre completo, número de documento, fecha de consulta (no mayor a 30 días), resultado negativo de antecedentes. Obligatorio para contratos con menores de edad. Aplica Ley 1918/2018." },
   17: { nombre: "Certificado de inexistencia de inhabilidades e incompatibilidades", criterios: "Verifica: declaración del contratista sin inhabilidades ni incompatibilidades conforme a los arts 8 y 9 de la Ley 80/1993, fecha ≤ 30 días, firma representante legal." },
-  18: { nombre: "Certificado de medidas correctivas", criterios: "Verifica: certificación de no tener medidas correctivas vigentes impuestas por autoridades de policía o administrativas que impidan contratar con el Estado. Fecha reciente." },
+  18: { nombre: "Certificado de medidas correctivas", criterios: "Verifica: certificación de no tener medidas correctivas vigentes impuestas por autoridades de policía o administrativas que impidan contratar con el Estado. Fecha reciente. Aplica Ley 1801/2016 (Código Nacional de Seguridad y Convivencia Ciudadana)." }, // SUGERENCIA SIN CONFIRMAR: cita agregada por IA, revisar con Jurídica
   19: { nombre: "Certificado REDAM", criterios: "Verifica: consulta en el Registro de Deudores Alimentarios Morosos (REDAM), resultado sin registro de deudor moroso, fecha de consulta reciente. Aplica Ley 2097/2021." },
   20: { nombre: "Revisor fiscal (cédula, antecedentes, tarjeta profesional)", criterios: "Verifica: cédula del revisor, tarjeta profesional activa en la Junta Central de Contadores, certificado de antecedentes disciplinarios (Procuraduría y Junta Central de Contadores). Aplica Ley 43/1990." },
   21: { nombre: "Certificación y planillas de seguridad social", criterios: "Verifica: pago de aportes a salud, pensión y ARL del contratista o empleados según corresponda, planillas del mes anterior, coherencia de valores con el contrato. Aplica Ley 100/1993, Decreto 1273/2018." },
@@ -3772,6 +3757,8 @@ function _histU_asegurarContenedor(prefijo, num, inputEl) {
     celda.appendChild(bloque);
 }
 
+var _histU_contadorId = 0; // id único incremental para cada versión registrada
+
 function histU_registrar(input, elementoId) {
     if (!input.files || !input.files[0]) return;
     var info = _histU_parsear(elementoId);
@@ -3785,22 +3772,34 @@ function histU_registrar(input, elementoId) {
 
     var f = input.files[0];
 
-    // Algunos mini-modales disparan esto dos veces para el mismo archivo
-    // (una al seleccionarlo, otra al presionar Guardar) — evitar duplicar
-    // la versión y solo actualizar los datos extra en ese caso.
-    var ultima = hist[hist.length - 1];
-    if (ultima && ultima.nombre === f.name && ultima.tamanoBytes === f.size) {
-        ultima.extra = _histU_infoMiniModal(info.prefijo, info.num);
+    // Última versión registrada de ESTE recuadro específico (no la última
+    // del ítem completo — en ítems con sub-documentos, 9/15/20/21, varios
+    // recuadros comparten el mismo historial). Solo sirve para detectar el
+    // caso de un mini-modal que dispara esto dos veces para el mismo
+    // archivo (selección + confirmación) y no duplicar esa versión.
+    var ultimaDeEsteRecuadro = null;
+    for (var i = hist.length - 1; i >= 0; i--) {
+        if (hist[i].origenId === elementoId) { ultimaDeEsteRecuadro = hist[i]; break; }
+    }
+    if (ultimaDeEsteRecuadro && ultimaDeEsteRecuadro.nombre === f.name && ultimaDeEsteRecuadro.tamanoBytes === f.size) {
+        ultimaDeEsteRecuadro.extra = _histU_infoMiniModal(info.prefijo, info.num);
         histU_render(info.prefijo, info.num);
         return;
     }
 
+    // Cada archivo elegido crea su propia versión nueva, sin importar si
+    // reemplaza a uno anterior del mismo recuadro — así se conserva un
+    // registro de todo lo que se intentó cargar antes de guardar.
     var ahora = new Date();
     var tam = f.size < 1048576
         ? (f.size / 1024).toFixed(1) + ' KB'
         : (f.size / 1048576).toFixed(2) + ' MB';
 
     hist.push({
+        id:          ++_histU_contadorId,
+        origenId:    elementoId,
+        origenInput: input,
+        archivo:     f, // referencia real al File, para poder restaurarlo si se quita una versión más nueva
         version:     hist.length + 1,
         nombre:      f.name,
         tamanoBytes: f.size,
@@ -3833,6 +3832,9 @@ function histU_render(prefijo, num) {
                 '<div class="hist-nombre">📄 ' + e.nombre +
                     (esPrimera ? '<span class="hist-tag-v1">v1 · Inicial</span>' : '<span class="hist-tag-vN">v' + e.version + '</span>') +
                     (idx === 0 ? '<span class="hist-tag-last">⬆ Actual</span>' : '') +
+                    ' <button onclick="histU_quitarVersion(\'' + prefijo + '\',' + num + ',' + e.id + ')" ' +
+                        'title="Quitar esta versión" style="background:none;border:1px solid #DC2626;color:#DC2626;' +
+                        'border-radius:6px;padding:1px 7px;font-size:10.5px;cursor:pointer;font-weight:600;margin-left:6px;">🗑️ Quitar</button>' +
                 '</div>' +
                 (e.extra ? '<div class="hist-meta">ℹ️ ' + e.extra + '</div>' : '') +
                 '<div class="hist-meta">📅 ' + e.fecha + ' &nbsp;·&nbsp; 🕐 ' + e.hora + ' &nbsp;·&nbsp; 💾 ' + e.tamano + '</div>' +
@@ -3855,6 +3857,103 @@ function histU_actualizarExtra(prefijo, num) {
     if (!hist || hist.length === 0) return;
     hist[hist.length - 1].extra = _histU_infoMiniModal(prefijo, num);
     histU_render(prefijo, num);
+}
+
+// ── Quitar una versión específica del historial local ──────────────────
+// Nada de esto ha llegado a Supabase todavía (solo se sube al presionar
+// "Guardar Proceso"), así que quitar aquí es seguro y no rompe la regla de
+// "nada se elimina" — esa regla aplica a documentos YA guardados en un
+// proceso existente, no a archivos recién seleccionados.
+function _histU_quitarEntradaPorIndice(prefijo, num, idx) {
+    var hist = _histU_datos[prefijo + num];
+    if (!hist || !hist[idx]) return;
+
+    var entrada = hist[idx];
+
+    // ¿Queda alguna versión anterior de ESTE mismo recuadro? Si esta era la
+    // única (o la más reciente), buscar la que le sigue en antigüedad para
+    // restaurarla como la actual — usando DataTransfer, ya que el navegador
+    // no permite reasignar un archivo directamente a un <input type="file">.
+    // Si no queda ninguna, el recuadro sí vuelve a "Sin archivo cargado".
+    var anterior = null;
+    for (var i = idx - 1; i >= 0; i--) {
+        if (hist[i].origenId === entrada.origenId) { anterior = hist[i]; break; }
+    }
+    var haySiguienteMasNueva = hist.some(function(h, i) {
+        return i > idx && h.origenId === entrada.origenId;
+    });
+
+    hist.splice(idx, 1);
+    hist.forEach(function(h, j) { h.version = j + 1; }); // renumerar (evita huecos v1, v3…)
+
+    if (!haySiguienteMasNueva) {
+        var divNombre = document.getElementById(entrada.origenId);
+        if (anterior && entrada.origenInput) {
+            var dt = new DataTransfer();
+            dt.items.add(anterior.archivo);
+            entrada.origenInput.files = dt.files;
+            if (divNombre) divNombre.innerHTML = '✅ <strong>' + anterior.nombre + '</strong>';
+        } else {
+            if (entrada.origenInput) entrada.origenInput.value = '';
+            if (divNombre) divNombre.innerHTML = 'Sin archivo cargado';
+
+            // Ítem 13 (Libreta Militar): si se eligió "Aplica", el avance
+            // depende del archivo (igual que los demás ítems) — al quitar el
+            // único que había, hay que revertir también el checkbox que
+            // alimenta la barra de progreso. Si se eligió "No aplica", el
+            // checkbox se deja tal cual (nunca dependió de un archivo).
+            if (num == 13) {
+                var radioAplica13 = document.querySelector('input[name="aplica_13"][value="aplica"]');
+                var check13El = document.getElementById('check_13');
+                if (check13El && radioAplica13 && radioAplica13.checked) {
+                    check13El.checked = false;
+                }
+            }
+        }
+    }
+
+    // ── Limpiar el análisis de JURISKILLS ligado al archivo que se quitó ──
+    // (si no, la columna "Análisis JURISKILLS" seguía mostrando el análisis
+    // de un archivo que ya no está cargado en ningún lado)
+    if (typeof estadoDocumentos !== 'undefined') {
+        delete estadoDocumentos[num + '__' + entrada.nombre];
+
+        var quedanDocsDeEsteItem = Object.values(estadoDocumentos).some(function(v) {
+            return v.numItem == num;
+        });
+        if (!quedanDocsDeEsteItem) {
+            var celdaIA = document.getElementById('ia-item-' + num);
+            if (celdaIA) celdaIA.innerHTML = '<span style="color:#9CA3AF;font-style:italic;font-size:12px;">Sin analizar aún.</span>';
+        }
+    }
+    if (typeof actualizarPanelAgente === 'function') actualizarPanelAgente();
+
+    // Ítems 15/20/21 (sub-documentos): su mini-barra "📁 Documentos cargados:
+    // N / M" solo se actualizaba al SUBIR un archivo (actualizarProgresoSub()
+    // se llama desde mostrarArchivoSub()) — nunca al quitarlo con este botón,
+    // por eso se quedaba mostrando un número más alto del real.
+    var _subdocInputIds = {
+        15: ['archivo_15a','archivo_15b','archivo_15c'],
+        20: ['archivo_20a','archivo_20b','archivo_20c'],
+        21: ['archivo_21a','archivo_21b']
+    };
+    if (_subdocInputIds[num] && typeof actualizarProgresoSub === 'function') {
+        actualizarProgresoSub('check_' + num, _subdocInputIds[num]);
+    }
+
+    histU_render(prefijo, num);
+    if (typeof cd1p_actualizarAvance === 'function') cd1p_actualizarAvance();
+}
+
+// Botón "🗑️ Quitar" dentro de cada fila de "Ver historial" — quita esa
+// versión puntual, sea o no la que está actualmente cargada en el recuadro.
+function histU_quitarVersion(prefijo, num, id) {
+    if (!confirm('¿Quitar esta versión del historial?')) return;
+    var hist = _histU_datos[prefijo + num];
+    if (!hist) return;
+    var idx = hist.findIndex(function(h) { return h.id === id; });
+    if (idx === -1) return;
+    _histU_quitarEntradaPorIndice(prefijo, num, idx);
 }
 
 // Envolver mostrarArchivo para que TODO ítem registre su historial,
@@ -3883,7 +3982,21 @@ async function leerArchivo(archivo) {
     const nombre = archivo.name.toLowerCase();
 
     if (tipo === 'application/pdf' || nombre.endsWith('.pdf')) {
-        // PDF: base64 para enviarlo como documento
+        // PDF: primero se intenta extraer el texto real con pdf.js (si el PDF tiene
+        // capa de texto, p.ej. exportado desde Word). Si no se logra (PDF escaneado
+        // sin texto), se cae al comportamiento anterior de solo enviar el base64.
+        try {
+            const textoExtraido = await _pdfATextoConTablas(archivo);
+            if (textoExtraido && textoExtraido.replace(/\s/g, '').length > 40) {
+                // Tope de seguridad muy alto (no es un recorte real de contenido legal,
+                // solo evita que un archivo corrupto/gigante congele el navegador).
+                // La IA sí analiza el documento completo dividiéndolo en partes,
+                // ver analizarConGroq().
+                return { tipo: 'texto', data: textoExtraido.slice(0, 300000) };
+            }
+        } catch (e) {
+            console.warn('No se pudo extraer texto del PDF con pdf.js, se usará solo el archivo:', e);
+        }
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onerror = () => reject(new Error('No se pudo leer el archivo PDF'));
@@ -3923,9 +4036,10 @@ async function leerArchivo(archivo) {
                 });
             }
             const arrayBuffer = await archivo.arrayBuffer();
-            const result = await mammoth.extractRawText({ arrayBuffer });
-            const texto = result.value || '(Sin texto extraíble del DOCX)';
-            return { tipo: 'texto', data: texto.slice(0, 12000) };
+            const result = await mammoth.convertToHtml({ arrayBuffer });
+            const texto = _htmlATextoConTablas(result.value) || '(Sin texto extraíble del DOCX)';
+            // Mismo tope de seguridad que en el caso de PDF (ver comentario arriba).
+            return { tipo: 'texto', data: texto.slice(0, 300000) };
         } catch (e) {
             // Fallback: intentar leer como texto
             return new Promise((resolve) => {
@@ -3977,6 +4091,68 @@ async function leerArchivo(archivo) {
             reader.readAsText(archivo, 'utf-8');
         });
     }
+}
+
+// ---- pdf.js: carga perezosa desde CDN (mismo patrón que mammoth.js arriba) ----
+async function _cargarPdfJs() {
+    if (typeof pdfjsLib !== 'undefined') return;
+    await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        s.onload = res;
+        s.onerror = () => rej(new Error('No se pudo cargar pdf.js'));
+        document.head.appendChild(s);
+    });
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ---- PDF → texto, reconstruyendo filas/columnas por posición aproximada ----
+// No es una lectura perfecta de tablas (un PDF no guarda el concepto de "tabla"
+// internamente, solo texto ubicado en coordenadas x/y) pero agrupar por fila y
+// ordenar por columna da una aproximación suficiente para que la IA entienda
+// la estructura. Solo funciona si el PDF tiene una capa de texto real (por
+// ejemplo, exportado desde Word) — un PDF escaneado no tiene nada que extraer.
+async function _pdfATextoConTablas(archivo) {
+    await _cargarPdfJs();
+    const arrayBuffer = await archivo.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const maxPaginas = Math.min(pdf.numPages, 15);
+    let texto = '';
+    for (let p = 1; p <= maxPaginas; p++) {
+        const page = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        const filas = [];
+        content.items.forEach(item => {
+            const y = item.transform[5];
+            let fila = filas.find(f => Math.abs(f.y - y) < 3);
+            if (!fila) { fila = { y, items: [] }; filas.push(fila); }
+            fila.items.push({ x: item.transform[4], texto: item.str });
+        });
+        filas.sort((a, b) => b.y - a.y);
+        filas.forEach(f => {
+            f.items.sort((a, b) => a.x - b.x);
+            const celdas = f.items.map(i => i.texto).filter(t => t.trim());
+            if (celdas.length) texto += celdas.join(' | ') + '\n';
+        });
+        texto += '\n';
+    }
+    return texto.trim();
+}
+
+// ---- HTML de mammoth → texto plano, convirtiendo <table> a filas "| celda |" ----
+function _htmlATextoConTablas(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    div.querySelectorAll('table').forEach(tabla => {
+        const filas = Array.from(tabla.querySelectorAll('tr')).map(tr =>
+            '| ' + Array.from(tr.querySelectorAll('td,th'))
+                .map(c => c.textContent.trim().replace(/\s+/g, ' '))
+                .join(' | ') + ' |'
+        );
+        tabla.replaceWith(document.createTextNode('\n' + filas.join('\n') + '\n'));
+    });
+    return div.textContent.replace(/\n{3,}/g, '\n\n').trim();
 }
 
 // ============================================================
@@ -4210,32 +4386,198 @@ const SKILLS_JURIDICOS = {
   }
 };
 
-// --- MOTOR DE ANÁLISIS LOCAL – Skills Inteligentes Jurídicos ---
-// Wrapper async: delega en ejecutarSkillJuridico (motor único y canónico)
+// --- MOTOR DE ANÁLISIS – JURISKILLS con IA (Groq) + respaldo local ---
+// Ítems restringidos a Jurídica (única fuente de verdad:
+// ITEMS_RESTRINGIDOS_GLOBAL en js/db.js, que carga antes que este archivo).
+const _NUMS_RESTRINGIDOS_ANALISIS = ITEMS_RESTRINGIDOS_GLOBAL;
+
+function _marcarComoLocal(resultado, mensaje) {
+    resultado.resumen = `⚠️ ${mensaje}\n${resultado.resumen || ''}`.trim();
+    resultado.motor = 'fallback_local';
+    return resultado;
+}
+
+// Tamaño máximo de texto que se manda en UNA sola llamada a Groq. Documentos
+// más largos que esto se dividen en varias partes (ver _dividirTextoEnPartes)
+// para que la IA SIEMPRE termine leyendo el 100% del contenido — nunca se
+// descarta texto por ser largo, solo se reparte en varias llamadas.
+// 25.000 caracteres ≈ 8.000 tokens de texto, que sumado al prompt fijo y al
+// espacio de respuesta se mantiene bajo el límite de 12.000 tokens/minuto de
+// la capa gratuita de Groq (comprobado: 40.000 caracteres ya lo superaba).
+const _TAMANO_PARTE_GROQ = 25000;
+
+// El límite de Groq es POR MINUTO, no por llamada — si un documento necesita
+// varias partes, hay que espaciarlas en el tiempo para que cada llamada caiga
+// en su propia "ventana" de minuto, si no, la 2ª/3ª parte falla aunque cada
+// una por separado esté dentro del límite.
+const _ESPERA_ENTRE_PARTES_MS = 60000;
+function _esperar(ms) { return new Promise(res => setTimeout(res, ms)); }
+
+// Quita tildes y caracteres raros para comparar texto de forma más tolerante.
+function _normalizarTexto(s) {
+    return (s || '').toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9\s]/g, ' ');
+}
+
+// La IA a veces repite una observación ("no se encontró X") aunque X ya haya
+// sido confirmado como presente en otra parte del documento — no siempre
+// descarta bien esa contradicción por su cuenta. En vez de confiar en que lo
+// haga, se filtra aquí de forma determinística: si la observación comparte
+// una palabra clave (>4 letras) con algo ya confirmado como presente, se
+// considera resuelta y se descarta antes de mandarla a la síntesis final.
+function _pareceContradichaPorPresente(observacion, camposPresentes) {
+    const obsNorm = _normalizarTexto(observacion);
+    return camposPresentes.some(campo => {
+        const palabrasCampo = _normalizarTexto(campo).split(/\s+/).filter(p => p.length > 4);
+        return palabrasCampo.length > 0 && palabrasCampo.some(p => obsNorm.includes(p));
+    });
+}
+
+// Divide el texto en partes de ~tamano caracteres, cortando en saltos de línea
+// (nunca a la mitad de una palabra/oración) para que cada parte quede legible.
+function _dividirTextoEnPartes(texto, tamano) {
+    if (texto.length <= tamano) return [texto];
+    const partes = [];
+    let inicio = 0;
+    while (inicio < texto.length) {
+        let fin = Math.min(inicio + tamano, texto.length);
+        if (fin < texto.length) {
+            const corte = texto.lastIndexOf('\n', fin);
+            if (corte > inicio) fin = corte;
+        }
+        partes.push(texto.slice(inicio, fin));
+        inicio = fin;
+    }
+    return partes;
+}
+
+// Intenta analizar con Groq (IA real); si el archivo no tiene texto legible o
+// la llamada falla (red, límite gratuito agotado, etc.), usa el motor local
+// ejecutarSkillJuridico() como respaldo, para que el checklist nunca se quede
+// en blanco o roto.
+async function analizarConGroq(numItem, nombreArchivo, contenido) {
+    const tieneTexto = contenido.tipo === 'texto' && contenido.data && contenido.data.trim().length > 40;
+
+    if (!tieneTexto) {
+        return _marcarComoLocal(
+            ejecutarSkillJuridico(numItem, nombreArchivo, contenido),
+            'Este archivo no tiene texto legible por la IA (imagen o documento escaneado sin texto). Se muestra una validación básica local.'
+        );
+    }
+
+    try {
+        const meta = (typeof ITEMS_CHECKLIST !== 'undefined' ? ITEMS_CHECKLIST[numItem] : null) || {};
+        const skill = typeof SKILLS_JURIDICOS !== 'undefined' ? SKILLS_JURIDICOS[numItem] : null;
+        const partes = _dividirTextoEnPartes(contenido.data, _TAMANO_PARTE_GROQ);
+        const esDividido = partes.length > 1;
+        const otrosItemsChecklist = typeof ITEMS_CHECKLIST !== 'undefined'
+            ? Object.entries(ITEMS_CHECKLIST)
+                .filter(([num]) => Number(num) !== numItem)
+                .map(([num, info]) => ({ num: Number(num), nombre: info.nombre }))
+            : [];
+
+        const infoBase = {
+            numItem,
+            nombreArchivo,
+            itemNombre: meta.nombre || `Ítem ${numItem}`,
+            criterios: meta.criterios || '',
+            normativaSkill: skill ? skill.normativa : null,
+            esRestringido: _NUMS_RESTRINGIDOS_ANALISIS.indexOf(numItem) !== -1,
+            contextoExpediente: typeof EXPEDIENTE_CONTEXTO !== 'undefined' ? EXPEDIENTE_CONTEXTO : null,
+            otrosItemsChecklist
+        };
+
+        // Se llama una vez por cada parte, EN SECUENCIA (no en paralelo) para no
+        // disparar de golpe el límite por minuto de la capa gratuita de Groq.
+        const resultadosPartes = [];
+        for (let i = 0; i < partes.length; i++) {
+            if (i > 0) await _esperar(_ESPERA_ENTRE_PARTES_MS);
+            const { data, error } = await supabaseClient.functions.invoke('analizar-documento', {
+                body: { ...infoBase, modo: 'parte', texto: partes[i], parteActual: i + 1, totalPartes: partes.length }
+            });
+            if (error) throw error;
+            if (!data || data.error || !data.estado) throw new Error((data && data.error) || 'Respuesta de IA incompleta.');
+            resultadosPartes.push(data);
+        }
+
+        let resultadoFinal;
+        if (esDividido) {
+            // Paso de síntesis: con lo confirmado en TODAS las partes, la IA da
+            // el veredicto final — así algo que la parte 1 no vio pero la parte 3
+            // sí confirmó no queda reportado como "ausente" por error.
+            await _esperar(_ESPERA_ENTRE_PARTES_MS);
+            const camposPresentesConocidos = [...new Set(resultadosPartes.flatMap(r => r.camposPresentes || []))];
+            const observacionesCandidatas = [...new Set(resultadosPartes.flatMap(r => [...(r.hallazgos || []), ...(r.advertencias || [])]))]
+                .filter(obs => !_pareceContradichaPorPresente(obs, camposPresentesConocidos));
+
+            const { data, error } = await supabaseClient.functions.invoke('analizar-documento', {
+                body: { ...infoBase, modo: 'sintesis', camposPresentesConocidos, observacionesCandidatas }
+            });
+            if (error) throw error;
+            if (!data || data.error || !data.estado) throw new Error((data && data.error) || 'Respuesta de IA incompleta.');
+            resultadoFinal = data;
+        } else {
+            resultadoFinal = resultadosPartes[0];
+        }
+
+        const textoLow = contenido.data.toLowerCase();
+        _extraerContexto(numItem, nombreArchivo, textoLow);
+        const obsConcordancia = _verificarConcordancia(numItem, nombreArchivo, textoLow);
+        const concordanciaErr = obsConcordancia.filter(a => a.startsWith('🔴'));
+        const concordanciaAdv = obsConcordancia.filter(a => !a.startsWith('🔴'));
+
+        return {
+            estado: resultadoFinal.estado,
+            puntaje: resultadoFinal.puntaje,
+            resumen: resultadoFinal.resumen || '',
+            titulo: resultadoFinal.titulo,
+            hallazgos: [...(resultadoFinal.hallazgos || []), ...concordanciaErr],
+            advertencias: [...(resultadoFinal.advertencias || []), ...concordanciaAdv],
+            recomendaciones: resultadoFinal.recomendaciones || [],
+            camposPresentes: resultadoFinal.camposPresentes || [],
+            camposAusentes: resultadoFinal.camposAusentes || [],
+            normativa: resultadoFinal.normativa,
+            motor: 'groq'
+        };
+
+    } catch (err) {
+        console.error('Groq no disponible, usando motor local de respaldo:', err);
+        return _marcarComoLocal(
+            ejecutarSkillJuridico(numItem, nombreArchivo, contenido),
+            'Análisis automático no disponible temporalmente (posible límite de uso gratuito o problema de red). Se muestra una validación básica local.'
+        );
+    }
+}
+
+// Punto de entrada usado por mostrarArchivo()/mostrarArchivoSub()/reAnalizarTodo() —
+// se mantiene el mismo nombre para no tener que tocar esos otros lugares.
 async function analizarConIA(numItem, nombreArchivo, contenido) {
-    // Pausa mínima para feedback visual de "analizando"
-    await new Promise(r => setTimeout(r, 400 + Math.random() * 300));
-    return ejecutarSkillJuridico(numItem, nombreArchivo, contenido);
+    return analizarConGroq(numItem, nombreArchivo, contenido);
 }
 
 // Actualizar el panel visual de JURISKILLS IA con todos los análisis actuales
+// Actualiza el contador global del panel JURISKILLS y, por cada ítem con
+// documentos cargados, rellena su propia celda "Análisis JURISKILLS" en el
+// checklist (antes todo esto se acumulaba en un solo acordeón al final de
+// la página — ver _renderTarjetasJuriskills más abajo para el detalle).
 function actualizarPanelAgente() {
-    const contenedor = document.getElementById('iaResultadosContenedor');
     const resumenGlobal = document.getElementById('iaResumenGlobal');
-    const contadorDocs = document.getElementById('iaContadorDocs');
-    const estadoBadge = document.getElementById('iaEstadoBadge');
-
-    if (!contenedor) return;
+    const contadorDocs  = document.getElementById('iaContadorDocs');
+    const estadoBadge   = document.getElementById('iaEstadoBadge');
 
     const items = Object.entries(estadoDocumentos);
-    if (items.length === 0) {
-        contenedor.innerHTML = `
-            <div style="text-align:center;padding:30px;color:#9CA3AF;">
-                <div style="font-size:40px;margin-bottom:10px;">📂</div>
-                <p>Carga documentos en el checklist para que JURISKILLS los analice automáticamente.</p>
-            </div>`;
+    const total = items.length;
+
+    if (contadorDocs) {
+        contadorDocs.textContent = total === 0
+            ? '0 documentos'
+            : `${total} documento${total !== 1 ? 's' : ''} cargado${total !== 1 ? 's' : ''}`;
+    }
+
+    if (total === 0) {
+        if (estadoBadge) estadoBadge.style.display = 'none';
         if (resumenGlobal) resumenGlobal.textContent = 'Sin documentos analizados aún.';
-        if (contadorDocs) contadorDocs.textContent = '0 documentos';
         return;
     }
 
@@ -4248,27 +4590,20 @@ function actualizarPanelAgente() {
         else nAnal++;
     });
 
-    const total = items.length;
-    if (contadorDocs) contadorDocs.textContent = `${total} documento${total !== 1 ? 's' : ''} cargado${total !== 1 ? 's' : ''}`;
-
     if (estadoBadge) {
-        if (total === 0) {
-            estadoBadge.style.display = 'none';
+        estadoBadge.style.display = 'inline-block';
+        if (nAnal > 0) {
+            estadoBadge.className = 'ia-badge badge-analizando';
+            estadoBadge.textContent = '⏳ Analizando…';
+        } else if (nErr > 0) {
+            estadoBadge.className = 'ia-badge badge-error';
+            estadoBadge.textContent = `${nErr} corrección${nErr !== 1 ? 'es' : ''} requerida${nErr !== 1 ? 's' : ''}`;
+        } else if (nAdv > 0) {
+            estadoBadge.className = 'ia-badge badge-warning';
+            estadoBadge.textContent = `${nAdv} advertencia${nAdv !== 1 ? 's' : ''}`;
         } else {
-            estadoBadge.style.display = 'inline-block';
-            if (nAnal > 0) {
-                estadoBadge.className = 'ia-badge badge-analizando';
-                estadoBadge.textContent = '⏳ Analizando…';
-            } else if (nErr > 0) {
-                estadoBadge.className = 'ia-badge badge-error';
-                estadoBadge.textContent = `${nErr} corrección${nErr !== 1 ? 'es' : ''} requerida${nErr !== 1 ? 's' : ''}`;
-            } else if (nAdv > 0) {
-                estadoBadge.className = 'ia-badge badge-warning';
-                estadoBadge.textContent = `${nAdv} advertencia${nAdv !== 1 ? 's' : ''}`;
-            } else {
-                estadoBadge.className = 'ia-badge badge-ok';
-                estadoBadge.textContent = '✅ Todo en orden';
-            }
+            estadoBadge.className = 'ia-badge badge-ok';
+            estadoBadge.textContent = '✅ Todo en orden';
         }
     }
 
@@ -4276,178 +4611,180 @@ function actualizarPanelAgente() {
         resumenGlobal.textContent = `${nOk} correctos · ${nAdv} con advertencias · ${nErr} con correcciones · ${nAnal} en análisis`;
     }
 
-    // Agrupar entradas por numItem y ordenar
+    // Agrupar entradas por numItem y renderizar cada una en su propia celda
     const porItem = {};
-    Object.values(estadoDocumentos).forEach(val => {
+    items.forEach(([, val]) => {
         const n = val.numItem;
         if (!porItem[n]) porItem[n] = [];
         porItem[n].push(val);
     });
 
-    // Generar tarjetas agrupadas por ítem como acordeones expandibles
+    Object.keys(porItem).forEach(num => {
+        const celda = document.getElementById('ia-item-' + num);
+        if (celda) celda.innerHTML = _renderTarjetasJuriskills(porItem[num]);
+    });
+}
+
+// Versión COMPACTA para la celda del checklist: semáforo + barra + resumen
+// corto + enlace "Ver análisis completo" que abre el modal con el detalle
+// (hallazgos, advertencias, recomendaciones, normativa) — ver
+// _renderContenidoCompletoAnalisis() y juriskillsAbrirModal().
+function _renderTarjetasJuriskills(docs) {
     let html = '';
-    Object.keys(porItem).sort((a,b) => parseInt(a)-parseInt(b)).forEach((num, idx) => {
-        const docs   = porItem[num];
-        const nombre = ITEMS_CHECKLIST[num]?.nombre || `Ítem ${num}`;
 
-        // Calcular estado global del ítem (peor estado entre sus docs)
-        const prioridad = { error:4, correccion:3, advertencia:2, analizando:1, ok:0 };
-        let estadoItem  = 'ok';
-        docs.forEach(d => {
-            if ((prioridad[d.estado]||0) > (prioridad[estadoItem]||0)) estadoItem = d.estado;
-        });
-
-        const coloresBorde = { ok:'#22C55E', advertencia:'#F59E0B', correccion:'#EF4444', error:'#EF4444', analizando:'#6366F1' };
-        const borde = coloresBorde[estadoItem] || '#94A3B8';
-        const bgHeader = estadoItem==='ok'?'#F0FDF4':estadoItem==='advertencia'?'#FFFBEB':estadoItem==='analizando'?'#EEF2FF':'#FEF2F2';
-        const panelId = 'ia-panel-' + num;
-
-        html += `<div style="border:1.5px solid ${borde};border-radius:14px;overflow:hidden;margin-bottom:4px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06);">
-          <!-- Cabecera clicable del ítem -->
-          <div onclick="(function(el){var p=document.getElementById('${panelId}');if(!p)return;var abierto=p.style.display!=='none';p.style.display=abierto?'none':'block';el.querySelector('.ia-chevron').style.transform=abierto?'rotate(0deg)':'rotate(180deg)';})(this)"
-               style="background:${bgHeader};padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-                      border-bottom:1px solid ${borde}22;cursor:pointer;user-select:none;">
-            <div style="width:26px;height:26px;border-radius:50%;background:${borde};color:white;
-                        display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">${num}</div>
-            <strong style="flex:1;font-size:13px;color:#1F2937;">${nombre}</strong>
-            <span style="font-size:11px;font-weight:700;color:${borde};background:${borde}18;border-radius:20px;padding:2px 10px;">
-              ${docs.length} doc${docs.length!==1?'s':''}
-            </span>
-            <span class="ia-chevron" style="font-size:14px;color:${borde};transition:transform .25s;transform:rotate(180deg);">▼</span>
-          </div>
-          <!-- Cuerpo desplegable (abierto por defecto) -->
-          <div id="${panelId}" style="display:block;">`;
-
-        // Tarjeta por cada documento del ítem
-        docs.forEach(val => {
-            if (val.estado === 'analizando') {
-                html += `<div style="padding:12px 14px;border-bottom:1px solid #F1F5F9;">
-                  <div style="display:flex;align-items:center;gap:8px;color:#6366F1;font-size:12px;">
-                    <span class="ia-badge badge-analizando">⏳ Analizando</span>
-                    <span style="color:#6B7280;">📄 ${val.archivo?.name || ''}</span>
-                  </div>
-                  <div class="ia-loader" style="margin-top:8px;"><div></div><div></div><div></div></div>
-                </div>`;
-                return;
-            }
-
-            const a = val.analisis;
-            if (!a) return;
-
-            const puntaje = a.puntaje ?? (a.estado==='ok'?90:a.estado==='advertencia'?65:30);
-            const pColor  = puntaje>=80?'#22C55E':puntaje>=50?'#F59E0B':'#EF4444';
-            const badgeClass = a.estado==='ok'?'badge-ok':a.estado==='advertencia'?'badge-warning':'badge-error';
-            const badgeLabel = a.estado==='ok'?'✅ Correcto':a.estado==='advertencia'?'⚠️ Advertencia':'🔴 Corrección';
-
-            // Separar hallazgos: normativos vs concordancia
-            const hallNorm  = (a.hallazgos||[]).filter(x => !x.startsWith('⚠️ Concordancia') && !x.startsWith('🔴 Inconsistencia'));
-            const hallConc  = (a.hallazgos||[]).filter(x => x.startsWith('⚠️ Concordancia') || x.startsWith('🔴 Inconsistencia'));
-            // Separar advertencias: normativas vs redacción vs concordancia
-            const advNorm   = (a.advertencias||[]).filter(x => !x.startsWith('✏️') && !x.startsWith('⚠️ Concordancia') && !x.startsWith('🔴 Inconsistencia'));
-            const advRedac  = (a.advertencias||[]).filter(x => x.startsWith('✏️'));
-            const advConc   = (a.advertencias||[]).filter(x => x.startsWith('⚠️ Concordancia'));
-
-            const hallNormHTML  = hallNorm.map(x=>`<li style="margin-bottom:4px;">${x}</li>`).join('');
-            const hallConcHTML  = hallConc.map(x=>`<li style="margin-bottom:4px;">${x}</li>`).join('');
-            const advNormHTML = advNorm.map((x, i) => {
-                const resaltado = x.replace(/(Art\.\s*[\d.]+[^)]*\)|Ley\s+\d+[^\s,;.]*|Decreto\s+\d+[^\s,;.]*|Acuerdo\s+\d+[^\s,;.]*|Res(?:olución|\.)\s*\d+[^\s,;.]*)/gi,
-                    '<span style="background:#FEF3C7;border-radius:3px;padding:0 3px;font-weight:700;color:#92400E;">$1</span>');
-                return `<li style="margin-bottom:8px;">
-                  <span style="display:inline-block;background:#F59E0B;color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:800;text-align:center;line-height:16px;margin-right:5px;flex-shrink:0;">${i+1}</span>
-                  ${resaltado}
-                </li>`;
-            }).join('');
-            // ── Renderizar observaciones de redacción con detalle expandible ──
-            function _renderRedacHTML(obs) {
-                if (!obs.includes('||')) {
-                    return `<li style="margin-bottom:6px;">${obs.replace('✏️ Redacción: ','').replace('✏️ ','')}</li>`;
-                }
-                const partes = obs.split('||');
-                const tipo   = partes[1];
-                const dato   = partes[2];
-                const det    = partes[3] || '';
-                const titulos = {
-                    'CAMPOS_VACIOS': `<strong>${dato} campo(s) sin diligenciar</strong> — marcadores encontrados:`,
-                    'INCOMPLETO':    `<strong>Documento posiblemente incompleto</strong> (${dato} fragmentos muy cortos):`,
-                    'REPETICION':    `<strong>${dato} línea(s) repetida(s)</strong> — posible plantilla sin personalizar:`,
-                    'OBJETO_AUSENTE':'<strong>Sección "Objeto / Necesidad" no identificada</strong>:',
-                    'FECHAS_VIEJAS': `<strong>Fechas de vigencias anteriores detectadas</strong> (${dato}):`,
-                };
-                const titulo = titulos[tipo] || '<strong>Observación de redacción:</strong>';
-                return `<li style="margin-bottom:10px;">
-                  <span style="display:block;margin-bottom:4px;">${titulo}</span>
-                  <div style="background:#E0F2FE;border-radius:6px;padding:6px 10px;font-size:11px;color:#075985;line-height:1.7;">${det}</div>
-                </li>`;
-            }
-            const advRedacHTML  = advRedac.map(x => _renderRedacHTML(x)).join('');
-            const advConcHTML   = advConc.map(x=>`<li style="margin-bottom:4px;">${x}</li>`).join('');
-            const recomHTML = (a.recomendaciones||[]).map((x, i) => {
-                const iconos = { '🖊️': '#0B7A43', '🔗': '#C2410C', '📄': '#1D4ED8' };
-                let color = '#0B7A43';
-                Object.keys(iconos).forEach(ic => { if (x.startsWith(ic)) color = iconos[ic]; });
-                return `<li style="margin-bottom:10px;padding-left:6px;border-left:3px solid ${color}30;">
-                  <span style="display:block;font-weight:700;color:${color};font-size:11px;margin-bottom:2px;">Acción ${i+1}</span>
-                  <span style="font-size:12px;color:#374151;">${x}</span>
-                </li>`;
-            }).join('');
-
-            html += `<div style="padding:12px 14px;border-bottom:1px solid #F1F5F9;">
-              <!-- nombre archivo + badge -->
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-                <span class="ia-badge ${badgeClass}" style="flex-shrink:0;">${badgeLabel}</span>
-                <span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${val.archivo?.name||''}</span>
+    docs.forEach((val, idxDoc) => {
+        if (val.estado === 'analizando') {
+            html += `<div style="padding:6px 0;${idxDoc>0?'border-top:1px solid #F1F5F9;':''}">
+              <div style="display:flex;align-items:center;gap:6px;color:#6366F1;font-size:11px;">
+                <span class="ia-badge badge-analizando">⏳ Analizando</span>
+                <span style="color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${val.archivo?.name || ''}</span>
               </div>
-              <!-- barra cumplimiento -->
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                <span style="font-size:10px;font-weight:700;color:#6B7280;white-space:nowrap;">Cumplimiento normativo</span>
-                <div style="flex:1;background:#E5E7EB;border-radius:10px;height:7px;overflow:hidden;">
-                  <div style="width:${puntaje}%;height:7px;border-radius:10px;background:${pColor};transition:width .5s;"></div>
-                </div>
-                <span style="font-size:12px;font-weight:800;color:${pColor};white-space:nowrap;">${puntaje}%</span>
-              </div>
-              <!-- resumen -->
-              ${a.resumen?`<p style="font-size:12px;color:#374151;font-style:italic;margin:0 0 8px;">${a.resumen}</p>`:''}
-              <!-- hallazgos normativos -->
-              ${hallNormHTML?`<div style="margin-bottom:8px;background:#FEF2F2;border-radius:8px;padding:8px 10px;">
-                <div style="font-size:11px;font-weight:700;color:#DC2626;margin-bottom:4px;">🔴 Incumplimientos normativos:</div>
-                <ul style="margin:0 0 0 14px;padding:0;font-size:12px;color:#4B5563;">${hallNormHTML}</ul></div>`:''}
-              <!-- hallazgos concordancia crítica -->
-              ${hallConcHTML?`<div style="margin-bottom:8px;background:#FFF1F2;border-radius:8px;padding:8px 10px;border:1px solid #FECDD3;">
-                <div style="font-size:11px;font-weight:700;color:#BE123C;margin-bottom:4px;">🔴 Inconsistencias entre documentos:</div>
-                <ul style="margin:0 0 0 14px;padding:0;font-size:12px;color:#4B5563;">${hallConcHTML}</ul></div>`:''}
-              <!-- advertencias normativas -->
-              ${advNormHTML?`<div style="margin-bottom:8px;background:#FFFBEB;border-radius:8px;padding:8px 10px;">
-                <div style="font-size:11px;font-weight:700;color:#D97706;margin-bottom:4px;">⚠️ Advertencias normativas:</div>
-                <ul style="margin:0 0 0 14px;padding:0;font-size:12px;color:#4B5563;">${advNormHTML}</ul></div>`:''}
-              <!-- observaciones de redacción -->
-              ${advRedacHTML?`<div style="margin-bottom:8px;background:#F0F9FF;border-radius:8px;padding:8px 10px;border:1px solid #BAE6FD;">
-                <div style="font-size:11px;font-weight:700;color:#0369A1;margin-bottom:4px;">✏️ Observaciones de redacción:</div>
-                <ul style="margin:0 0 0 14px;padding:0;font-size:12px;color:#4B5563;">${advRedacHTML}</ul></div>`:''}
-              <!-- concordancia entre documentos -->
-              ${advConcHTML?`<div style="margin-bottom:8px;background:#FFF7ED;border-radius:8px;padding:8px 10px;border:1px solid #FED7AA;">
-                <div style="font-size:11px;font-weight:700;color:#C2410C;margin-bottom:4px;">🔗 Concordancia entre documentos:</div>
-                <ul style="margin:0 0 0 14px;padding:0;font-size:12px;color:#4B5563;">${advConcHTML}</ul></div>`:''}
-              <!-- recomendaciones -->
-              ${recomHTML?`<div style="margin-bottom:2px;background:#F0FDF4;border-radius:8px;padding:8px 10px;">
-                <div style="font-size:11px;font-weight:700;color:#0B7A43;margin-bottom:4px;">💡 Recomendaciones:</div>
-                <ul style="margin:0 0 0 14px;padding:0;font-size:12px;">${recomHTML}</ul></div>`:''}
-              <!-- normativa -->
-              ${a.normativa?`<div style="font-size:10px;color:#9CA3AF;border-top:1px solid #F1F5F9;padding-top:5px;margin-top:6px;">📌 ${a.normativa}</div>`:''}
+              <div class="ia-loader" style="margin-top:6px;"><div></div><div></div><div></div></div>
             </div>`;
-        });
+            return;
+        }
 
-        html += `</div></div>`; // cierre panel + grupo ítem
+        const a = val.analisis;
+        if (!a) return;
+
+        const puntaje = a.puntaje ?? (a.estado==='ok'?90:a.estado==='advertencia'?65:30);
+        const pColor  = puntaje>=80?'#22C55E':puntaje>=50?'#F59E0B':'#EF4444';
+        const badgeClass = a.estado==='ok'?'badge-ok':a.estado==='advertencia'?'badge-warning':'badge-error';
+        const badgeLabel = a.estado==='ok'?'✅ Correcto':a.estado==='advertencia'?'⚠️ Advertencia':'🔴 Corrección';
+        const clave = (val.numItem ?? '') + '__' + (val.archivo?.name || '');
+
+        html += `<div style="padding:8px 0;${idxDoc>0?'border-top:1px solid #F1F5F9;':''}">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+            <span class="ia-badge ${badgeClass}" style="flex-shrink:0;">${badgeLabel}</span>
+            <span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${val.archivo?.name||''}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <span style="font-size:10px;font-weight:700;color:#6B7280;white-space:nowrap;">Cumplimiento</span>
+            <div style="flex:1;background:#E5E7EB;border-radius:10px;height:6px;overflow:hidden;">
+              <div style="width:${puntaje}%;height:6px;border-radius:10px;background:${pColor};transition:width .5s;"></div>
+            </div>
+            <span style="font-size:11px;font-weight:800;color:${pColor};white-space:nowrap;">${puntaje}%</span>
+          </div>
+          <a href="javascript:void(0)" onclick="juriskillsAbrirModal('${clave.replace(/'/g,"\\'")}')" style="font-size:11px;font-weight:700;color:#2563EB;text-decoration:underline;">🔍 Ver análisis completo</a>
+        </div>`;
     });
 
-    contenedor.innerHTML = html;
+    return html;
+}
 
-    // ── Forzar apertura de todos los paneles ──
-    contenedor.querySelectorAll('[id^="ia-panel-"]').forEach(function(p) {
-        p.style.display = 'block';
-    });
-    contenedor.querySelectorAll('.ia-chevron').forEach(function(c) {
-        c.style.transform = 'rotate(180deg)';
-    });
+// Arma el detalle COMPLETO de un solo documento (hallazgos, advertencias,
+// redacción, concordancia, recomendaciones, normativa) — es el contenido que
+// se muestra dentro del modal al presionar "Ver análisis completo".
+function _renderContenidoCompletoAnalisis(val) {
+    {
+        const a = val.analisis;
+        if (!a) return '<p style="color:#9CA3AF;">Sin análisis disponible.</p>';
+
+        const puntaje = a.puntaje ?? (a.estado==='ok'?90:a.estado==='advertencia'?65:30);
+        const pColor  = puntaje>=80?'#22C55E':puntaje>=50?'#F59E0B':'#EF4444';
+        const badgeClass = a.estado==='ok'?'badge-ok':a.estado==='advertencia'?'badge-warning':'badge-error';
+        const badgeLabel = a.estado==='ok'?'✅ Correcto':a.estado==='advertencia'?'⚠️ Advertencia':'🔴 Corrección';
+
+        // Separar hallazgos: normativos vs concordancia
+        const hallNorm  = (a.hallazgos||[]).filter(x => !x.startsWith('⚠️ Concordancia') && !x.startsWith('🔴 Inconsistencia'));
+        const hallConc  = (a.hallazgos||[]).filter(x => x.startsWith('⚠️ Concordancia') || x.startsWith('🔴 Inconsistencia'));
+        // Separar advertencias: normativas vs redacción vs concordancia
+        const advNorm   = (a.advertencias||[]).filter(x => !x.startsWith('✏️') && !x.startsWith('⚠️ Concordancia') && !x.startsWith('🔴 Inconsistencia'));
+        const advRedac  = (a.advertencias||[]).filter(x => x.startsWith('✏️'));
+        const advConc   = (a.advertencias||[]).filter(x => x.startsWith('⚠️ Concordancia'));
+
+        const hallNormHTML  = hallNorm.map(x=>`<li style="margin-bottom:4px;">${x}</li>`).join('');
+        const hallConcHTML  = hallConc.map(x=>`<li style="margin-bottom:4px;">${x}</li>`).join('');
+        const advNormHTML = advNorm.map((x, i) => {
+            const resaltado = x.replace(/(Art\.\s*[\d.]+[^)]*\)|Ley\s+\d+[^\s,;.]*|Decreto\s+\d+[^\s,;.]*|Acuerdo\s+\d+[^\s,;.]*|Res(?:olución|\.)\s*\d+[^\s,;.]*)/gi,
+                '<span style="background:#FEF3C7;border-radius:3px;padding:0 3px;font-weight:700;color:#92400E;">$1</span>');
+            return `<li style="margin-bottom:8px;">
+              <span style="display:inline-block;background:#F59E0B;color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:800;text-align:center;line-height:16px;margin-right:5px;flex-shrink:0;">${i+1}</span>
+              ${resaltado}
+            </li>`;
+        }).join('');
+        // ── Renderizar observaciones de redacción con detalle expandible ──
+        function _renderRedacHTML(obs) {
+            if (!obs.includes('||')) {
+                return `<li style="margin-bottom:6px;">${obs.replace('✏️ Redacción: ','').replace('✏️ ','')}</li>`;
+            }
+            const partes = obs.split('||');
+            const tipo   = partes[1];
+            const dato   = partes[2];
+            const det    = partes[3] || '';
+            const titulos = {
+                'CAMPOS_VACIOS': `<strong>${dato} campo(s) sin diligenciar</strong> — marcadores encontrados:`,
+                'INCOMPLETO':    `<strong>Documento posiblemente incompleto</strong> (${dato} fragmentos muy cortos):`,
+                'REPETICION':    `<strong>${dato} línea(s) repetida(s)</strong> — posible plantilla sin personalizar:`,
+                'OBJETO_AUSENTE':'<strong>Sección "Objeto / Necesidad" no identificada</strong>:',
+                'FECHAS_VIEJAS': `<strong>Fechas de vigencias anteriores detectadas</strong> (${dato}):`,
+            };
+            const titulo = titulos[tipo] || '<strong>Observación de redacción:</strong>';
+            return `<li style="margin-bottom:10px;">
+              <span style="display:block;margin-bottom:4px;">${titulo}</span>
+              <div style="background:#E0F2FE;border-radius:6px;padding:6px 10px;font-size:11px;color:#075985;line-height:1.7;">${det}</div>
+            </li>`;
+        }
+        const advRedacHTML  = advRedac.map(x => _renderRedacHTML(x)).join('');
+        const advConcHTML   = advConc.map(x=>`<li style="margin-bottom:4px;">${x}</li>`).join('');
+        const recomHTML = (a.recomendaciones||[]).map((x, i) => {
+            const iconos = { '🖊️': '#0B7A43', '🔗': '#C2410C', '📄': '#1D4ED8' };
+            let color = '#0B7A43';
+            Object.keys(iconos).forEach(ic => { if (x.startsWith(ic)) color = iconos[ic]; });
+            return `<li style="margin-bottom:10px;padding-left:6px;border-left:3px solid ${color}30;">
+              <span style="display:block;font-weight:700;color:${color};font-size:11px;margin-bottom:2px;">Acción ${i+1}</span>
+              <span style="font-size:12px;color:#374151;">${x}</span>
+            </li>`;
+        }).join('');
+
+        return `<div>
+          <!-- nombre archivo + badge -->
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+            <span class="ia-badge ${badgeClass}" style="flex-shrink:0;">${badgeLabel}</span>
+            <span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${val.archivo?.name||''}</span>
+          </div>
+          <!-- barra cumplimiento -->
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <span style="font-size:10px;font-weight:700;color:#6B7280;white-space:nowrap;">Cumplimiento</span>
+            <div style="flex:1;background:#E5E7EB;border-radius:10px;height:6px;overflow:hidden;">
+              <div style="width:${puntaje}%;height:6px;border-radius:10px;background:${pColor};transition:width .5s;"></div>
+            </div>
+            <span style="font-size:11px;font-weight:800;color:${pColor};white-space:nowrap;">${puntaje}%</span>
+          </div>
+          <!-- resumen -->
+          ${a.resumen?`<p style="font-size:11.5px;color:#374151;font-style:italic;margin:0 0 6px;">${a.resumen}</p>`:''}
+          <!-- hallazgos normativos -->
+          ${hallNormHTML?`<div style="margin-bottom:6px;background:#FEF2F2;border-radius:8px;padding:6px 8px;">
+            <div style="font-size:11px;font-weight:700;color:#DC2626;margin-bottom:4px;">🔴 Incumplimientos normativos:</div>
+            <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">${hallNormHTML}</ul></div>`:''}
+          <!-- hallazgos concordancia crítica -->
+          ${hallConcHTML?`<div style="margin-bottom:6px;background:#FFF1F2;border-radius:8px;padding:6px 8px;border:1px solid #FECDD3;">
+            <div style="font-size:11px;font-weight:700;color:#BE123C;margin-bottom:4px;">🔴 Inconsistencias entre documentos:</div>
+            <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">${hallConcHTML}</ul></div>`:''}
+          <!-- advertencias normativas -->
+          ${advNormHTML?`<div style="margin-bottom:6px;background:#FFFBEB;border-radius:8px;padding:6px 8px;">
+            <div style="font-size:11px;font-weight:700;color:#D97706;margin-bottom:4px;">⚠️ Advertencias normativas:</div>
+            <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">${advNormHTML}</ul></div>`:''}
+          <!-- observaciones de redacción -->
+          ${advRedacHTML?`<div style="margin-bottom:6px;background:#F0F9FF;border-radius:8px;padding:6px 8px;border:1px solid #BAE6FD;">
+            <div style="font-size:11px;font-weight:700;color:#0369A1;margin-bottom:4px;">✏️ Observaciones de redacción:</div>
+            <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">${advRedacHTML}</ul></div>`:''}
+          <!-- concordancia entre documentos -->
+          ${advConcHTML?`<div style="margin-bottom:6px;background:#FFF7ED;border-radius:8px;padding:6px 8px;border:1px solid #FED7AA;">
+            <div style="font-size:11px;font-weight:700;color:#C2410C;margin-bottom:4px;">🔗 Concordancia entre documentos:</div>
+            <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">${advConcHTML}</ul></div>`:''}
+          <!-- recomendaciones -->
+          ${recomHTML?`<div style="margin-bottom:2px;background:#F0FDF4;border-radius:8px;padding:6px 8px;">
+            <div style="font-size:11px;font-weight:700;color:#0B7A43;margin-bottom:4px;">💡 Recomendaciones:</div>
+            <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;">${recomHTML}</ul></div>`:''}
+          <!-- normativa -->
+          ${a.normativa?`<div style="font-size:10px;color:#9CA3AF;border-top:1px solid #F1F5F9;padding-top:4px;margin-top:4px;">📌 ${a.normativa}</div>`:''}
+          <!-- aviso fijo: la IA no reemplaza el criterio jurídico -->
+          <div style="margin-top:10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;font-size:10.5px;color:#1E3A8A;line-height:1.5;">
+            ⓘ El análisis es generado por IA con base en el contenido real de cada documento cargado y la normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación.
+          </div>
+        </div>`;
+    }
 }
 
 // Botón "Actualizar análisis": re-analizar todos los documentos cargados
@@ -4692,12 +5029,23 @@ function actualizarProgresoSub(checkId, todosIds) {
 
 
 function evaluarAplica13(radio) {
-    const aplica        = radio.value === 'aplica';
     const cargaWrap     = document.getElementById('carga_13_wrap');
     const justifWrap    = document.getElementById('justif_13_wrap');
     const banner        = document.getElementById('noaplica_13_banner');
     const badge         = document.getElementById('badge_aplica_13');
     const check13       = document.getElementById('check_13');
+
+    // Si se deseleccionó (ver radioClicConDeseleccion), volver al estado
+    // inicial: ninguna de las dos opciones marcada, nada visible todavía.
+    if (!radio.checked) {
+        cargaWrap.style.display  = 'none';
+        justifWrap.style.display = 'none';
+        banner.style.display     = 'none';
+        badge.style.display      = 'none';
+        return;
+    }
+
+    const aplica = radio.value === 'aplica';
 
     if (aplica) {
         // Mostrar sección de carga
@@ -4710,8 +5058,10 @@ function evaluarAplica13(radio) {
             + 'border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">✅ Aplica</span>';
         badge.style.display = 'block';
 
-        // Marcar checkbox automáticamente como recordatorio
-        if (check13) check13.indeterminate = false;
+        // Marcar checkbox automáticamente: contar el avance apenas se responde
+        // "Aplica", sin esperar a que además se suba el archivo (igual que ya
+        // pasaba del lado de "No aplica" un poco más abajo).
+        if (check13) { check13.checked = true; check13.indeterminate = false; }
 
     } else {
         // Ocultar carga, mostrar justificación y banner
@@ -5727,49 +6077,64 @@ window.cambiarModalidadDesdeD3P = function(val) {
   }
 };
 
-/* ── Funciones para Estudio de Mercado en Subasta (Tabla Modal) ── */
+/* ── Permitir "desmarcar" un radio haciendo clic de nuevo sobre el que ya
+   estaba elegido ────────────────────────────────────────────────────────
+   Un <input type="radio"> nativo no se puede desmarcar por sí solo con un
+   segundo clic — el navegador solo permite CAMBIAR a otro radio del mismo
+   grupo, nunca dejar el grupo sin ninguno marcado. Estas dos funciones se
+   usan juntas en el HTML (onmousedown + onclick) para lograrlo:
+   1) onmousedown guarda si el radio YA estaba marcado antes de este clic
+      (hay que capturarlo ANTES del clic, porque al momento del evento
+      "click" el navegador ya lo dejó marcado de todas formas).
+   2) onclick revisa ese dato: si ya estaba marcado, lo desmarca a mano y
+      llama la función de turno (actualizarOpcionesSubasta, evaluarAplica13,
+      etc.) para que la pantalla refleje "ninguna opción elegida". */
+function radioPermitirDeseleccion(input) {
+    input.dataset.previoMarcado = input.checked ? '1' : '0';
+}
+
+function radioClicConDeseleccion(input, callback) {
+    if (input.dataset.previoMarcado === '1') {
+        input.checked = false;
+    }
+    if (typeof callback === 'function') callback(input);
+}
+
+/* ── Ítem 9 (Estudio de Mercado) de Contratación Directa 1 Propuesta ──
+   Antes había que elegir el radio amarillo (distribuidor sí/no) y LUEGO
+   otro radio en el recuadro blanco para que aparecieran los botones de
+   carga. Como el recuadro blanco de cada caso solo tenía una única opción
+   posible, ese segundo clic era innecesario — ahora basta con elegir el
+   radio amarillo para que aparezcan los botones directamente; el recuadro
+   blanco quedó solo como texto informativo (sin radio). */
 function actualizarOpcionesSubasta() {
   var opcion = document.querySelector('input[name="sub_distribuidor"]:checked');
   var opcDocumentos = document.getElementById('sub_opciones_documentos');
   var opcionNo = document.getElementById('sub_opcion_no_distribuidor');
   var opcionSi = document.getElementById('sub_opcion_distribuidor');
-  
-  if (!opcion) {
-    opcDocumentos.style.display = 'none';
-    document.getElementById('sub_botones_carga').style.display = 'none';
-    return;
-  }
-  
-  opcDocumentos.style.display = 'block';
-  
-  if (opcion.value === 'no') {
-    opcionNo.style.display = 'block';
-    opcionSi.style.display = 'none';
-  } else {
-    opcionNo.style.display = 'none';
-    opcionSi.style.display = 'block';
-  }
-}
-
-function mostrarBotonesCarga() {
-  var tipoDoc = document.querySelector('input[name="sub_doc_type"]:checked');
   var botonesCarga = document.getElementById('sub_botones_carga');
   var btnMercado = document.getElementById('sub_btn_mercado');
   var btnPropuestas = document.getElementById('sub_btn_propuestas');
   var btnCarta = document.getElementById('sub_btn_carta');
-  
-  if (!tipoDoc) {
+
+  if (!opcion) {
+    opcDocumentos.style.display = 'none';
     botonesCarga.style.display = 'none';
     return;
   }
-  
+
+  opcDocumentos.style.display = 'block';
   botonesCarga.style.display = 'flex';
-  
-  if (tipoDoc.value === 'mercado_propuestas') {
+
+  if (opcion.value === 'no') {
+    opcionNo.style.display = 'block';
+    opcionSi.style.display = 'none';
     btnMercado.style.display = 'block';
     btnPropuestas.style.display = 'block';
     btnCarta.style.display = 'none';
   } else {
+    opcionNo.style.display = 'none';
+    opcionSi.style.display = 'block';
     btnMercado.style.display = 'none';
     btnPropuestas.style.display = 'none';
     btnCarta.style.display = 'block';

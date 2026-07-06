@@ -3,6 +3,26 @@
 //  Todas las operaciones con Supabase en un solo lugar
 // ════════════════════════════════════════════════════
 
+// ── Constantes compartidas por todo el sitio ──
+// Ítems del checklist restringidos a Jurídica/Admin. ÚNICA fuente de verdad
+// (antes había 4 copias repartidas entre script.js y proceso-detalle.js).
+// Pendiente confirmar con Jurídica la lista real para Convocatoria/Subasta,
+// cuyo checklist de 15 ítems no tiene ítems 20-22.
+var ITEMS_RESTRINGIDOS_GLOBAL = [15, 20, 21, 22];
+
+// Límite de tamaño por archivo. El plan actual de Supabase rechaza archivos
+// de más de 50 MB — este aviso evita que el usuario vea un error críptico.
+var MAX_TAMANO_ARCHIVO_BYTES = 50 * 1024 * 1024;
+
+function _db_archivoDemasiadoGrande(archivo) {
+    if (archivo && archivo.size > MAX_TAMANO_ARCHIVO_BYTES) {
+        alert('⚠️ El archivo "' + archivo.name + '" pesa más de 50 MB y no ' +
+              'puede guardarse. Por favor comprímalo o divídalo en partes.');
+        return true;
+    }
+    return false;
+}
+
 
 // ════════════════════════════════════════════════════
 //  VERIFICAR ROL DEL USUARIO ACTUAL
@@ -119,53 +139,73 @@ async function db_guardarProceso(datos) {
         if (datos.checklist && datos.checklist.length > 0) {
             for (var i = 0; i < datos.checklist.length; i++) {
                 var item = datos.checklist[i];
-                if (!item.archivo) continue;
 
-                try {
-                    // Biomédica NO puede subir documentos restringidos
-                    if (item.esRestringido && perfil.area === 'biomedica') {
-                        continue;
+                // Un ítem puede traer VARIOS archivos (ej. el ítem 9 tiene
+                // 3 recuadros, el 15 tiene 3, el 21 tiene 2...). Antes solo
+                // se subía el primero y los demás se perdían en silencio.
+                var archivosItem = (item.archivos && item.archivos.length)
+                    ? item.archivos
+                    : (item.archivo ? [item.archivo] : []);
+
+                if (archivosItem.length === 0) continue;
+
+                // Biomédica NO puede subir documentos restringidos
+                if (item.esRestringido && perfil.area === 'biomedica') {
+                    continue;
+                }
+
+                for (var f = 0; f < archivosItem.length; f++) {
+                    var arch = archivosItem[f];
+
+                    try {
+                        if (_db_archivoDemasiadoGrande(arch)) {
+                            erroresArchivos.push('Ítem ' + item.num + ': ' + arch.name + ' (más de 50 MB)');
+                            continue;
+                        }
+
+                        var bucket = item.esRestringido
+                            ? 'documentos-restringidos'
+                            : 'documentos-procesos';
+
+                        // Ruta organizada: proceso/item/version_archivo.
+                        // Si el ítem trae varios archivos, se agrega un número
+                        // para que dos archivos con el mismo nombre no choquen.
+                        var rutaArchivo = procesoId + '/' +
+                                          'item-' + item.num + '/' +
+                                          'v1_' + (archivosItem.length > 1 ? (f + 1) + '_' : '') +
+                                          arch.name;
+
+                        var { error: errorSubida } = await supabaseClient
+                            .storage
+                            .from(bucket)
+                            .upload(rutaArchivo, arch, { upsert: false });
+
+                        if (errorSubida) {
+                            console.error('Error subiendo ítem ' + item.num, errorSubida);
+                            erroresArchivos.push('Ítem ' + item.num + ': ' + arch.name);
+                            continue;
+                        }
+
+                        // Registrar documento en tabla
+                        await supabaseClient
+                            .from('documentos')
+                            .insert({
+                                proceso_id:     procesoId,
+                                item_num:       item.num,
+                                item_label:     item.label        || '',
+                                nombre_archivo: arch.name,
+                                url_archivo:    bucket + '/' + rutaArchivo,
+                                subido_por:     perfil.id,
+                                es_restringido: item.esRestringido || false,
+                                version:        1,
+                                activo:         true,
+                                tamano_bytes:   arch.size
+                            });
+
+                    } catch (errItem) {
+                        console.error('Error en ítem ' + item.num, errItem);
+                        erroresArchivos.push('Ítem ' + item.num + (arch ? ': ' + arch.name : ''));
                     }
-
-                    var bucket = item.esRestringido
-                        ? 'documentos-restringidos'
-                        : 'documentos-procesos';
-
-                    // Ruta organizada: proceso/item/version_archivo
-                    var rutaArchivo = procesoId + '/' +
-                                      'item-' + item.num + '/' +
-                                      'v1_' + item.archivo.name;
-
-                    var { error: errorSubida } = await supabaseClient
-                        .storage
-                        .from(bucket)
-                        .upload(rutaArchivo, item.archivo, { upsert: false });
-
-                    if (errorSubida) {
-                        console.error('Error subiendo ítem ' + item.num, errorSubida);
-                        erroresArchivos.push('Ítem ' + item.num + ': ' + item.archivo.name);
-                        continue;
-                    }
-
-                    // Registrar documento en tabla
-                    await supabaseClient
-                        .from('documentos')
-                        .insert({
-                            proceso_id:     procesoId,
-                            item_num:       item.num,
-                            item_label:     item.label        || '',
-                            nombre_archivo: item.archivo.name,
-                            url_archivo:    bucket + '/' + rutaArchivo,
-                            subido_por:     perfil.id,
-                            es_restringido: item.esRestringido || false,
-                            version:        1,
-                            activo:         true,
-                            tamano_bytes:   item.archivo.size
-                        });
-
-                } catch (errItem) {
-                    console.error('Error en ítem ' + item.num, errItem);
-                    erroresArchivos.push('Ítem ' + item.num);
                 }
             }
 
@@ -283,6 +323,8 @@ async function db_subirDocumento(procesoId, itemNum, itemLabel, archivo, esRestr
             ? 'documentos-restringidos'
             : 'documentos-procesos';
 
+        if (_db_archivoDemasiadoGrande(archivo)) return null;
+
         // Buscar versión anterior activa del mismo ítem
         var { data: versionAnterior } = await supabaseClient
             .from('documentos')
@@ -294,19 +336,13 @@ async function db_subirDocumento(procesoId, itemNum, itemLabel, archivo, esRestr
             .limit(1)
             .single();
 
-        var nuevaVersion = 1;
+        var nuevaVersion = versionAnterior ? versionAnterior.version + 1 : 1;
 
-        if (versionAnterior) {
-            nuevaVersion = versionAnterior.version + 1;
-
-            // Marcar versión anterior como inactiva (queda en historial)
-            await supabaseClient
-                .from('documentos')
-                .update({ activo: false })
-                .eq('id', versionAnterior.id);
-        }
-
-        // Subir archivo con número de versión en la ruta
+        // Subir archivo con número de versión en la ruta.
+        // IMPORTANTE: se sube PRIMERO y solo si la subida tiene éxito se
+        // desactiva la versión anterior — antes se desactivaba primero, y si
+        // la subida fallaba (internet caído, archivo pesado) el ítem quedaba
+        // sin ninguna versión "vigente".
         var rutaArchivo = procesoId + '/' +
                           'item-' + itemNum + '/' +
                           'v' + nuevaVersion + '_' + archivo.name;
@@ -320,6 +356,14 @@ async function db_subirDocumento(procesoId, itemNum, itemLabel, archivo, esRestr
             console.error('Error subiendo archivo:', errorSubida);
             alert('❌ Error al subir el archivo: ' + errorSubida.message);
             return null;
+        }
+
+        if (versionAnterior) {
+            // Marcar versión anterior como inactiva (queda en historial)
+            await supabaseClient
+                .from('documentos')
+                .update({ activo: false })
+                .eq('id', versionAnterior.id);
         }
 
         // Registrar nueva versión en tabla documentos

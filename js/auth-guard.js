@@ -26,8 +26,16 @@ var _CLAVE_ACTIVIDAD    = 'hslv_ultima_actividad';
 
 // Guarda en localStorage la marca de tiempo de la última actividad.
 // A diferencia del setTimeout de abajo, esto SÍ sobrevive a cerrar la pestaña.
+// Se escribe como máximo una vez cada 5 segundos: antes se escribía en CADA
+// movimiento del mouse (decenas de veces por segundo), y cada escritura
+// además dispara un evento "storage" en las demás pestañas abiertas. Para un
+// timeout de 10 minutos, una precisión de 5 segundos es más que suficiente.
+var _ultimaEscrituraActividad = 0;
 function _marcarActividad() {
-    localStorage.setItem(_CLAVE_ACTIVIDAD, Date.now().toString());
+    var ahora = Date.now();
+    if (ahora - _ultimaEscrituraActividad < 5000) return;
+    _ultimaEscrituraActividad = ahora;
+    localStorage.setItem(_CLAVE_ACTIVIDAD, ahora.toString());
 }
 
 // ── Cierre de sesión en cadena entre pestañas ──

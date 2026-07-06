@@ -69,7 +69,54 @@
                 como soporte del expediente contractual.
             </div>
 
-        <div class="checklist-wrapper">
+<!-- JURISKILLS IA: panel general (contador global + normativa). El detalle
+     de análisis por documento ya no vive aquí — se muestra directamente en
+     la columna "Análisis JURISKILLS" de cada fila del checklist. -->
+<div class="agente-ia-box" style="margin-top:0;margin-bottom:18px;">
+
+    <div class="agente-ia-header">
+        <div class="agente-ia-info">
+            <div class="agente-ia-icon">🤖</div>
+            <div>
+                <div class="agente-ia-title">
+                    JURISKILLS IA - Análisis Inteligente de Contratacion
+                    <span class="beta-tag">BETA</span>
+                </div>
+                <div class="agente-ia-text">
+                    Carga documentos en el checklist y JURISKILLS los analiza con base en el <strong>Acuerdo 015/2024</strong> y la <strong>Resolución 0456/2024</strong> del HSLV, Ley 80/1993 y
+                    Decreto 1082/2015. El resultado de cada documento aparece junto a su fila, en la columna "Análisis JURISKILLS".
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;">
+                    <span id="iaContadorDocs">0 documentos</span>
+                    <span id="iaEstadoBadge" class="ia-badge badge-analizando" style="display:none;"></span>
+                </div>
+                <div id="iaResumenGlobal"></div>
+            </div>
+        </div>
+        <button class="btn btn-actualizar" onclick="reAnalizarTodo()">
+            ⟳ Actualizar análisis
+        </button>
+    </div>
+
+    <div class="normativa-box" style="margin-top:16px;">
+        <h4>Normativa aplicada por JURISKILLS</h4>
+        <ul>
+            <li>Ley 80 de 1993 y Ley 1150 de 2007</li>
+            <li>Decreto 1082 de 2015</li>
+            <li><strong>Acuerdo 015/2024 HSLV</strong> – Estatuto de Contratación (base principal)</li>
+            <li><strong>Resolución 0456/2024 HSLV</strong> – Manual de Contratación (base principal)</li>
+            <li>Ley 734/2002 · Ley 610/2000 · Ley 1918/2018</li>
+            <li>Ley 43/1990 · Ley 48/1993</li>
+        </ul>
+    </div>
+
+    <div class="agente-ia-footer">
+        ⓘ El análisis es generado por IA con base en el contenido real de cada documento cargado y la normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación.
+    </div>
+
+</div>
+
+        <div class="checklist-wrapper" id="cd1p-checklist">
         <table>
             <thead>
                 <tr>
@@ -77,6 +124,7 @@
                     <th>Documento Requerido</th>
                     <th>Validación</th>
                     <th>Carga de Documento</th>
+                    <th>🤖 Análisis JURISKILLS</th>
                 </tr>
             </thead>
 
@@ -90,7 +138,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('modalPAAItem').style.display='flex'">
+            onclick="document.getElementById('archivo_1').click()">
                 📎 Cargar Documento
             </button>
 
@@ -104,73 +152,8 @@
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
                 Sin archivo cargado
             </div>
-            <div id="paa-unspsc-preview" style="display:none;margin-top:6px;font-size:11px;color:#374151;background:#F0FDF4;border-radius:8px;padding:6px 10px;border:1px solid #BBF7D0;">
-                <strong>UNSPSC:</strong> <span id="paa-unspsc-label"></span><br>
-                <strong>Detalle:</strong> <span id="paa-detalle-label"></span>
-            </div>
         </td>
     </tr>
-
-<!-- ===== MINI-MODAL PAA UNSPSC ===== -->
-<div id="modalPAAItem" style="
-    display:none; position:fixed; inset:0; z-index:999999;
-    background:rgba(0,0,0,.6); justify-content:center; align-items:center; padding:20px;">
-    <div style="
-        background:#fff; border-radius:20px; padding:28px; width:100%;
-        max-width:480px; box-shadow:0 20px 50px rgba(0,0,0,.3);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-            <h3 style="color:#123C7B;font-size:18px;margin:0;">📋 Certificado PAA</h3>
-            <span onclick="document.getElementById('modalPAAItem').style.display='none'"
-                style="font-size:26px;cursor:pointer;color:#6B7280;line-height:1;">&times;</span>
-        </div>
-        <div style="margin-bottom:14px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:6px;font-size:13px;">
-                Código(s) UNSPSC
-            </label>
-            <input id="paa-unspsc-input" type="text"
-                placeholder="Ej: 42142500, 81112100" autocomplete="off"
-                style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-            <div style="font-size:11px;color:#6B7280;margin-top:4px;">Separe múltiples códigos con coma.</div>
-        </div>
-        <div style="margin-bottom:18px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:6px;font-size:13px;">
-                Detalle / Descripción
-            </label>
-            <textarea id="paa-detalle-input" rows="3"
-                placeholder="Descripción del bien o servicio incluido en el PAA…" autocomplete="off"
-                style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;"></textarea>
-        </div>
-        <div style="margin-bottom:18px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:6px;font-size:13px;">
-                Documento PAA
-            </label>
-            <button onclick="document.getElementById('paa_archivo_temp').click()"
-                style="width:100%;background:#F8FAFC;border:1.5px dashed #94A3B8;color:#374151;
-                padding:11px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;">
-                📎 Seleccionar archivo
-            </button>
-            <input type="file" id="paa_archivo_temp" style="display:none;"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                onchange="paa_mostrarNombreTemporal(this)">
-            <div id="paa_nombre_temp"
-                style="margin-top:6px;font-size:12px;color:#6B7280;font-style:italic;">
-                Sin archivo seleccionado
-            </div>
-        </div>
-        <div style="display:flex;gap:10px;">
-            <button onclick="guardarPAAItem()"
-                style="flex:1;background:linear-gradient(90deg,#0B7A43,#123C7B);color:#fff;
-                border:none;padding:12px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;">
-                ✅ Guardar
-            </button>
-            <button onclick="document.getElementById('modalPAAItem').style.display='none'"
-                style="flex:1;background:#F3F4F6;color:#374151;border:none;
-                padding:12px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;">
-                Cancelar
-            </button>
-        </div>
-    </div>
-</div>
 
     <tr>
         <td>2</td>
@@ -181,7 +164,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('modalSolicitudCDPItem').style.display='flex'">
+            onclick="document.getElementById('archivo_2').click()">
                 📎 Cargar Documento
             </button>
 
@@ -195,104 +178,8 @@
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
                 Sin archivo cargado
             </div>
-            <div id="scdp-preview" style="display:none;margin-top:6px;font-size:11px;color:#374151;background:#EFF6FF;border-radius:8px;padding:6px 10px;border:1px solid #BFDBFE;">
-                <strong>Rubro:</strong> <span id="scdp-rubro-label"></span><br>
-                <strong>N° Rubro:</strong> <span id="scdp-numrubro-label"></span><br>
-                <strong>Valor:</strong> <span id="scdp-valor-label"></span><br>
-                <strong>Fecha:</strong> <span id="scdp-fecha-label"></span><br>
-                <strong>Solicitud:</strong> <span id="scdp-solicitud-label"></span>
-            </div>
         </td>
     </tr>
-
-<!-- ===== MINI-MODAL SOLICITUD CDP ===== -->
-<div id="modalSolicitudCDPItem" style="
-    display:none; position:fixed; inset:0; z-index:999999;
-    background:rgba(0,0,0,.6); justify-content:center; align-items:center; padding:20px;">
-    <div style="
-        background:#fff; border-radius:20px; padding:28px; width:100%;
-        max-width:520px; box-shadow:0 20px 50px rgba(0,0,0,.3); max-height:92vh; overflow-y:auto;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-            <h3 style="color:#123C7B;font-size:17px;margin:0;">📄 Solicitud CDP</h3>
-            <span onclick="document.getElementById('modalSolicitudCDPItem').style.display='none'"
-                style="font-size:26px;cursor:pointer;color:#6B7280;line-height:1;">&times;</span>
-        </div>
-
-        <!-- Rubro -->
-        <div style="margin-bottom:13px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Nombre del Rubro</label>
-            <input id="scdp-rubro" type="text" placeholder="Ej: Servicios Personales Indirectos" autocomplete="off"
-                style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-        </div>
-
-        <!-- Número rubro -->
-        <div style="margin-bottom:13px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Número del Rubro</label>
-            <input id="scdp-numrubro" type="text" placeholder="Ej: 2-1-01-01" autocomplete="off"
-                style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-        </div>
-
-        <!-- Valor en número -->
-        <div style="margin-bottom:13px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Valor de la Propuesta (en números)</label>
-            <input id="scdp-valor-num" type="number" placeholder="Ej: 15000000" autocomplete="off"
-                style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"
-                oninput="scdpAutoLetras()">
-        </div>
-
-        <!-- Valor en letras -->
-        <div style="margin-bottom:13px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Valor de la Propuesta (en letras)</label>
-            <input id="scdp-valor-letras" type="text" placeholder="Se genera automáticamente o escríbalo manualmente" autocomplete="off"
-                style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-        </div>
-
-        <!-- Fecha -->
-        <div style="margin-bottom:13px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Fecha de Solicitud</label>
-            <input id="scdp-fecha" type="date"
-                style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-        </div>
-
-        <!-- Solicitud de la propuesta -->
-        <div style="margin-bottom:13px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Solicitud de la Propuesta</label>
-            <button onclick="document.getElementById('archivo_2b').click()"
-                style="width:100%;background:#F8FAFC;border:1.5px dashed #94A3B8;color:#374151;
-                padding:11px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;">
-                📎 Cargar Solicitud (Word, Excel o PDF)
-            </button>
-            <input type="file" id="archivo_2b" style="display:none;"
-                accept=".pdf,.doc,.docx,.xls,.xlsx"
-                onchange="scdpMostrarSolicitud(this)">
-            <div id="scdp-solicitud-archivo" style="margin-top:6px;font-size:12px;color:#0B7A43;font-weight:600;"></div>
-        </div>
-
-        <!-- Archivo -->
-        <div style="margin-bottom:18px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Documento</label>
-            <button onclick="document.getElementById('archivo_2').click()"
-                style="width:100%;background:#F8FAFC;border:1.5px dashed #94A3B8;color:#374151;
-                padding:11px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;">
-                📎 Seleccionar archivo
-            </button>
-            <div id="nombreArchivo_2_modal" style="margin-top:6px;font-size:12px;color:#0B7A43;font-weight:600;"></div>
-        </div>
-
-        <div style="display:flex;gap:10px;">
-            <button onclick="guardarSolicitudCDPItem()"
-                style="flex:1;background:linear-gradient(90deg,#0B7A43,#123C7B);color:#fff;
-                border:none;padding:12px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;">
-                ✅ Guardar
-            </button>
-            <button onclick="document.getElementById('modalSolicitudCDPItem').style.display='none'"
-                style="flex:1;background:#F3F4F6;color:#374151;border:none;
-                padding:12px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;">
-                Cancelar
-            </button>
-        </div>
-    </div>
-</div>
 
 
     <tr>
@@ -304,7 +191,7 @@
         <td>
             <button class="btn"
             style="padding:10px 14px;font-size:13px;"
-            onclick="document.getElementById('modalCDPItem').style.display='flex'">
+            onclick="document.getElementById('archivo_3').click()">
                 📎 Cargar Documento
             </button>
 
@@ -318,74 +205,8 @@
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
                 Sin archivo cargado
             </div>
-            <div id="cdp-preview" style="display:none;margin-top:6px;font-size:11px;color:#374151;background:#FFF7ED;border-radius:8px;padding:6px 10px;border:1px solid #FED7AA;">
-                <strong>N° CDP:</strong> <span id="cdp-num-label"></span><br>
-                <strong>Fecha:</strong> <span id="cdp-fecha-label"></span><br>
-                <strong>Objeto:</strong> <span id="cdp-objeto-label"></span>
-            </div>
         </td>
     </tr>
-
-<!-- ===== MINI-MODAL CDP ===== -->
-<div id="modalCDPItem" style="
-    display:none; position:fixed; inset:0; z-index:999999;
-    background:rgba(0,0,0,.6); justify-content:center; align-items:center; padding:20px;">
-    <div style="
-        background:#fff; border-radius:20px; padding:28px; width:100%;
-        max-width:480px; box-shadow:0 20px 50px rgba(0,0,0,.3); max-height:92vh; overflow-y:auto;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-            <h3 style="color:#123C7B;font-size:17px;margin:0;">📋 Certificado de Disponibilidad Presupuestal</h3>
-            <span onclick="document.getElementById('modalCDPItem').style.display='none'"
-                style="font-size:26px;cursor:pointer;color:#6B7280;line-height:1;">&times;</span>
-        </div>
-
-        <!-- Número CDP -->
-        <div style="margin-bottom:13px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Número de CDP</label>
-            <input id="cdp-num" type="text" placeholder="Ej: CDP-2025-001" autocomplete="off"
-                style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-        </div>
-
-        <!-- Fecha CDP -->
-        <div style="margin-bottom:13px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Fecha del CDP</label>
-            <input id="cdp-fecha" type="date"
-                style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-        </div>
-
-        <!-- Objeto CDP -->
-        <div style="margin-bottom:18px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Objeto del CDP</label>
-            <textarea id="cdp-objeto" rows="3"
-                placeholder="Describa el objeto para el cual se expide el CDP…" autocomplete="off"
-                style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;"></textarea>
-        </div>
-
-        <!-- Archivo -->
-        <div style="margin-bottom:18px;">
-            <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Documento CDP</label>
-            <button onclick="document.getElementById('archivo_3').click()"
-                style="width:100%;background:#F8FAFC;border:1.5px dashed #94A3B8;color:#374151;
-                padding:11px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;">
-                📎 Seleccionar archivo
-            </button>
-            <div id="nombreArchivo_3_modal" style="margin-top:6px;font-size:12px;color:#0B7A43;font-weight:600;"></div>
-        </div>
-
-        <div style="display:flex;gap:10px;">
-            <button onclick="guardarCDPItem()"
-                style="flex:1;background:linear-gradient(90deg,#0B7A43,#123C7B);color:#fff;
-                border:none;padding:12px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;">
-                ✅ Guardar
-            </button>
-            <button onclick="document.getElementById('modalCDPItem').style.display='none'"
-                style="flex:1;background:#F3F4F6;color:#374151;border:none;
-                padding:12px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;">
-                Cancelar
-            </button>
-        </div>
-    </div>
-</div>
 
 
     <tr>
@@ -545,40 +366,44 @@
         </td>
         <td>
             <!-- Alerta Normativa -->
-            <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:12.5px;color:#92400E;">
+            <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:12.5px;color:#92400E;box-sizing:border-box;max-width:44ch;">
                 <div style="margin-bottom:8px;font-weight:600;">⚠️ Este documento solo aplica para los proveedores o contratistas que <strong>NO</strong> son distribuidores exclusivos</div>
-                <div style="display:flex;flex-direction:column;gap:8px;">
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;font-weight:normal;">
-                        <input type="radio" name="sub_distribuidor" value="no" onchange="actualizarOpcionesSubasta()"> No es distribuidor exclusivo
-                    </label>
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;font-weight:normal;">
-                        <input type="radio" name="sub_distribuidor" value="si" onchange="actualizarOpcionesSubasta()"> Es distribuidor o proveedor exclusivo
-                    </label>
-                </div>
+                <label style="display:block;position:relative;padding-left:24px;cursor:pointer;margin:0 0 6px;font-weight:normal;box-sizing:border-box;">
+                    <input type="radio" name="sub_distribuidor" value="no"
+                        onmousedown="radioPermitirDeseleccion(this)"
+                        onclick="radioClicConDeseleccion(this, actualizarOpcionesSubasta)"
+                        style="position:absolute;left:0;top:2px;margin:0;width:16px;height:16px;"> No es distribuidor exclusivo
+                </label>
+                <label style="display:block;position:relative;padding-left:24px;cursor:pointer;margin:0;font-weight:normal;box-sizing:border-box;">
+                    <input type="radio" name="sub_distribuidor" value="si"
+                        onmousedown="radioPermitirDeseleccion(this)"
+                        onclick="radioClicConDeseleccion(this, actualizarOpcionesSubasta)"
+                        style="position:absolute;left:0;top:2px;margin:0;width:16px;height:16px;"> Es distribuidor o proveedor exclusivo
+                </label>
             </div>
 
             <!-- Contenedor de Opciones -->
-            <div id="sub_opciones_documentos" style="display:none;margin-bottom:10px;">
-                <div style="background:#EBF8F5;border-radius:8px;padding:10px;">
-                    <!-- Opción 1: No distribuidor -->
+            <div id="sub_opciones_documentos" style="display:none;margin-bottom:10px;box-sizing:border-box;max-width:44ch;">
+                <div style="background:#EBF8F5;border-radius:8px;padding:10px;box-sizing:border-box;">
+                    <!-- Opción 1: No distribuidor (solo informativo, ya no hay que elegir nada más) -->
                     <div id="sub_opcion_no_distribuidor" style="display:none;">
                         <p style="font-size:12px;font-weight:600;margin:0 0 8px 0;color:#0B7A43;">Documentos a cargar:</p>
-                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px;background:white;border-radius:6px;border:1px solid #CBD5E1;font-size:12.5px;">
-                            <input type="radio" name="sub_doc_type" value="mercado_propuestas" onchange="mostrarBotonesCarga()"> 📋 Estudio de Mercado + 📨 Propuestas
-                        </label>
+                        <div style="padding:7px;background:white;border-radius:6px;border:1px solid #CBD5E1;font-size:12.5px;box-sizing:border-box;">
+                            📋 Estudio de Mercado + 📨 Propuestas
+                        </div>
                     </div>
-                    <!-- Opción 2: ES distribuidor -->
+                    <!-- Opción 2: ES distribuidor (solo informativo, ya no hay que elegir nada más) -->
                     <div id="sub_opcion_distribuidor" style="display:none;">
                         <p style="font-size:12px;font-weight:600;margin:0 0 8px 0;color:#0B7A43;">Documento a cargar:</p>
-                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px;background:white;border-radius:6px;border:1px solid #CBD5E1;font-size:12.5px;">
-                            <input type="radio" name="sub_doc_type" value="distribuidor" onchange="mostrarBotonesCarga()"> 🏢 Carta de Distribuidor o Proveedor Exclusivo
-                        </label>
+                        <div style="padding:7px;background:white;border-radius:6px;border:1px solid #CBD5E1;font-size:12.5px;box-sizing:border-box;">
+                            🏢 Carta de Distribuidor o Proveedor Exclusivo
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Botones de Carga -->
-            <div id="sub_botones_carga" style="display:none;margin-bottom:10px;gap:8px;flex-wrap:wrap;">
+            <div id="sub_botones_carga" style="display:none;margin-bottom:10px;gap:8px;flex-wrap:wrap;max-width:44ch;box-sizing:border-box;">
                 <div id="sub_btn_mercado" style="display:none;">
                     <button class="btn" style="padding:10px 14px;font-size:13px;" onclick="document.getElementById('archivo_9_mercado').click()">📎 Cargar Estudio de Mercado</button>
                     <input type="file" id="archivo_9_mercado" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_mercado')">
@@ -691,8 +516,8 @@
         </td>
         <td>
             <!-- ── SELECTOR APLICA / NO APLICA ── -->
-            <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;
-                        padding:10px 12px;margin-bottom:10px;">
+            <div id="selector_13_wrap" style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;
+                        padding:10px 12px;margin-bottom:10px;box-sizing:border-box;">
                 <div style="font-size:11.5px;font-weight:700;color:#1e40af;margin-bottom:8px;">
                     ⚠️ Este documento solo aplica para hombres menores de 50 años (Ley 48/1993)
                 </div>
@@ -700,14 +525,16 @@
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
                                   font-size:12px;font-weight:600;color:#166534;">
                         <input type="radio" name="aplica_13" value="aplica"
-                               onchange="evaluarAplica13(this)"
+                               onmousedown="radioPermitirDeseleccion(this)"
+                               onclick="radioClicConDeseleccion(this, evaluarAplica13)"
                                style="accent-color:#0B7A43;width:15px;height:15px;">
                         ✅ Aplica
                     </label>
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
                                   font-size:12px;font-weight:600;color:#DC2626;">
                         <input type="radio" name="aplica_13" value="no_aplica"
-                               onchange="evaluarAplica13(this)"
+                               onmousedown="radioPermitirDeseleccion(this)"
+                               onclick="radioClicConDeseleccion(this, evaluarAplica13)"
                                style="accent-color:#DC2626;width:15px;height:15px;">
                         🚫 No aplica
                     </label>
@@ -865,7 +692,7 @@
             </div>
 
             <!-- Progreso global ítem 15 -->
-            <div id="progreso_15" style="margin-top:10px;font-size:11px;color:#6B7280;
+            <div id="progreso_15" class="subdoc-progreso" style="margin-top:10px;font-size:11px;color:#6B7280;
                 background:#EFF6FF;border-radius:8px;padding:7px 10px;display:flex;
                 align-items:center;gap:8px;">
                 <span>📁 Documentos cargados:</span>
@@ -1051,7 +878,7 @@
             </div>
 
             <!-- Progreso global ítem 20 -->
-            <div id="progreso_20" style="margin-top:10px;font-size:11px;color:#6B7280;
+            <div id="progreso_20" class="subdoc-progreso" style="margin-top:10px;font-size:11px;color:#6B7280;
                 background:#EFF6FF;border-radius:8px;padding:7px 10px;display:flex;
                 align-items:center;gap:8px;">
                 <span>📁 Documentos cargados:</span>
@@ -1115,7 +942,7 @@
             </div>
 
             <!-- Progreso global ítem 21 -->
-            <div id="progreso_21" style="margin-top:10px;font-size:11px;color:#6B7280;
+            <div id="progreso_21" class="subdoc-progreso" style="margin-top:10px;font-size:11px;color:#6B7280;
                 background:#EFF6FF;border-radius:8px;padding:7px 10px;display:flex;
                 align-items:center;gap:8px;">
                 <span>📁 Documentos cargados:</span>
@@ -1190,76 +1017,10 @@
         </td>
     </tr>
             </tbody>
-        
+
 </table>
 </div><!-- /checklist-wrapper -->
         </div><!-- fin section-card Checklist -->
-
-<div class="agente-ia-box">
-
-    <!-- CABECERA DEL AGENTE -->
-    <div class="agente-ia-header">
-        <div class="agente-ia-info">
-            <div class="agente-ia-icon">🤖</div>
-            <div>
-                <div class="agente-ia-title">
-                    JURISKILLS IA - Análisis Inteligente de Contratacion
-                    <span class="beta-tag">BETA</span>
-                </div>
-                <div class="agente-ia-text">
-                    Carga documentos en el checklist y JURISKILLS los analiza con base en el <strong>Acuerdo 015/2024</strong> y la <strong>Resolución 0456/2024</strong> del HSLV, Ley 80/1993 y
-                    Decreto 1082/2015.
-                </div>
-                <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;">
-                    <span id="iaContadorDocs">0 documentos</span>
-                    <span id="iaEstadoBadge" class="ia-badge badge-analizando" style="display:none;"></span>
-                </div>
-                <div id="iaResumenGlobal"></div>
-            </div>
-        </div>
-        <button class="btn btn-actualizar" onclick="reAnalizarTodo()">
-            ⟳ Actualizar análisis
-        </button>
-    </div>
-
-    <!-- RESULTADOS DINÁMICOS -->
-    <div id="iaResultadosContenedor">
-        <div style="text-align:center;padding:30px;color:#9CA3AF;">
-            <div style="font-size:40px;margin-bottom:10px;">📂</div>
-            <p>Carga documentos en el checklist para que JURISKILLS los analice automáticamente.</p>
-        </div>
-    </div>
-
-    <!-- OBSERVACIONES + NORMATIVA -->
-    <div class="ia-grid" style="margin-top:18px;">
-        <div>
-            <div class="ia-section-title">Observaciones adicionales</div>
-            <textarea class="ia-observaciones" id="iaObservaciones"
-                placeholder="Escriba observaciones o justificaciones adicionales…" autocomplete="off"
-                oninput="document.getElementById('iaCharCount').textContent=this.value.length+'/1000 caracteres'"
-                maxlength="1000"></textarea>
-            <div id="iaCharCount" style="margin-top:6px;color:#6B7280;font-size:12px;">0/1000 caracteres</div>
-        </div>
-        <div>
-            <div class="normativa-box">
-                <h4>Normativa aplicada por JURISKILLS</h4>
-                <ul>
-                    <li>Ley 80 de 1993 y Ley 1150 de 2007</li>
-                    <li>Decreto 1082 de 2015</li>
-                    <li><strong>Acuerdo 015/2024 HSLV</strong> – Estatuto de Contratación (base principal)</li>
-                    <li><strong>Resolución 0456/2024 HSLV</strong> – Manual de Contratación (base principal)</li>
-                    <li>Ley 734/2002 · Ley 610/2000 · Ley 1918/2018</li>
-                    <li>Ley 43/1990 · Ley 48/1993</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="agente-ia-footer">
-        ⓘ El análisis es generado por IA con base en el contenido real de cada documento cargado y la normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación.
-    </div>
-
-</div>
 
 <div id="cd1p-avance-bar" style="margin-bottom:14px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:14px;padding:14px 18px;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
