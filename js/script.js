@@ -1791,248 +1791,6 @@ async function guardarProceso() {
     setTimeout(function(){ toast.remove(); }, 4000);
 }
 
-// ══════════════════════════════════════════════════════════════
-// IMPRIMIR / DESCARGAR CHECKLIST — Contratación Directa 1 Propuesta
-// Lee directamente cada <tr> del tbody del checklist-wrapper
-// ══════════════════════════════════════════════════════════════
-function imprimirChecklistCD1P() {
-    const objeto    = (document.getElementById('mp_objeto')    || {}).value || '—';
-    const area      = (document.getElementById('mp_area')      || {}).value || '—';
-    const modalidad = (document.getElementById('mp_modalidad') || {}).value || 'Contratación Directa (1) Propuesta';
-
-    // Mapa explícito: cada ítem con su label, los IDs de su(s) checkbox(es) y div(s) de nombre de archivo.
-    // Para ítems sin ID en el checkbox se usa chkIdx (posición entre todos los checkboxes del modal).
-    // NOTA: Los <div> de mini-modales entre <tr> hacen que el DOM del tbody sea poco confiable,
-    //       por eso leemos directamente por ID de elemento.
-    function getNom(ids) {
-        for (var i = 0; i < ids.length; i++) {
-            var el = document.getElementById(ids[i]);
-            if (el) {
-                var txt = el.textContent.replace(/📄\s*/g,'').trim();
-                if (txt && txt !== 'Sin archivo cargado') return txt;
-            }
-        }
-        return '';
-    }
-    function getChk(id) {
-        var el = document.getElementById(id);
-        return el ? el.checked : false;
-    }
-    // Para checkboxes sin ID, los obtenemos por posición dentro del modal
-    var allCbs = Array.from(document.querySelectorAll('#modalProceso input[type="checkbox"]'));
-
-    var ITEMS = [
-        { num:1,  label:'CERTIFICADO PAA',                                                    chk: allCbs[0],            noms:['nombreArchivo_1'] },
-        { num:2,  label:'SOLICITUD DE CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',            chk: allCbs[1],            noms:['nombreArchivo_2'] },
-        { num:3,  label:'CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',                         chk: allCbs[2],            noms:['nombreArchivo_3'] },
-        { num:4,  label:'SOLICITUD PARA CONTRATAR',                                           chk: allCbs[3],            noms:['nombreArchivo_4'] },
-        { num:5,  label:'ESTUDIOS PREVIOS',                                                   chk: allCbs[4],            noms:['nombreArchivo_5'] },
-        { num:6,  label:'MATRIZ DE RIESGO',                                                   chk: allCbs[5],            noms:['nombreArchivo_6'] },
-        { num:7,  label:'ANEXO IO PRESENTACIÓN DE LA PROPUESTA',                              chk: allCbs[6],            noms:['nombreArchivo_7'] },
-        { num:8,  label:'PROPUESTA',                                                          chk: allCbs[7],            noms:['nombreArchivo_8'] },
-        { num:9,  label:'ESTUDIO DE MERCADO',                                                 chk: allCbs[8],            noms:['nombreArchivo_9'] },
-        { num:10, label:'EXPERIENCIA',                                                        chk: allCbs[9],            noms:['nombreArchivo_10'] },
-        { num:11, label:'CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN',                         chk: allCbs[10],           noms:['nombreArchivo_11'] },
-        { num:12, label:'CÉDULA DE CIUDADANÍA',                                               chk: allCbs[11],           noms:['nombreArchivo_12'] },
-        { num:13, label:'LIBRETA MILITAR (si aplica)',                                        chk: document.getElementById('check_13'), noms:['nombreArchivo_13'] },
-        { num:14, label:'REGISTRO ÚNICO TRIBUTARIO',                                          chk: allCbs[13],           noms:['nombreArchivo_14'] },
-        { num:15, label:'CERTIFICADO ANTECEDENTES (DISCIPLINARIOS, FISCALES Y JUDICIALES)',   chk: document.getElementById('check_15'), noms:['nombreArchivo_15a','nombreArchivo_15b','nombreArchivo_15c'] },
-        { num:16, label:'CERTIFICADO ANTECEDENTES DE DELITOS SEXUALES',                       chk: allCbs[15],           noms:['nombreArchivo_16'] },
-        { num:17, label:'CERTIFICADO INEXISTENCIA DE INHABILIDADES E INCOMPATIBILIDADES',     chk: allCbs[16],           noms:['nombreArchivo_17'] },
-        { num:18, label:'CERTIFICADO DE MEDIDAS CORRECTIVAS',                                 chk: allCbs[17],           noms:['nombreArchivo_18'] },
-        { num:19, label:'CERTIFICADO REDAM',                                                  chk: allCbs[18],           noms:['nombreArchivo_19'] },
-        { num:20, label:'REVISOR FISCAL (CÉDULA, ANTECEDENTES, TARJETA PROFESIONAL)',         chk: document.getElementById('check_20'), noms:['nombreArchivo_20a','nombreArchivo_20b','nombreArchivo_20c'] },
-        { num:21, label:'CERTIFICACIÓN Y PLANILLAS DE SEGURIDAD SOCIAL',                      chk: document.getElementById('check_21'), noms:['nombreArchivo_21a','nombreArchivo_21b'] },
-        { num:22, label:'FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT',                           chk: allCbs[21],           noms:['nombreArchivo_22'] },
-        { num:23, label:'ACTA DE EVALUACIÓN',                                                 chk: allCbs[22],           noms:['nombreArchivo_23'] }
-    ];
-
-    var totalMarcados = 0;
-    var filas = '';
-
-    ITEMS.forEach(function(item) {
-        var marcado = item.chk ? item.chk.checked : false;
-        var archivo = getNom(item.noms);
-        if (marcado) totalMarcados++;
-
-        var rowBg      = marcado ? '#F0FDF4' : '#FFFAFA';
-        var estadoHTML = marcado
-            ? '<span style="color:#166534;font-weight:700;">&#10004; Verificado</span>'
-            : '<span style="color:#991B1B;font-weight:700;">&#10008; Pendiente</span>';
-        var archHTML   = archivo
-            ? '<span style="color:#0B7A43;font-size:11px;">&#128196; ' + archivo + '</span>'
-            : '<span style="color:#9CA3AF;font-size:11px;font-style:italic;">Sin archivo cargado</span>';
-
-        filas += '<tr style="background:' + rowBg + ';">'
-            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;text-align:center;font-weight:700;color:#374151;">' + item.num + '</td>'
-            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;font-size:12px;color:#1F2937;line-height:1.4;">' + item.label + '</td>'
-            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;text-align:center;">' + estadoHTML + '</td>'
-            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;">' + archHTML + '</td>'
-            + '</tr>';
-    });
-
-    var pct    = Math.round((totalMarcados / 23) * 100);
-    var pctCol = pct >= 80 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626';
-    var ahora  = new Date().toLocaleString('es-CO');
-
-    var html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
-        + '<title>Checklist Contratacion Directa 1 Propuesta</title>'
-        + '<style>'
-        + '*{margin:0;padding:0;box-sizing:border-box;}'
-        + 'body{font-family:Segoe UI,Arial,sans-serif;color:#1F2937;background:#fff;padding:30px 36px;}'
-        + 'h1{color:#046A38;font-size:20px;border-bottom:3px solid #046A38;padding-bottom:8px;margin-bottom:4px;}'
-        + 'h2{color:#123C7B;font-size:15px;margin-bottom:16px;}'
-        + '.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}'
-        + '.meta-item{background:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;padding:10px 14px;}'
-        + '.lbl{font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;margin-bottom:3px;}'
-        + '.val{font-size:13px;font-weight:700;color:#1F2937;}'
-        + '.pb-wrap{background:#E5E7EB;border-radius:10px;height:14px;overflow:hidden;margin:6px 0 2px;}'
-        + '.pb-fill{height:14px;border-radius:10px;background:' + pctCol + ';width:' + pct + '%;}'
-        + 'table{width:100%;border-collapse:collapse;margin-top:12px;}'
-        + 'thead th{background:#046A38;color:white;padding:10px;font-size:12px;text-align:left;}'
-        + 'thead th:nth-child(1){width:36px;text-align:center;}'
-        + 'thead th:nth-child(3){width:120px;text-align:center;}'
-        + 'thead th:nth-child(4){width:190px;}'
-        + '.footer{margin-top:24px;border-top:1px solid #E5E7EB;padding-top:10px;color:#9CA3AF;font-size:10px;display:flex;justify-content:space-between;}'
-        + '@media print{body{padding:14px 18px;}}'
-        + '</style>'
-        + '</head><body>'
-        + '<h1>Hospital Susana Lopez de Valencia E.S.E.</h1>'
-        + '<h2>Checklist Documental &mdash; ' + modalidad + '</h2>'
-        + '<div class="meta">'
-        +   '<div class="meta-item" style="grid-column:1/-1;"><div class="lbl">Objeto Contractual</div><div class="val" style="font-weight:400;line-height:1.5;">' + objeto + '</div></div>'
-        +   '<div class="meta-item"><div class="lbl">Area Solicitante</div><div class="val">' + area + '</div></div>'
-        +   '<div class="meta-item"><div class="lbl">Fecha de generacion</div><div class="val">' + ahora + '</div></div>'
-        +   '<div class="meta-item" style="grid-column:1/-1;">'
-        +     '<div class="lbl">Cumplimiento &mdash; ' + totalMarcados + ' de 23 items verificados (' + pct + '%)</div>'
-        +     '<div class="pb-wrap"><div class="pb-fill"></div></div>'
-        +     '<div style="font-size:11px;color:' + pctCol + ';font-weight:700;margin-top:2px;">' + pct + '% completado</div>'
-        +   '</div>'
-        + '</div>'
-        + '<table><thead><tr>'
-        +   '<th>#</th><th>Documento Requerido</th><th>Verificacion</th><th>Documento Cargado</th>'
-        + '</tr></thead><tbody>' + filas + '</tbody></table>'
-        + '<div class="footer">'
-        +   '<span>Generado por Aplicativo HSLV &middot; JURISKILLS IA &middot; ' + ahora + '</span>'
-        +   '<span>Contratacion Directa &mdash; 1 Propuesta</span>'
-        + '</div>'
-        + '<script>window.print();<\/script>'
-        + '</body></html>';
-
-    var win = window.open('', '_blank');
-    win.document.write(html);
-    win.document.close();
-}
-
-// ── Versión genérica de "Descargar Checklist" para Convocatoria y Subasta
-//    (no lo traían en su HTML original) ──
-function imprimirChecklistGenerico(prefijo, labels, tituloModalidad) {
-    var objeto = (document.getElementById('mp_objeto') || {}).value || '—';
-    var area   = (document.getElementById('mp_area')   || {}).value || '—';
-
-    var totalMarcados = 0;
-    var filas = '';
-
-    labels.forEach(function(label, i) {
-        var num = i + 1;
-        var chk = document.getElementById(prefijo + 'chk_' + num);
-        var nom = document.getElementById(prefijo + 'nom_' + num);
-        var marcado = chk ? chk.checked : false;
-        var archivo = nom ? nom.textContent.replace(/[📄✅]\s*/g, '').trim() : '';
-        if (archivo === 'Sin archivo cargado') archivo = '';
-        if (marcado) totalMarcados++;
-
-        var rowBg = marcado ? '#F0FDF4' : '#FFFAFA';
-        var estadoHTML = marcado
-            ? '<span style="color:#166534;font-weight:700;">&#10004; Verificado</span>'
-            : '<span style="color:#991B1B;font-weight:700;">&#10008; Pendiente</span>';
-        var archHTML = archivo
-            ? '<span style="color:#0B7A43;font-size:11px;">&#128196; ' + archivo + '</span>'
-            : '<span style="color:#9CA3AF;font-size:11px;font-style:italic;">Sin archivo cargado</span>';
-
-        filas += '<tr style="background:' + rowBg + ';">'
-            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;text-align:center;font-weight:700;color:#374151;">' + num + '</td>'
-            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;font-size:12px;color:#1F2937;line-height:1.4;">' + label + '</td>'
-            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;text-align:center;">' + estadoHTML + '</td>'
-            + '<td style="padding:8px 10px;border-bottom:1px solid #E5E7EB;">' + archHTML + '</td>'
-            + '</tr>';
-    });
-
-    var pct    = Math.round((totalMarcados / labels.length) * 100);
-    var pctCol = pct >= 80 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626';
-    var ahora  = new Date().toLocaleString('es-CO');
-
-    var html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
-        + '<title>Checklist ' + tituloModalidad + '</title>'
-        + '<style>'
-        + '*{margin:0;padding:0;box-sizing:border-box;}'
-        + 'body{font-family:Segoe UI,Arial,sans-serif;color:#1F2937;background:#fff;padding:30px 36px;}'
-        + 'h1{color:#046A38;font-size:20px;border-bottom:3px solid #046A38;padding-bottom:8px;margin-bottom:4px;}'
-        + 'h2{color:#123C7B;font-size:15px;margin-bottom:16px;}'
-        + '.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}'
-        + '.meta-item{background:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;padding:10px 14px;}'
-        + '.lbl{font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;margin-bottom:3px;}'
-        + '.val{font-size:13px;font-weight:700;color:#1F2937;}'
-        + '.pb-wrap{background:#E5E7EB;border-radius:10px;height:14px;overflow:hidden;margin:6px 0 2px;}'
-        + '.pb-fill{height:14px;border-radius:10px;background:' + pctCol + ';width:' + pct + '%;}'
-        + 'table{width:100%;border-collapse:collapse;margin-top:12px;}'
-        + 'thead th{background:#046A38;color:white;padding:10px;font-size:12px;text-align:left;}'
-        + 'thead th:nth-child(1){width:36px;text-align:center;}'
-        + 'thead th:nth-child(3){width:120px;text-align:center;}'
-        + 'thead th:nth-child(4){width:190px;}'
-        + '.footer{margin-top:24px;border-top:1px solid #E5E7EB;padding-top:10px;color:#9CA3AF;font-size:10px;display:flex;justify-content:space-between;}'
-        + '@media print{body{padding:14px 18px;}}'
-        + '</style>'
-        + '</head><body>'
-        + '<h1>Hospital Susana Lopez de Valencia E.S.E.</h1>'
-        + '<h2>Checklist Documental &mdash; ' + tituloModalidad + '</h2>'
-        + '<div class="meta">'
-        +   '<div class="meta-item" style="grid-column:1/-1;"><div class="lbl">Objeto Contractual</div><div class="val" style="font-weight:400;line-height:1.5;">' + objeto + '</div></div>'
-        +   '<div class="meta-item"><div class="lbl">Area Solicitante</div><div class="val">' + area + '</div></div>'
-        +   '<div class="meta-item"><div class="lbl">Fecha de generacion</div><div class="val">' + ahora + '</div></div>'
-        +   '<div class="meta-item" style="grid-column:1/-1;">'
-        +     '<div class="lbl">Cumplimiento &mdash; ' + totalMarcados + ' de ' + labels.length + ' items verificados (' + pct + '%)</div>'
-        +     '<div class="pb-wrap"><div class="pb-fill"></div></div>'
-        +     '<div style="font-size:11px;color:' + pctCol + ';font-weight:700;margin-top:2px;">' + pct + '% completado</div>'
-        +   '</div>'
-        + '</div>'
-        + '<table><thead><tr>'
-        +   '<th>#</th><th>Documento Requerido</th><th>Verificacion</th><th>Documento Cargado</th>'
-        + '</tr></thead><tbody>' + filas + '</tbody></table>'
-        + '<div class="footer">'
-        +   '<span>Generado por Aplicativo HSLV &middot; JURISKILLS IA &middot; ' + ahora + '</span>'
-        +   '<span>' + tituloModalidad + '</span>'
-        + '</div>'
-        + '<script>window.print();<\/script>'
-        + '</body></html>';
-
-    var win = window.open('', '_blank');
-    win.document.write(html);
-    win.document.close();
-}
-
-function imprimirChecklistConv() {
-    imprimirChecklistGenerico('conv_', [
-        'CERTIFICADO PAA', 'CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL', 'SOLICITUD PARA CONTRATAR',
-        'ESTUDIOS PREVIOS', 'MATRIZ DE RIESGO', 'AVISO DE CONVOCATORIA', 'PLIEGO DE CONDICIONES',
-        'PROPUESTAS RECIBIDAS', 'ACTA DE EVALUACIÓN DE PROPUESTAS', 'ACTA DE ADJUDICACIÓN',
-        'CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN', 'REGISTRO ÚNICO TRIBUTARIO (RUT)',
-        'CERTIFICADO ANTECEDENTES (DISCIPLINARIOS, FISCALES Y JUDICIALES)',
-        'FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT', 'MINUTA DE CONTRATO'
-    ], 'Convocatoria Pública');
-}
-
-function imprimirChecklistSub() {
-    imprimirChecklistGenerico('sub_', [
-        'CERTIFICADO PAA', 'CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL', 'SOLICITUD PARA CONTRATAR',
-        'ESTUDIOS PREVIOS', 'MATRIZ DE RIESGO', 'AVISO DE CONVOCATORIA / INVITACIÓN SUBASTA',
-        'REGLAS DE LA SUBASTA (PLIEGO)', 'ACTA DE HABILITACIÓN DE PROPONENTES',
-        'CONFIGURACIÓN DEL EVENTO DE SUBASTA (SECOP II)', 'ACTA DE CIERRE Y RESULTADO DE SUBASTA',
-        'CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN', 'REGISTRO ÚNICO TRIBUTARIO (RUT)',
-        'CERTIFICADO ANTECEDENTES (DISCIPLINARIOS, FISCALES Y JUDICIALES)',
-        'FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT', 'MINUTA DE CONTRATO'
-    ], 'Subasta Inversa');
-}
 
 
 function validarLogin() {
@@ -3634,9 +3392,102 @@ function cd1p_marcarCheckboxPorItem(numStr) {
     }
 }
 
-// Función llamada cuando se selecciona un archivo en la tabla del checklist
+// ══════════════════════════════════════════════════════════════
+// ENRUTAMIENTO DEL ANÁLISIS POR ÍTEM (CD1P)
+// 'ia'      → siempre Groq, con respaldo local automático si falla
+//             (ítems 4, 5, 9 y 23: los documentos más extensos).
+// 'local'   → siempre el motor local de reglas (nunca gasta cuota de Groq).
+// 'ninguno' → no se analiza, solo se registra el archivo cargado
+//             (ítems 12 y 13: documentos de identificación personal).
+// ══════════════════════════════════════════════════════════════
+const _MODO_ANALISIS_CD1P = {
+    1:'local', 2:'local', 3:'local', 4:'ia', 5:'ia', 6:'local', 7:'local', 8:'local',
+    9:'ia', 10:'local', 11:'local', 12:'ninguno', 13:'ninguno', 14:'local',
+    15:'local', 16:'local', 17:'local', 18:'local', 19:'local', 20:'local', 21:'local',
+    22:'local', 23:'ia'
+};
+
+// Sub-casillas puntuales sin análisis dentro de ítems con sub-documentos:
+// Cédula (20a) y Tarjeta Profesional (20c) del Revisor Fiscal, y Planillas
+// (21b) de Seguridad Social — documentos personales / pendientes de definir.
+const _SUBDOC_SIN_ANALISIS = ['20a', '20c', '21b'];
+
+function _modoAnalisisPorSufijo(sufijo) {
+    if (_SUBDOC_SIN_ANALISIS.indexOf(sufijo) !== -1) return 'ninguno';
+    const num = parseInt(sufijo);
+    return _MODO_ANALISIS_CD1P[num] || 'local';
+}
+
+function _analisisSinRequerir(numItem) {
+    return {
+        estado: 'ok', puntaje: 100,
+        titulo: ITEMS_CHECKLIST[numItem]?.nombre || `Ítem ${numItem}`,
+        hallazgos: [], advertencias: [], recomendaciones: [],
+        resumen: 'Documento de identificación — no requiere análisis.',
+        normativa: '', camposPresentes: [], camposAusentes: [],
+        sinAnalisis: true
+    };
+}
+
+// Analiza un documento ya cargado y "pendiente" (se dispara con el botón
+// "🔎 Analizar" de la casilla JURISKILLS, nunca automáticamente al subir el
+// archivo) — así no se gasta cuota de Groq si por error se cargó el
+// documento equivocado. Enruta a Groq o al motor local según el ítem.
+async function analizarDocumentoCD1P(clave) {
+    const val = estadoDocumentos[clave];
+    if (!val || !val.archivo) return;
+    const { numItem, archivo } = val;
+
+    estadoDocumentos[clave] = { numItem, archivo, analisis: null, estado: 'analizando' };
+    actualizarPanelAgente();
+
+    try {
+        const contenido = await leerArchivo(archivo);
+        const modo = _MODO_ANALISIS_CD1P[numItem] || 'local';
+        const analisis = modo === 'ia'
+            ? await analizarConIA(numItem, archivo.name, contenido)
+            : ejecutarAnalisisLocalReglas(numItem, archivo.name, contenido);
+
+        estadoDocumentos[clave] = { numItem, archivo, analisis, estado: analisis.estado };
+        actualizarPanelAgente();
+        if (typeof cd1p_actualizarAvance === 'function') cd1p_actualizarAvance();
+
+        if (numItem === 7 || numItem === 8) _aplicarCruceFechas7y8();
+
+    } catch (err) {
+        console.error('Error analizando documento:', err);
+
+        let mensajeError = 'No fue posible procesar el documento con Skills Inteligentes Jurídicos.';
+        const msg = err.message || '';
+        if (msg.includes('too large') || msg.includes('large') || msg.includes('413')) {
+            mensajeError = 'El archivo es demasiado grande. Use archivos de texto o PDF ligero.';
+        } else if (msg) {
+            mensajeError = msg.slice(0, 180);
+        }
+
+        estadoDocumentos[clave] = {
+            numItem, archivo,
+            analisis: {
+                estado: 'error',
+                titulo: ITEMS_CHECKLIST[numItem]?.nombre || `Ítem ${numItem}`,
+                hallazgos: [mensajeError], advertencias: [], recomendaciones: [],
+                resumen: 'Error al procesar el archivo.',
+                camposPresentes: [], camposAusentes: []
+            },
+            estado: 'error'
+        };
+        actualizarPanelAgente();
+        if (typeof cd1p_actualizarAvance === 'function') cd1p_actualizarAvance();
+    }
+}
+
+// Función llamada cuando se selecciona un archivo en la tabla del checklist.
+// Ya NO analiza automático: solo registra el archivo como "pendiente" (o
+// "sin análisis" para los ítems que no lo requieren) — el análisis real
+// arranca con el botón "🔎 Analizar" que aparece en la columna JURISKILLS.
 async function mostrarArchivo(input, elementoId) {
-    const numItem = parseInt(elementoId.replace('nombreArchivo_', ''));
+    const sufijo = elementoId.replace('nombreArchivo_', '');
+    const numItem = parseInt(sufijo);
     const divNombre = document.getElementById(elementoId);
 
     if (!input.files || input.files.length === 0) {
@@ -3647,48 +3498,19 @@ async function mostrarArchivo(input, elementoId) {
     const archivo = input.files[0];
 
     // ── Marcar el checkbox automáticamente al cargar el archivo ──
-    const sufijo = elementoId.replace('nombreArchivo_', '');
     cd1p_marcarCheckboxPorItem(sufijo);
 
-    if (divNombre) divNombre.innerHTML = `⏳ Analizando: <strong>${archivo.name}</strong>…`;
+    if (divNombre) divNombre.innerHTML = `✅ <strong>${archivo.name}</strong>`;
 
-    // Registrar como analizando
-    _lexconRegistrar(numItem, archivo, null, 'analizando');
-    actualizarPanelAgente();
-
-    try {
-        const contenido = await leerArchivo(archivo);
-        const analisis  = await analizarConIA(numItem, archivo.name, contenido);
-
-        _lexconRegistrar(numItem, archivo, analisis, analisis.estado);
-        if (divNombre) divNombre.innerHTML = `✅ <strong>${archivo.name}</strong>`;
-        actualizarPanelAgente();
-        if (typeof cd1p_actualizarAvance === 'function') cd1p_actualizarAvance();
-
-    } catch (err) {
-        console.error('Error analizando documento:', err);
-
-        let mensajeError = 'No fue posible procesar el documento con Skills Inteligentes Jurídicos.';
-        let recomError = [];
-        const msg = err.message || '';
-        if (msg.includes('too large') || msg.includes('large') || msg.includes('413')) {
-            mensajeError = 'El archivo es demasiado grande. Use archivos de texto o PDF ligero.';
-            recomError = ['Reduzca el tamaño del archivo antes de cargarlo.'];
-        } else if (msg) {
-            mensajeError = msg.slice(0, 180);
-        }
-
-        _lexconRegistrar(numItem, archivo, {
-            estado: 'error',
-            titulo: ITEMS_CHECKLIST[numItem]?.nombre || `Ítem ${numItem}`,
-            hallazgos: [mensajeError],
-            recomendaciones: recomError,
-            resumen: 'Error al procesar el archivo.'
-        }, 'error');
-        if (divNombre) divNombre.innerHTML = `⚠️ Error: <strong>${archivo.name}</strong>`;
-        actualizarPanelAgente();
-        if (typeof cd1p_actualizarAvance === 'function') cd1p_actualizarAvance();
+    const modo = _modoAnalisisPorSufijo(sufijo);
+    if (modo === 'ninguno') {
+        _lexconRegistrar(numItem, archivo, _analisisSinRequerir(numItem), 'sin_analisis');
+    } else {
+        _lexconRegistrar(numItem, archivo, null, 'pendiente');
     }
+
+    actualizarPanelAgente();
+    if (typeof cd1p_actualizarAvance === 'function') cd1p_actualizarAvance();
 }
 
 // ════════════════════════════════════════════════════
@@ -4582,12 +4404,14 @@ function actualizarPanelAgente() {
     }
 
     // Contar estados
-    let nOk = 0, nAdv = 0, nErr = 0, nAnal = 0;
+    let nOk = 0, nAdv = 0, nErr = 0, nAnal = 0, nPend = 0;
     items.forEach(([,v]) => {
         if (v.estado === 'ok') nOk++;
         else if (v.estado === 'advertencia') nAdv++;
         else if (v.estado === 'correccion' || v.estado === 'error') nErr++;
-        else nAnal++;
+        else if (v.estado === 'analizando') nAnal++;
+        else if (v.estado === 'pendiente') nPend++;
+        // 'sin_analisis' no suma a ningún contador — no requiere acción.
     });
 
     if (estadoBadge) {
@@ -4597,10 +4421,13 @@ function actualizarPanelAgente() {
             estadoBadge.textContent = '⏳ Analizando…';
         } else if (nErr > 0) {
             estadoBadge.className = 'ia-badge badge-error';
-            estadoBadge.textContent = `${nErr} corrección${nErr !== 1 ? 'es' : ''} requerida${nErr !== 1 ? 's' : ''}`;
+            estadoBadge.textContent = `${nErr} ${nErr !== 1 ? 'correcciones requeridas' : 'corrección requerida'}`;
         } else if (nAdv > 0) {
             estadoBadge.className = 'ia-badge badge-warning';
             estadoBadge.textContent = `${nAdv} advertencia${nAdv !== 1 ? 's' : ''}`;
+        } else if (nPend > 0) {
+            estadoBadge.className = 'ia-badge badge-warning';
+            estadoBadge.textContent = `${nPend} pendiente${nPend !== 1 ? 's' : ''} de analizar`;
         } else {
             estadoBadge.className = 'ia-badge badge-ok';
             estadoBadge.textContent = '✅ Todo en orden';
@@ -4608,7 +4435,7 @@ function actualizarPanelAgente() {
     }
 
     if (resumenGlobal) {
-        resumenGlobal.textContent = `${nOk} correctos · ${nAdv} con advertencias · ${nErr} con correcciones · ${nAnal} en análisis`;
+        resumenGlobal.textContent = `${nOk} correctos · ${nAdv} con advertencias · ${nErr} con correcciones · ${nPend} pendientes de analizar`;
     }
 
     // Agrupar entradas por numItem y renderizar cada una en su propia celda
@@ -4644,8 +4471,31 @@ function _renderTarjetasJuriskills(docs) {
             return;
         }
 
+        // Archivo cargado pero aún no analizado: se muestra con su botón
+        // "Analizar" en vez de disparar el análisis automático (así no se
+        // gasta cuota de Groq si por error se subió el documento equivocado).
+        if (val.estado === 'pendiente') {
+            const clavePend = (val.numItem ?? '') + '__' + (val.archivo?.name || '');
+            html += `<div style="padding:8px 0;${idxDoc>0?'border-top:1px solid #F1F5F9;':''}">
+              <div style="margin-bottom:8px;font-size:12px;color:#0B7A43;font-weight:600;">✅ <strong>${val.archivo?.name || ''}</strong></div>
+              <button class="btn" style="padding:10px 14px;font-size:13px;"
+                onclick="analizarDocumentoCD1P('${clavePend.replace(/'/g,"\\'")}')">🔎 Analizar</button>
+            </div>`;
+            return;
+        }
+
         const a = val.analisis;
         if (!a) return;
+
+        // Ítems que no requieren análisis (documentos de identificación): se
+        // muestra el archivo cargado sin badge ni barra de cumplimiento.
+        if (val.estado === 'sin_analisis' || a.sinAnalisis) {
+            html += `<div style="padding:8px 0;${idxDoc>0?'border-top:1px solid #F1F5F9;':''}">
+              <div style="font-size:12px;color:#0B7A43;font-weight:600;">✅ <strong>${val.archivo?.name || ''}</strong></div>
+              <div style="font-size:10.5px;color:#9CA3AF;font-style:italic;margin-top:2px;">Documento de identificación — sin análisis.</div>
+            </div>`;
+            return;
+        }
 
         const puntaje = a.puntaje ?? (a.estado==='ok'?90:a.estado==='advertencia'?65:30);
         const pColor  = puntaje>=80?'#22C55E':puntaje>=50?'#F59E0B':'#EF4444';
@@ -4788,27 +4638,38 @@ function _renderContenidoCompletoAnalisis(val) {
 }
 
 // Botón "Actualizar análisis": re-analizar todos los documentos cargados
+// Botón "⟳ Actualizar análisis": solo RE-analiza documentos que ya se habían
+// analizado antes (estado ok/advertencia/correccion/error) — los que están
+// "pendiente" (nunca se presionó su botón "Analizar") o "sin análisis" se
+// dejan tal cual, para no gastar cuota de Groq en documentos que el usuario
+// nunca pidió analizar.
 async function reAnalizarTodo() {
     const btn = document.querySelector('.btn-actualizar');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Analizando…'; }
 
-    // Marcar todos como "analizando"
-    Object.keys(estadoDocumentos).forEach(clave => {
-        if (estadoDocumentos[clave].archivo) {
-            estadoDocumentos[clave].estado   = 'analizando';
-            estadoDocumentos[clave].analisis = null;
-        }
+    const estadosReanalizables = ['ok', 'advertencia', 'correccion', 'error'];
+    const clavesAReanalizar = Object.entries(estadoDocumentos)
+        .filter(([, val]) => val.archivo && estadosReanalizables.indexOf(val.estado) !== -1)
+        .map(([clave]) => clave);
+
+    clavesAReanalizar.forEach(clave => {
+        estadoDocumentos[clave].estado   = 'analizando';
+        estadoDocumentos[clave].analisis = null;
     });
     actualizarPanelAgente();
 
-    // Re-analizar todos en paralelo
-    const promesas = Object.entries(estadoDocumentos).map(async ([clave, val]) => {
-        if (!val.archivo) return;
+    let tocoItem7u8 = false;
+    const promesas = clavesAReanalizar.map(async (clave) => {
+        const val = estadoDocumentos[clave];
         const numItem = val.numItem;
         try {
             const contenido = await leerArchivo(val.archivo);
-            const analisis  = await analizarConIA(numItem, val.archivo.name, contenido);
+            const modo = _MODO_ANALISIS_CD1P[numItem] || 'local';
+            const analisis = modo === 'ia'
+                ? await analizarConIA(numItem, val.archivo.name, contenido)
+                : ejecutarAnalisisLocalReglas(numItem, val.archivo.name, contenido);
             estadoDocumentos[clave] = { numItem, archivo: val.archivo, analisis, estado: analisis.estado };
+            if (numItem === 7 || numItem === 8) tocoItem7u8 = true;
         } catch (err) {
             console.error(`Error re-analizando ítem ${numItem}:`, err);
             estadoDocumentos[clave].estado   = 'error';
@@ -4824,6 +4685,7 @@ async function reAnalizarTodo() {
     });
 
     await Promise.all(promesas);
+    if (tocoItem7u8) _aplicarCruceFechas7y8();
     if (btn) { btn.disabled = false; btn.textContent = '⟳ Actualizar análisis'; }
 }
 
@@ -4923,6 +4785,25 @@ document.addEventListener('DOMContentLoaded', function(){
 
 });
 
+// Cerrar cualquier modal abierto con la tecla Escape — antes solo se podía
+// cerrar con la "X" o con clic fuera. El sitio usa varios patrones de modal
+// distintos (la clase genérica ".modal", el modal de JURISKILLS creado por
+// JS, los mini-modales de PAA/CDP de Directa 3 Invitaciones, etc.), así que
+// en vez de enumerar cada uno se detecta cualquier elemento visible cuyo id
+// contenga "modal" (sin importar mayúsculas) y cuya posición sea "fixed"
+// (así nunca se confunde con, por ejemplo, un <div> que solo muestra el
+// nombre de un archivo y que por coincidencia también tiene "modal" en el id).
+document.addEventListener('keydown', function(e){
+    if (e.key !== 'Escape' && e.key !== 'Esc') return;
+    document.querySelectorAll('[id]').forEach(function(el){
+        if (el.id.toLowerCase().indexOf('modal') === -1) return;
+        const cs = getComputedStyle(el);
+        if (cs.position !== 'fixed' || cs.display === 'none') return;
+        el.style.display = 'none';
+    });
+    document.body.style.overflow = 'auto';
+});
+
 // ===== GESTIÓN DE SKILLS INTELIGENTES JURÍDICOS =====
 // Las credenciales se manejan internamente sin exposición de API Keys
 
@@ -4952,6 +4833,9 @@ if (_modalApiKey) {
  * @param {string}           checkId     - ID del checkbox del ítem padre
  * @param {string[]}         todosIds    - Array con los IDs de todos los inputs del ítem
  */
+// Ítems con sub-documentos (15, 20, 21). Igual que mostrarArchivo(): ya no
+// analiza automático, solo registra "pendiente" (o "sin análisis" para las
+// sub-casillas que no lo requieren, ver _SUBDOC_SIN_ANALISIS).
 async function mostrarArchivoSub(input, divId, checkId, todosIds) {
     const div = document.getElementById(divId);
     if (!div) return;
@@ -4962,28 +4846,16 @@ async function mostrarArchivoSub(input, divId, checkId, todosIds) {
         return;
     }
 
-    const archivo  = input.files[0];
-    const numItem  = parseInt(checkId.replace('check_', ''));
-    div.innerHTML  = `⏳ Analizando: <strong>${archivo.name}</strong>…`;
+    const archivo = input.files[0];
+    const numItem = parseInt(checkId.replace('check_', ''));
+    const sufijo  = divId.replace('nombreArchivo_', ''); // ej. '15a', '20b', '21a'
 
-    _lexconRegistrar(numItem, archivo, null, 'analizando');
-    actualizarPanelAgente();
-    actualizarProgresoSub(checkId, todosIds);
+    div.innerHTML = `✅ <strong>${archivo.name}</strong>`;
 
-    try {
-        const contenido = await leerArchivo(archivo);
-        const analisis  = await analizarConIA(numItem, archivo.name, contenido);
-        _lexconRegistrar(numItem, archivo, analisis, analisis.estado);
-        div.innerHTML = `✅ <strong>${archivo.name}</strong>`;
-    } catch (err) {
-        _lexconRegistrar(numItem, archivo, {
-            estado: 'error',
-            titulo: ITEMS_CHECKLIST[numItem]?.nombre || `Ítem ${numItem}`,
-            hallazgos: ['No se pudo analizar el archivo: ' + (err.message || 'error desconocido')],
-            recomendaciones: [],
-            resumen: 'Error al procesar el archivo.'
-        }, 'error');
-        div.innerHTML = `⚠️ Error: <strong>${archivo.name}</strong>`;
+    if (_SUBDOC_SIN_ANALISIS.indexOf(sufijo) !== -1) {
+        _lexconRegistrar(numItem, archivo, _analisisSinRequerir(numItem), 'sin_analisis');
+    } else {
+        _lexconRegistrar(numItem, archivo, null, 'pendiente');
     }
 
     actualizarPanelAgente();
@@ -5374,7 +5246,7 @@ function _analizarRedaccion(texto, textoLow, numItem) {
         const detalles = aniosUnicos.map(anio => {
             const casos = instanciasFecha.filter(i => i.anio === anio);
             const primerCaso = casos[0];
-            return `<span class="rd-item"><span class="rd-anio">Año ${anio}</span> (aparece ${casos.length} vez${casos.length > 1 ? 'es' : ''}) — primera ocurrencia línea ${primerCaso.linea}: <span class="rd-ctx">${primerCaso.contexto}</span></span>`;
+            return `<span class="rd-item"><span class="rd-anio">Año ${anio}</span> (aparece ${casos.length} ${casos.length > 1 ? 'veces' : 'vez'}) — primera ocurrencia línea ${primerCaso.linea}: <span class="rd-ctx">${primerCaso.contexto}</span></span>`;
         }).join('');
         obs.push(`✏️||FECHAS_VIEJAS||${aniosUnicos.join(',')}||${detalles}`);
     }
@@ -5382,23 +5254,79 @@ function _analizarRedaccion(texto, textoLow, numItem) {
     return obs;
 }
 
-function ejecutarSkillJuridico(numItem, nombreArchivo, contenido) {
-    const skill = typeof SKILLS_JURIDICOS !== 'undefined' ? SKILLS_JURIDICOS[numItem] : null;
+// Recomendaciones específicas según el tipo de observación de redacción
+// detectada por _analizarRedaccion() — compartida entre el ítem con reglas
+// normativas (SKILLS_JURIDICOS) y el camino "sin reglas específicas" de abajo,
+// para no duplicar este bloque dos veces.
+function _recomendacionesRedaccion(obsRedaccion) {
+    const recomendaciones = [];
+    obsRedaccion.forEach(obs => {
+        if (obs.includes('||CAMPOS_VACIOS||')) {
+            const n = obs.split('||')[2];
+            recomendaciones.push(`🖊️ Complete los ${n} campo(s) sin diligenciar identificados: reemplace cada marcador (corchetes, guiones, "pendiente") con la información real antes de firmar y radicar el documento.`);
+        } else if (obs.includes('||INCOMPLETO||')) {
+            recomendaciones.push('🖊️ El documento presenta secciones con texto muy breve. Verifique que todos los campos del formulario hayan sido debidamente diligenciados y que no sea una versión preliminar.');
+        } else if (obs.includes('||REPETICION||')) {
+            recomendaciones.push('🖊️ Se detectaron párrafos duplicados. Revise el documento para asegurarse de que no es una plantilla copiada sin personalizar; elimine las repeticiones innecesarias.');
+        } else if (obs.includes('||OBJETO_AUSENTE||')) {
+            recomendaciones.push('🖊️ Incluya en el documento una sección clara de "Objeto" o "Necesidad" que describa lo que se va a contratar, conforme al Art. 12 Res. 0456/2024 y Art. 20 Acuerdo 015/2024.');
+        } else if (obs.includes('||FECHAS_VIEJAS||')) {
+            const anios = obs.split('||')[2];
+            recomendaciones.push(`🖊️ Actualice o justifique las fechas de vigencia ${anios} encontradas en el documento. Si corresponden a normas o referencias vigentes, indíquelo expresamente para que no genere confusión sobre la vigencia fiscal del proceso.`);
+        }
+    });
+    return recomendaciones;
+}
 
-    if (!skill) {
-        return {
-            estado: 'ok', puntaje: 100,
-            titulo: `Ítem ${numItem}`,
-            hallazgos: [], advertencias: [], recomendaciones: [],
-            resumen: `✅ Documento "${nombreArchivo}" registrado en el expediente contractual.`,
-            normativa: 'Acuerdo 015/2024 – Resolución 0456/2024 HSLV',
-            camposPresentes: [], camposAusentes: []
-        };
-    }
+function ejecutarSkillJuridico(numItem, nombreArchivo, contenido) {
+    // El ítem 6 (Matriz de riesgo) se revisa deliberadamente SOLO por redacción
+    // (repeticiones, campos sin diligenciar, fechas viejas, etc.) — sin el
+    // chequeo normativo de palabras clave que sí aplica a los demás ítems.
+    const skill = (numItem === 6)
+        ? null
+        : (typeof SKILLS_JURIDICOS !== 'undefined' ? SKILLS_JURIDICOS[numItem] : null);
 
     const texto     = (contenido.tipo === 'texto' ? contenido.data : '') || '';
     const textoLow  = texto.toLowerCase();
     const esBinario = contenido.tipo === 'pdf' || contenido.tipo === 'imagen';
+
+    if (!skill) {
+        // Sin reglas normativas específicas para este ítem (o ítem 6, forzado
+        // arriba): igual se revisa redacción/repetición y concordancia entre
+        // documentos del expediente — antes esto se saltaba por completo para
+        // los ítems sin entrada en SKILLS_JURIDICOS.
+        if (!esBinario && textoLow.length > 40) _extraerContexto(numItem, nombreArchivo, textoLow);
+
+        const obsRedaccion    = (!esBinario && textoLow.length > 40) ? _analizarRedaccion(texto, textoLow, numItem) : [];
+        const obsConcordancia = (!esBinario && textoLow.length > 40) ? _verificarConcordancia(numItem, nombreArchivo, textoLow) : [];
+        const concordanciaErr = obsConcordancia.filter(a => a.startsWith('🔴'));
+        const concordanciaAdv = obsConcordancia.filter(a => !a.startsWith('🔴'));
+
+        const hallazgos    = [...concordanciaErr];
+        const advertencias = [...obsRedaccion, ...concordanciaAdv];
+
+        let estado = 'ok';
+        if (hallazgos.length > 0)         estado = 'correccion';
+        else if (advertencias.length > 0) estado = 'advertencia';
+        if (esBinario && estado === 'ok') estado = 'advertencia';
+
+        const recomendaciones = _recomendacionesRedaccion(obsRedaccion);
+        if (esBinario) recomendaciones.push('Documento PDF/imagen recibido. Revise manualmente el contenido.');
+        if (obsConcordancia.length > 0) recomendaciones.push('🔗 Verifique la concordancia de datos (objeto, NIT, CDP) entre todos los documentos del expediente antes de continuar con la siguiente etapa del proceso.');
+
+        let resumen;
+        if (estado === 'ok')               resumen = `✅ Documento "${nombreArchivo}" registrado en el expediente, sin observaciones de redacción.`;
+        else if (estado === 'advertencia') resumen = `⚠️ ${advertencias.length} observación(es) de redacción o concordancia.`;
+        else                                resumen = `🔴 ${hallazgos.length} inconsistencia(s) detectada(s) frente a otros documentos del expediente.`;
+
+        return {
+            estado, puntaje: estado === 'ok' ? 100 : estado === 'advertencia' ? 70 : 40,
+            titulo: ITEMS_CHECKLIST[numItem]?.nombre || `Ítem ${numItem}`,
+            hallazgos, advertencias, recomendaciones, resumen,
+            normativa: 'Acuerdo 015/2024 – Resolución 0456/2024 HSLV',
+            camposPresentes: [], camposAusentes: []
+        };
+    }
 
     // ── Extraer y acumular contexto del expediente ──
     if (!esBinario && textoLow.length > 40) {
@@ -5495,26 +5423,8 @@ function ejecutarSkillJuridico(numItem, nombreArchivo, contenido) {
     else
         resumen = `🔴 ${skill.nombre}: ${hallazgos.length} incumplimiento(s) normativo(s) o de concordancia detectado(s).`;
 
-    const recomendaciones = [];
+    const recomendaciones = _recomendacionesRedaccion(obsRedaccion);
     if (esBinario) recomendaciones.push('Documento PDF/imagen recibido. Revise manualmente el contenido según la normativa: ' + skill.normativa);
-
-    // Recomendaciones específicas por tipo de observación de redacción
-    obsRedaccion.forEach(obs => {
-        if (obs.includes('||CAMPOS_VACIOS||')) {
-            const n = obs.split('||')[2];
-            recomendaciones.push(`🖊️ Complete los ${n} campo(s) sin diligenciar identificados: reemplace cada marcador (corchetes, guiones, "pendiente") con la información real antes de firmar y radicar el documento.`);
-        } else if (obs.includes('||INCOMPLETO||')) {
-            recomendaciones.push('🖊️ El documento presenta secciones con texto muy breve. Verifique que todos los campos del formulario hayan sido debidamente diligenciados y que no sea una versión preliminar.');
-        } else if (obs.includes('||REPETICION||')) {
-            recomendaciones.push('🖊️ Se detectaron párrafos duplicados. Revise el documento para asegurarse de que no es una plantilla copiada sin personalizar; elimine las repeticiones innecesarias.');
-        } else if (obs.includes('||OBJETO_AUSENTE||')) {
-            recomendaciones.push('🖊️ Incluya en el documento una sección clara de "Objeto" o "Necesidad" que describa lo que se va a contratar, conforme al Art. 12 Res. 0456/2024 y Art. 20 Acuerdo 015/2024.');
-        } else if (obs.includes('||FECHAS_VIEJAS||')) {
-            const anios = obs.split('||')[2];
-            recomendaciones.push(`🖊️ Actualice o justifique las fechas de vigencia ${anios} encontradas en el documento. Si corresponden a normas o referencias vigentes, indíquelo expresamente para que no genere confusión sobre la vigencia fiscal del proceso.`);
-        }
-    });
-
     if (obsConcordancia.length > 0)   recomendaciones.push('🔗 Verifique la concordancia de datos (objeto, NIT, CDP) entre todos los documentos del expediente antes de continuar con la siguiente etapa del proceso.');
     if (advertencias.length > 0 && obsRedaccion.length === 0 && obsConcordancia.length === 0) recomendaciones.push(...advertencias.slice(0,3));
 
@@ -5527,6 +5437,220 @@ function ejecutarSkillJuridico(numItem, nombreArchivo, contenido) {
         camposPresentes,
         camposAusentes,
         normativa: skill.normativa
+    };
+}
+
+// ══════════════════════════════════════════════════════════════
+// MOTOR LOCAL DE REGLAS DE VIGENCIA — ítems que NUNCA pasan por IA
+// (ver _MODO_ANALISIS_CD1P más abajo). Reglas simples pedidas por el
+// usuario: la mayoría de estos ítems son documentos cortos donde solo
+// importa que la fecha de expedición (o similar) esté dentro de la
+// ventana de vigencia exigida — comparada siempre contra la fecha real
+// del sistema en el momento de analizar, no una fecha guardada aparte.
+// ══════════════════════════════════════════════════════════════
+
+const _MESES_ES = {
+    enero:1, febrero:2, marzo:3, abril:4, mayo:5, junio:6, julio:7,
+    agosto:8, septiembre:9, setiembre:9, octubre:10, noviembre:11, diciembre:12
+};
+
+// Extrae fechas reconocibles de un texto: "dd/mm/yyyy", "dd-mm-yyyy" y la
+// forma textual típica de documentos colombianos "dd de <mes> de yyyy".
+function _extraerFechasTexto(texto) {
+    const fechas = [];
+    if (!texto) return fechas;
+
+    const reNum = /\b(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})\b/g;
+    let m;
+    while ((m = reNum.exec(texto)) !== null) {
+        const d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+        if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) fechas.push(new Date(y, mo - 1, d));
+    }
+
+    const reTexto = /\b(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s+de\s+(20\d{2})\b/gi;
+    while ((m = reTexto.exec(texto)) !== null) {
+        const d  = parseInt(m[1], 10);
+        const mo = _MESES_ES[m[2].toLowerCase()];
+        const y  = parseInt(m[3], 10);
+        if (d >= 1 && d <= 31 && mo) fechas.push(new Date(y, mo - 1, d));
+    }
+
+    return fechas;
+}
+
+// Heurística simple: de todas las fechas encontradas, se toma la MÁS RECIENTE
+// como "fecha probable de expedición" — funciona bien en documentos cortos de
+// una sola fecha. No es infalible (un documento con varias fechas podría
+// confundirla), por eso siempre se recomienda revisión manual si hay dudas.
+function _fechaProbableExpedicion(texto) {
+    const fechas = _extraerFechasTexto(texto);
+    if (fechas.length === 0) return null;
+    return new Date(Math.max.apply(null, fechas.map(f => f.getTime())));
+}
+
+// Regla de vigencia por ítem: 'anio' (mismo año), 'mes' (mismo mes Y año),
+// 'dias30' (máx. 30 días de antigüedad), 'meses3' (máx. ~3 meses).
+const _REGLA_FECHA_LOCAL = {
+    1:'anio', 2:'anio', 3:'anio', 7:'anio', 8:'anio', 14:'anio',
+    11:'dias30',
+    15:'mes', 16:'mes', 17:'mes', 18:'mes', 20:'mes', 21:'mes', 22:'mes',
+    19:'meses3'
+};
+
+function _verificarVigenciaFecha(numItem, texto) {
+    const regla = _REGLA_FECHA_LOCAL[numItem];
+    if (!regla) return null;
+
+    const fecha = _fechaProbableExpedicion(texto);
+    const hoy   = new Date();
+
+    if (!fecha) {
+        return {
+            ok: false, fechaDetectada: null,
+            hallazgos: [],
+            advertencias: ['🗓️ No se identificó una fecha de expedición (o similar) legible en el documento. Verifique manualmente que esté vigente.']
+        };
+    }
+
+    let ok = true, motivo = '';
+    if (regla === 'anio') {
+        ok = fecha.getFullYear() === hoy.getFullYear();
+        motivo = `El documento debe tener fecha del año vigente (${hoy.getFullYear()}). Fecha detectada: ${fecha.toLocaleDateString('es-CO')}.`;
+    } else if (regla === 'mes') {
+        ok = fecha.getFullYear() === hoy.getFullYear() && fecha.getMonth() === hoy.getMonth();
+        motivo = `El documento debe tener fecha del mes y año vigente (${hoy.toLocaleDateString('es-CO', { month:'long', year:'numeric' })}). Fecha detectada: ${fecha.toLocaleDateString('es-CO')}.`;
+    } else if (regla === 'dias30') {
+        const dias = Math.round((hoy - fecha) / 86400000);
+        ok = dias >= 0 && dias <= 30;
+        motivo = `La fecha de expedición debe tener máximo 30 días de antigüedad. Fecha detectada: ${fecha.toLocaleDateString('es-CO')} (${dias} día(s)).`;
+    } else if (regla === 'meses3') {
+        const dias = Math.round((hoy - fecha) / 86400000);
+        ok = dias >= 0 && dias <= 92;
+        motivo = `La vigencia no debe superar los 3 meses. Fecha detectada: ${fecha.toLocaleDateString('es-CO')} (${dias} día(s)).`;
+    }
+
+    return {
+        ok, fechaDetectada: fecha,
+        hallazgos:    ok ? [] : ['🗓️ ' + motivo],
+        advertencias: []
+    };
+}
+
+// Ítem 10 (Experiencia): que el objeto declarado en el formulario aparezca,
+// aunque sea parcialmente, en el texto del documento cargado.
+function _verificarObjetoContractual(texto) {
+    const campo  = document.getElementById('mp_objeto');
+    const objeto = campo ? (campo.value || '').trim() : '';
+    if (!objeto || objeto.length < 6) return null;
+
+    const objNorm   = _normalizarTexto(objeto);
+    const textoNorm = _normalizarTexto(texto);
+    const palabras  = objNorm.split(/\s+/).filter(p => p.length >= 4);
+    if (palabras.length === 0) return null;
+
+    const coinciden = palabras.filter(p => textoNorm.includes(p)).length;
+    const ok = coinciden >= Math.max(2, Math.ceil(palabras.length * 0.5));
+
+    return {
+        ok,
+        hallazgos: ok ? [] : [`🔎 No se encontró en el documento un texto similar al Objeto Contractual declarado ("${objeto.slice(0, 80)}${objeto.length > 80 ? '…' : ''}"). Verifique que corresponda al mismo proceso.`],
+        advertencias: []
+    };
+}
+
+// Cruce ítem 7 (Anexo IO – Presentación de la Propuesta) vs ítem 8 (Propuesta):
+// la fecha del ítem 7 no puede ser anterior a la fecha del ítem 8. Se aplica
+// después de analizar cualquiera de los dos, cuando ambos ya tienen una fecha
+// detectada — y se retira sola si un re-análisis deja de contradecirla.
+function _aplicarCruceFechas7y8() {
+    const entrada7 = Object.values(estadoDocumentos).find(v => v.numItem === 7 && v.analisis && v.analisis._fechaDetectadaISO);
+    const entrada8 = Object.values(estadoDocumentos).find(v => v.numItem === 8 && v.analisis && v.analisis._fechaDetectadaISO);
+    if (!entrada7 || !entrada8) return;
+
+    const fecha7 = new Date(entrada7.analisis._fechaDetectadaISO);
+    const fecha8 = new Date(entrada8.analisis._fechaDetectadaISO);
+    const prefijoAlerta = '🔗 La fecha detectada en el Anexo IO – Presentación de la Propuesta (ítem 7:';
+    const alerta = `${prefijoAlerta} ${fecha7.toLocaleDateString('es-CO')}) es anterior a la fecha detectada en la Propuesta (ítem 8: ${fecha8.toLocaleDateString('es-CO')}). Verifique el orden de estos documentos.`;
+
+    const yaEstaba = entrada7.analisis.hallazgos.some(h => h.startsWith(prefijoAlerta));
+
+    if (fecha7 < fecha8) {
+        if (!yaEstaba) {
+            entrada7.analisis.hallazgos.push(alerta);
+            entrada7.analisis.estado  = 'correccion';
+            entrada7.estado           = 'correccion';
+            entrada7.analisis.puntaje = Math.max(0, (entrada7.analisis.puntaje || 0) - 20);
+        }
+    } else if (yaEstaba) {
+        entrada7.analisis.hallazgos = entrada7.analisis.hallazgos.filter(h => !h.startsWith(prefijoAlerta));
+        if (entrada7.analisis.hallazgos.length === 0) {
+            entrada7.analisis.estado = entrada7.analisis.advertencias.length ? 'advertencia' : 'ok';
+            entrada7.estado          = entrada7.analisis.estado;
+        }
+    }
+    actualizarPanelAgente();
+}
+
+// Motor local completo para los ítems que NUNCA pasan por IA: reutiliza
+// ejecutarSkillJuridico() (palabras clave + redacción + concordancia) como
+// base y le suma, según el ítem, la regla de vigencia de fecha y/o el cruce
+// contra el Objeto Contractual del formulario.
+function ejecutarAnalisisLocalReglas(numItem, nombreArchivo, contenido) {
+    const base      = ejecutarSkillJuridico(numItem, nombreArchivo, contenido);
+    const esBinario = contenido.tipo === 'pdf' || contenido.tipo === 'imagen';
+    const texto     = contenido.tipo === 'texto' ? (contenido.data || '') : '';
+
+    const hallazgosExtra    = [];
+    const advertenciasExtra = [];
+    let fechaDetectadaISO   = null;
+
+    if (esBinario) {
+        advertenciasExtra.push('🗓️ Documento sin texto legible (imagen o PDF escaneado): no fue posible verificar automáticamente la fecha de vigencia. Revise manualmente.');
+    } else if (texto.length > 15) {
+        const resFecha = _verificarVigenciaFecha(numItem, texto);
+        if (resFecha) {
+            hallazgosExtra.push(...resFecha.hallazgos);
+            advertenciasExtra.push(...resFecha.advertencias);
+            if (resFecha.fechaDetectada) fechaDetectadaISO = resFecha.fechaDetectada.toISOString();
+        }
+
+        if (numItem === 10) {
+            const resObjeto = _verificarObjetoContractual(texto);
+            if (resObjeto) {
+                hallazgosExtra.push(...resObjeto.hallazgos);
+                advertenciasExtra.push(...resObjeto.advertencias);
+            }
+        }
+    }
+
+    const hallazgos    = [...base.hallazgos, ...hallazgosExtra];
+    const advertencias = [...base.advertencias, ...advertenciasExtra];
+
+    let estado = 'ok';
+    if (hallazgos.length > 0)         estado = 'correccion';
+    else if (advertencias.length > 0) estado = 'advertencia';
+
+    const puntaje = (hallazgosExtra.length + advertenciasExtra.length) === 0
+        ? base.puntaje
+        : Math.max(0, (base.puntaje ?? 100) - hallazgosExtra.length * 25 - advertenciasExtra.length * 10);
+
+    let resumen = base.resumen;
+    if (hallazgosExtra.length > 0 || advertenciasExtra.length > 0) {
+        resumen = estado === 'correccion'
+            ? `🔴 ${base.titulo}: ${hallazgos.length} incumplimiento(s) detectado(s) (incluye vigencia/fecha).`
+            : `⚠️ ${base.titulo}: revise ${advertencias.length} observación(es) (incluye vigencia/fecha).`;
+    }
+
+    return {
+        estado, puntaje, resumen,
+        titulo: base.titulo,
+        hallazgos, advertencias,
+        recomendaciones: base.recomendaciones,
+        camposPresentes: base.camposPresentes,
+        camposAusentes: base.camposAusentes,
+        normativa: base.normativa,
+        motor: 'local_reglas',
+        _fechaDetectadaISO: fechaDetectadaISO
     };
 }
 

@@ -64,6 +64,18 @@ Deno.serve(async (req: Request) => {
         `como incumplimiento aquí — asume que ese contenido se revisará en su propio ítem del checklist.\n`
       : '';
 
+    // El ítem 5 (Estudios Previos) es el más importante de todo el expediente
+    // — a petición del usuario, su análisis debe ser el más estricto de los
+    // 23 ítems, sin indulgencia con menciones superficiales de un requisito.
+    const bloqueEstricto = numItem === 5
+      ? ' Este es el ítem MÁS IMPORTANTE de todo el expediente contractual (Estudios Previos) — sé el más ' +
+        'estricto y riguroso de todos los ítems del checklist. Si un criterio obligatorio solo se menciona de ' +
+        'forma superficial (una frase genérica, sin desarrollo real ni datos concretos), trátalo como AUSENTE, ' +
+        'no como presente. Cualquier requisito obligatorio que falte debe reportarse siempre con estado ' +
+        '"correccion" (nunca rebajarlo a "advertencia"). Ante la duda de si un criterio cumple o no, decide que ' +
+        'NO cumple y explica exactamente por qué en el hallazgo correspondiente.'
+      : '';
+
     const reglasComunes =
       'Responde EXCLUSIVAMENTE con un objeto JSON (sin texto fuera del JSON) con EXACTAMENTE estas claves: ' +
       '{"estado":"ok|advertencia|correccion","puntaje":0-100,"resumen":"string breve",' +
@@ -97,7 +109,7 @@ Deno.serve(async (req: Request) => {
         'mismo elemento SÍ aparece en la lista de presentes, DESCÁRTALA (ya quedó resuelta por otra parte del ' +
         'documento) — no la incluyas en tu resultado final. ' +
         '3) No pidas ver el documento de nuevo, trabaja solo con estas listas. ' +
-        reglasComunes + bloqueOtrosItems;
+        reglasComunes + bloqueOtrosItems + bloqueEstricto;
 
       const presentesTxt = (camposPresentesConocidos || []).length
         ? (camposPresentesConocidos as string[]).map((c) => `- ${c}`).join('\n')
@@ -120,7 +132,7 @@ Deno.serve(async (req: Request) => {
         'Eres un abogado revisor de contratación pública colombiana (Hospital Susana López de Valencia, ' +
         'Acuerdo 015/2024, Resolución 0456/2024, Ley 80/1993, Decreto 1082/2015). Revisas UN documento de un ' +
         'expediente de Contratación Directa (1 propuesta) contra los criterios normativos dados. ' +
-        reglasComunes + bloqueOtrosItems +
+        reglasComunes + bloqueOtrosItems + bloqueEstricto +
         (esDocumentoDividido
           ? ' ESTE DOCUMENTO ES MUY LARGO Y SE DIVIDIÓ EN VARIAS PARTES PARA QUE PUEDAS LEERLO COMPLETO. ' +
             'Solo estás viendo UNA parte. Un requisito que no aparece en esta parte podría estar en otra ' +
