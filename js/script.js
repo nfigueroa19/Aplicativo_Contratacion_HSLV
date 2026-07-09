@@ -3442,7 +3442,7 @@ async function analizarDocumentoCD1P(clave) {
     actualizarPanelAgente();
 
     try {
-        const contenido = await leerArchivo(archivo);
+        const contenido = await leerArchivo(archivo, (msg) => _reportarProgresoOCR(clave, msg));
         const modo = _MODO_ANALISIS_CD1P[numItem] || 'local';
         const analisis = modo === 'ia'
             ? await analizarConIA(numItem, archivo.name, contenido)
@@ -3798,15 +3798,23 @@ function histU_quitarVersion(prefijo, num, id) {
     };
 })();
 
-// Leer el archivo como texto o base64
-async function leerArchivo(archivo) {
+// Leer el archivo como texto o base64. `onProgress(mensaje)` es opcional —
+// se usa para avisar el avance del OCR en documentos escaneados, que puede
+// tardar bastante (varios segundos por página) al no tener tope de páginas.
+async function leerArchivo(archivo, onProgress) {
     const tipo = archivo.type || '';
     const nombre = archivo.name.toLowerCase();
 
     if (tipo === 'application/pdf' || nombre.endsWith('.pdf')) {
         // PDF: primero se intenta extraer el texto real con pdf.js (si el PDF tiene
-        // capa de texto, p.ej. exportado desde Word). Si no se logra (PDF escaneado
-        // sin texto), se cae al comportamiento anterior de solo enviar el base64.
+        // capa de texto, p.ej. exportado desde Word). Si no se logra (documento
+        // escaneado), se aplica OCR con Tesseract.js sobre cada página renderizada
+        // como imagen. Solo si el OCR también falla o no rinde texto suficiente,
+        // se cae al comportamiento anterior de enviar el base64 sin analizar —
+        // guardando el MOTIVO exacto (red vs. documento realmente sin texto) para
+        // que el mensaje que ve el usuario no diga "parece un escaneo" cuando en
+        // realidad fue, por ejemplo, un fallo de red cargando el lector.
+        let motivoSinTexto = 'El documento no tiene texto legible (parece un PDF escaneado o una imagen), y no fue posible extraerlo con OCR.';
         try {
             const textoExtraido = await _pdfATextoConTablas(archivo);
             if (textoExtraido && textoExtraido.replace(/\s/g, '').length > 40) {
@@ -3816,22 +3824,56 @@ async function leerArchivo(archivo) {
                 // ver analizarConGroq().
                 return { tipo: 'texto', data: textoExtraido.slice(0, 300000) };
             }
+            const chars = textoExtraido ? textoExtraido.replace(/\s/g, '').length : 0;
+            console.warn(`PDF procesado pero con muy poco texto extraído (${chars} caracteres) — probablemente es un PDF escaneado, se intentará OCR: ${archivo.name}`);
         } catch (e) {
-            console.warn('No se pudo extraer texto del PDF con pdf.js, se usará solo el archivo:', e);
+            console.warn('No se pudo extraer texto del PDF con pdf.js (fallo técnico, no necesariamente un escaneo), se intentará OCR:', e);
         }
+
+        try {
+            if (onProgress) onProgress('🔎 Extrayendo texto con OCR (puede tardar varios minutos en documentos largos)…');
+            const textoOCR = await _pdfEscaneadoAOcr(archivo, onProgress);
+            if (textoOCR && textoOCR.replace(/\s/g, '').length > 40) {
+                return { tipo: 'texto', data: textoOCR.slice(0, 300000), motorTexto: 'ocr' };
+            }
+            console.warn(`OCR aplicado pero con muy poco texto extraído del PDF: ${archivo.name}`);
+        } catch (e) {
+            motivoSinTexto = 'No se pudo cargar o procesar el OCR (posible problema de conexión). Intente analizar de nuevo.';
+            console.warn('Falló el OCR del PDF escaneado con Tesseract.js:', e);
+        }
+
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onerror = () => reject(new Error('No se pudo leer el archivo PDF'));
             reader.onload = () => resolve({
                 tipo: 'pdf',
                 data: reader.result.split(',')[1],
-                mimeType: 'application/pdf'
+                mimeType: 'application/pdf',
+                motivoSinTexto
             });
             reader.readAsDataURL(archivo);
         });
 
     } else if (tipo.startsWith('image/') || /\.(png|jpg|jpeg|gif|webp)$/.test(nombre)) {
-        // Imagen: base64
+        // Imagen: se intenta OCR con Tesseract.js primero (fotos de cédulas,
+        // capturas de pantalla de certificados, etc. suelen tener texto legible).
+        // Si no rinde texto suficiente (ej. una firma o un logo), se cae al
+        // comportamiento anterior de enviar el base64 sin analizar.
+        try {
+            if (onProgress) onProgress('🔎 Extrayendo texto de la imagen con OCR…');
+            const canvasImagen = await _archivoACanvas(archivo);
+            _preprocesarCanvasOCR(canvasImagen);
+            const textoOCR = await _ocrImagen(canvasImagen, (pct) => {
+                if (onProgress) onProgress(`🔎 Extrayendo texto de la imagen con OCR… ${pct}%`);
+            });
+            if (textoOCR && textoOCR.replace(/\s/g, '').length > 40) {
+                return { tipo: 'texto', data: textoOCR.slice(0, 300000), motorTexto: 'ocr' };
+            }
+            console.warn(`OCR aplicado pero con muy poco texto extraído de la imagen: ${archivo.name}`);
+        } catch (e) {
+            console.warn('Falló el OCR de la imagen con Tesseract.js:', e);
+        }
+
         return new Promise((resolve, reject) => {
             const mimeType = tipo || 'image/png';
             const reader = new FileReader();
@@ -3839,7 +3881,8 @@ async function leerArchivo(archivo) {
             reader.onload = () => resolve({
                 tipo: 'imagen',
                 data: reader.result.split(',')[1],
-                mimeType
+                mimeType,
+                motivoSinTexto: 'La imagen no tiene texto legible detectable por OCR.'
             });
             reader.readAsDataURL(archivo);
         });
@@ -3915,16 +3958,39 @@ async function leerArchivo(archivo) {
     }
 }
 
-// ---- pdf.js: carga perezosa desde CDN (mismo patrón que mammoth.js arriba) ----
-async function _cargarPdfJs() {
-    if (typeof pdfjsLib !== 'undefined') return;
-    await new Promise((res, rej) => {
+// Carga un <script> externo con tiempo límite (evita que una conexión lenta
+// o bloqueada al CDN se quede colgada en silencio sin avisar nunca del error).
+function _cargarScriptConTimeout(src, timeoutMs) {
+    return new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-        s.onload = res;
-        s.onerror = () => rej(new Error('No se pudo cargar pdf.js'));
+        let resuelto = false;
+        const temporizador = setTimeout(() => {
+            if (resuelto) return;
+            resuelto = true;
+            s.remove();
+            rej(new Error('Tiempo de espera agotado cargando ' + src));
+        }, timeoutMs);
+        s.src = src;
+        s.onload = () => { if (resuelto) return; resuelto = true; clearTimeout(temporizador); res(); };
+        s.onerror = () => { if (resuelto) return; resuelto = true; clearTimeout(temporizador); s.remove(); rej(new Error('No se pudo cargar ' + src)); };
         document.head.appendChild(s);
     });
+}
+
+// ---- pdf.js: carga perezosa desde CDN (mismo patrón que mammoth.js arriba) ----
+// Con un reintento único: en una red de hospital con proxy/firewall, un fallo
+// de red al primer intento es más probable que un problema real del PDF —
+// antes, si el CDN fallaba una sola vez, el documento quedaba marcado como
+// "sin texto legible" (dando a entender que era un escaneo) sin serlo.
+async function _cargarPdfJs() {
+    if (typeof pdfjsLib !== 'undefined') return;
+    const src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    try {
+        await _cargarScriptConTimeout(src, 10000);
+    } catch (e) {
+        console.warn('Primer intento de cargar pdf.js falló, reintentando una vez:', e);
+        await _cargarScriptConTimeout(src, 10000);
+    }
     pdfjsLib.GlobalWorkerOptions.workerSrc =
         'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
@@ -3939,25 +4005,196 @@ async function _pdfATextoConTablas(archivo) {
     await _cargarPdfJs();
     const arrayBuffer = await archivo.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const maxPaginas = Math.min(pdf.numPages, 15);
+    // Sin tope de páginas: se procesa el PDF completo sin importar cuántas
+    // páginas tenga (a petición del usuario — el documento nunca debe quedar
+    // recortado, ni siquiera en expedientes muy extensos).
+    const maxPaginas = pdf.numPages;
     let texto = '';
+    let paginasConError = 0;
     for (let p = 1; p <= maxPaginas; p++) {
-        const page = await pdf.getPage(p);
-        const content = await page.getTextContent();
-        const filas = [];
-        content.items.forEach(item => {
-            const y = item.transform[5];
-            let fila = filas.find(f => Math.abs(f.y - y) < 3);
-            if (!fila) { fila = { y, items: [] }; filas.push(fila); }
-            fila.items.push({ x: item.transform[4], texto: item.str });
-        });
-        filas.sort((a, b) => b.y - a.y);
-        filas.forEach(f => {
-            f.items.sort((a, b) => a.x - b.x);
-            const celdas = f.items.map(i => i.texto).filter(t => t.trim());
-            if (celdas.length) texto += celdas.join(' | ') + '\n';
-        });
-        texto += '\n';
+        // Cada página se procesa en su propio try/catch: si UNA página tiene un
+        // problema puntual (fuente rara, contenido corrupto), antes se perdía
+        // TODO el documento (el error abortaba el ciclo completo) aunque las
+        // demás páginas sí tuvieran texto perfectamente legible.
+        try {
+            const page = await pdf.getPage(p);
+            const content = await page.getTextContent();
+            const filas = [];
+            content.items.forEach(item => {
+                const y = item.transform[5];
+                let fila = filas.find(f => Math.abs(f.y - y) < 3);
+                if (!fila) { fila = { y, items: [] }; filas.push(fila); }
+                fila.items.push({ x: item.transform[4], texto: item.str });
+            });
+            filas.sort((a, b) => b.y - a.y);
+            filas.forEach(f => {
+                f.items.sort((a, b) => a.x - b.x);
+                const celdas = f.items.map(i => i.texto).filter(t => t.trim());
+                if (celdas.length) texto += celdas.join(' | ') + '\n';
+            });
+            texto += '\n';
+        } catch (errPagina) {
+            paginasConError++;
+            console.warn(`No se pudo leer la página ${p} del PDF (se continúa con el resto):`, errPagina);
+        }
+    }
+    if (paginasConError > 0) {
+        console.warn(`${paginasConError} de ${maxPaginas} página(s) del PDF no se pudieron procesar.`);
+    }
+    return texto.trim();
+}
+
+// ---- Tesseract.js: carga perezosa desde CDN (mismo patrón que mammoth.js/pdf.js) ----
+async function _cargarTesseract() {
+    if (typeof Tesseract !== 'undefined') return;
+    const src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js';
+    try {
+        await _cargarScriptConTimeout(src, 15000);
+    } catch (e) {
+        console.warn('Primer intento de cargar Tesseract.js falló, reintentando una vez:', e);
+        await _cargarScriptConTimeout(src, 15000);
+    }
+}
+
+// Avisa en la insignia "Analizando…" de la fila del documento qué está
+// haciendo el OCR en este momento (puede tardar bastante en documentos
+// largos, así que sin este aviso el usuario podría pensar que se colgó).
+function _reportarProgresoOCR(clave, mensaje) {
+    if (typeof estadoDocumentos === 'undefined' || !estadoDocumentos[clave]) return;
+    estadoDocumentos[clave].progreso = mensaje;
+    if (typeof actualizarPanelAgente === 'function') actualizarPanelAgente();
+}
+
+// ── Preprocesamiento de imagen para mejorar la precisión del OCR ──
+// Escala de grises + binarización automática (umbral de Otsu): el mismo tipo
+// de paso que aplican los pipelines de OCR en Python (ej. OpenCV) antes de
+// reconocer texto. Reduce muchísimo el "ruido" que Tesseract suele confundir
+// con caracteres — sombras de escaneo, sellos, logos, fondos de color — al
+// dejar cada píxel en blanco o negro puro según qué tan probable es que sea
+// fondo o texto.
+function _preprocesarCanvasOCR(canvas) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    if (w === 0 || h === 0) return canvas;
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const data = imgData.data;
+    const total = w * h;
+
+    // 1) Escala de grises (luminancia perceptual) + histograma para Otsu.
+    const gris = new Uint8ClampedArray(total);
+    const histograma = new Array(256).fill(0);
+    for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+        const g = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+        gris[p] = g;
+        histograma[g]++;
+    }
+
+    // 2) Umbral óptimo de Otsu: el que maximiza la separación entre el grupo
+    // de píxeles "claros" (fondo) y "oscuros" (texto) del histograma.
+    let sumaTotal = 0;
+    for (let i = 0; i < 256; i++) sumaTotal += i * histograma[i];
+    let sumaFondo = 0, pesoFondo = 0, mejorVarianza = -1, umbral = 128;
+    for (let t = 0; t < 256; t++) {
+        pesoFondo += histograma[t];
+        if (pesoFondo === 0) continue;
+        const pesoTexto = total - pesoFondo;
+        if (pesoTexto === 0) break;
+        sumaFondo += t * histograma[t];
+        const mediaFondo = sumaFondo / pesoFondo;
+        const mediaTexto = (sumaTotal - sumaFondo) / pesoTexto;
+        const varianza = pesoFondo * pesoTexto * (mediaFondo - mediaTexto) * (mediaFondo - mediaTexto);
+        if (varianza > mejorVarianza) { mejorVarianza = varianza; umbral = t; }
+    }
+
+    // 3) Binarizar: cada píxel queda blanco o negro puro según el umbral.
+    for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+        const v = gris[p] >= umbral ? 255 : 0;
+        data[i] = data[i + 1] = data[i + 2] = v;
+    }
+    ctx.putImageData(imgData, 0, 0);
+    return canvas;
+}
+
+// Carga un File/Blob de imagen en un <canvas>, escalando hacia arriba si es
+// pequeña (fotos de celular en baja resolución) — Tesseract reconoce mucho
+// mejor cuando la altura de cada letra tiene más píxeles.
+function _archivoACanvas(archivo) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(archivo);
+        img.onload = () => {
+            const escala = img.width < 1200 ? Math.ceil(1600 / img.width) : 1;
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width * escala;
+            canvas.height = img.height * escala;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            resolve(canvas);
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('No se pudo cargar la imagen para preprocesarla antes del OCR.'));
+        };
+        img.src = url;
+    });
+}
+
+// OCR de una sola imagen (blob, canvas o el propio File) con Tesseract.js,
+// en español. Sin tope de tamaño ni de resolución — se procesa tal cual se
+// cargó el archivo.
+async function _ocrImagen(fuente, onProgress) {
+    await _cargarTesseract();
+    const { data } = await Tesseract.recognize(fuente, 'spa', {
+        logger: onProgress ? (m) => {
+            if (m.status === 'recognizing text' && typeof m.progress === 'number') {
+                onProgress(Math.round(m.progress * 100));
+            }
+        } : undefined
+    });
+    return (data && data.text) || '';
+}
+
+// OCR de un PDF escaneado (sin capa de texto real): renderiza CADA página a
+// un canvas con pdf.js y le aplica OCR con Tesseract, página por página, sin
+// límite de páginas (a petición del usuario — nunca se recorta el documento,
+// aunque tarde más en expedientes largos).
+async function _pdfEscaneadoAOcr(archivo, onProgress) {
+    await _cargarPdfJs();
+    await _cargarTesseract();
+    const arrayBuffer = await archivo.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const totalPaginas = pdf.numPages;
+
+    let texto = '';
+    let paginasConError = 0;
+    for (let p = 1; p <= totalPaginas; p++) {
+        try {
+            if (onProgress) onProgress(`🔎 página ${p}/${totalPaginas}…`);
+            const page = await pdf.getPage(p);
+            // Escala 3x: mejora notablemente la precisión del OCR frente al
+            // tamaño de render por defecto de pdf.js (útil en escaneos con
+            // texto pequeño o de baja calidad).
+            const viewport = page.getViewport({ scale: 3 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            _preprocesarCanvasOCR(canvas);
+
+            const textoPagina = await _ocrImagen(canvas, (pct) => {
+                if (onProgress) onProgress(`🔎 página ${p}/${totalPaginas}… ${pct}%`);
+            });
+            texto += textoPagina + '\n\n';
+            canvas.width = 0; canvas.height = 0; // libera memoria del canvas cuanto antes
+        } catch (errPagina) {
+            paginasConError++;
+            console.warn(`No se pudo aplicar OCR a la página ${p} del PDF (se continúa con el resto):`, errPagina);
+        }
+    }
+    if (paginasConError > 0) {
+        console.warn(`${paginasConError} de ${totalPaginas} página(s) no se pudieron procesar con OCR.`);
     }
     return texto.trim();
 }
@@ -4282,9 +4519,10 @@ async function analizarConGroq(numItem, nombreArchivo, contenido) {
     const tieneTexto = contenido.tipo === 'texto' && contenido.data && contenido.data.trim().length > 40;
 
     if (!tieneTexto) {
+        const motivo = contenido.motivoSinTexto || 'Este archivo no tiene texto legible por la IA (imagen o documento escaneado sin texto).';
         return _marcarComoLocal(
             ejecutarSkillJuridico(numItem, nombreArchivo, contenido),
-            'Este archivo no tiene texto legible por la IA (imagen o documento escaneado sin texto). Se muestra una validación básica local.'
+            motivo + ' Se muestra una validación básica local.'
         );
     }
 
@@ -4466,6 +4704,7 @@ function _renderTarjetasJuriskills(docs) {
                 <span class="ia-badge badge-analizando">⏳ Analizando</span>
                 <span style="color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${val.archivo?.name || ''}</span>
               </div>
+              ${val.progreso ? `<div style="margin-top:4px;font-size:10px;color:#6366F1;">${val.progreso}</div>` : ''}
               <div class="ia-loader" style="margin-top:6px;"><div></div><div></div><div></div></div>
             </div>`;
             return;
@@ -4663,7 +4902,7 @@ async function reAnalizarTodo() {
         const val = estadoDocumentos[clave];
         const numItem = val.numItem;
         try {
-            const contenido = await leerArchivo(val.archivo);
+            const contenido = await leerArchivo(val.archivo, (msg) => _reportarProgresoOCR(clave, msg));
             const modo = _MODO_ANALISIS_CD1P[numItem] || 'local';
             const analisis = modo === 'ia'
                 ? await analizarConIA(numItem, val.archivo.name, contenido)
@@ -5159,11 +5398,73 @@ function _lineaDePos(texto, pos) {
 }
 
 // Análisis de calidad redaccional del texto — VERSIÓN DETALLADA
+// Repositorio amplio de palabras que anteceden una cita normativa colombiana
+// ("Ley 1150 DE 2007", "Resolución No. 5185 DE 2013", "Decreto 1082 DE 2015"…).
+// Un año que aparece justo después de una de estas palabras (con "de" de por
+// medio) es la fecha de EXPEDICIÓN DE LA NORMA CITADA, no una fecha de
+// vigencia del documento analizado — por diseño, un manual o estudio previo
+// SIEMPRE va a citar normas antiguas, así que no debe marcarse como alerta.
+// Se mantiene como lista amplia y fácil de ampliar a futuro si aparecen
+// nuevos tipos de instrumento normativo que generen falsos positivos.
+const _PALABRAS_CITA_NORMATIVA = [
+    'ley', 'decreto', 'decreto ley', 'decreto-ley', 'decreto único', 'decreto unico',
+    'decreto reglamentario', 'decreto legislativo',
+    'resolución', 'resolucion', 'resolución no', 'resolucion no',
+    'acuerdo', 'ordenanza', 'circular', 'circular externa', 'circular interna',
+    'circular reglamentaria', 'directiva', 'directiva presidencial',
+    'sentencia', 'auto', 'concepto', 'providencia', 'fallo',
+    'estatuto', 'estatuto tributario', 'estatuto anticorrupción', 'estatuto anticorrupcion',
+    'código', 'codigo', 'reglamento', 'instructivo', 'memorando', 'oficio',
+    'conpes', 'convenio', 'tratado', 'protocolo', 'jurisprudencia',
+    'constitución política', 'constitucion politica', 'plan de desarrollo',
+    'lineamiento', 'instrucción administrativa', 'instruccion administrativa'
+];
+
+// ¿El año encontrado en `texto` en la posición `indexAnio` es en realidad
+// parte de una cita normativa ("Ley XXX DE <año>") y no una fecha de
+// vigencia real del documento? Se revisa una ventana de texto justo antes
+// del año: debe terminar en "de" y contener alguna de las palabras del
+// repositorio de arriba.
+function _esCitaNormativa(texto, indexAnio) {
+    const inicio = Math.max(0, indexAnio - 60);
+    const ventana = texto.slice(inicio, indexAnio);
+    if (!/\bde\s*$/i.test(ventana)) return false;
+    const ventanaLow = _normalizarTexto(ventana);
+    return _PALABRAS_CITA_NORMATIVA.some(p => ventanaLow.includes(_normalizarTexto(p)));
+}
+
+// ¿El contenido capturado dentro de un posible marcador de plantilla
+// ([...], {...}, guiones bajos) parece texto legible y coherente, o es en
+// realidad ruido de OCR? Un escaneo de mala calidad genera basura con pinta
+// de "[* BO PE o - VIGILADO:. tii LA A ES [2 —”% .eÍ——]" al leer sellos,
+// marcas de agua o bordes de tabla — eso NO es un campo de plantilla sin
+// diligenciar, es ruido visual mal interpretado por el OCR. Se acepta como
+// coherente: un mismo carácter repetido ("XXXX", "____", típico de blancos
+// para llenar) o texto donde la mayoría de caracteres son letras y no hay
+// rachas de 3+ símbolos sueltos seguidos (la firma típica del ruido de OCR).
+function _pareceTextoCoherente(contenido) {
+    const limpio = (contenido || '').trim();
+    if (!limpio) return false;
+    const sinEspacios = limpio.replace(/\s/g, '');
+    if (sinEspacios.length === 0) return false;
+
+    if (/^(.)\1*$/.test(sinEspacios)) return true;
+    if (/[^\w\sÀ-ÖØ-öø-ÿ]{3,}/.test(limpio)) return false;
+
+    const letras = (sinEspacios.match(/[a-zA-ZÀ-ÖØ-öø-ÿ]/g) || []).length;
+    return (letras / sinEspacios.length) >= 0.55;
+}
+
 function _analizarRedaccion(texto, textoLow, numItem) {
     const obs = [];
     if (!texto || texto.length < 30) return obs;
 
     // ── 1. Campos sin diligenciar: reportar CADA instancia con su fragmento ──
+    // Los tipos 'corchete', 'llave' y 'guión' se filtran además por
+    // _pareceTextoCoherente(), porque son los más propensos a "atrapar" ruido
+    // de OCR con forma de corchete/guion en vez de un campo real sin llenar.
+    // Los demás tipos están anclados a frases literales en español (no a
+    // símbolos sueltos) y no necesitan ese filtro.
     const patronesPlaceholder = [
         { re: /\[([^\]]{1,80})\]/g,        tipo: 'corchete',    label: (m) => `"[${m[1]}]"` },
         { re: /\{([^}]{1,60})\}/g,          tipo: 'llave',       label: (m) => `"{${m[1]}}"` },
@@ -5175,10 +5476,20 @@ function _analizarRedaccion(texto, textoLow, numItem) {
     ];
 
     const instanciasPlaceholder = [];
-    patronesPlaceholder.forEach(({ re, label }) => {
+    patronesPlaceholder.forEach(({ re, tipo, label }) => {
         re.lastIndex = 0;
         let m;
         while ((m = re.exec(texto)) !== null) {
+            if (tipo === 'corchete' || tipo === 'llave' || tipo === 'guión') {
+                const contenidoCapturado = tipo === 'guión' ? m[0] : m[1];
+                if (!_pareceTextoCoherente(contenidoCapturado)) continue;
+                // Una URL o dominio entre corchetes/llaves (pie de página,
+                // marca de agua "www.hosusanagov.eo", enlace de referencia)
+                // es texto real y coherente, pero no es un campo de plantilla
+                // sin diligenciar — se descarta aparte.
+                if ((tipo === 'corchete' || tipo === 'llave') &&
+                    /https?:\/\/|www\.[a-z0-9-]+\.[a-z]{2,}/i.test(contenidoCapturado)) continue;
+            }
             instanciasPlaceholder.push({
                 linea: _lineaDePos(texto, m.index),
                 etiqueta: label(m),
@@ -5234,6 +5545,7 @@ function _analizarRedaccion(texto, textoLow, numItem) {
     const instanciasFecha = [];
     let mf;
     while ((mf = reAniosViejos.exec(texto)) !== null) {
+        if (_esCitaNormativa(texto, mf.index)) continue; // "Ley/Decreto/Resolución... de <año>": cita normativa, no vigencia
         instanciasFecha.push({
             anio: mf[1],
             linea: _lineaDePos(texto, mf.index),
@@ -5605,7 +5917,8 @@ function ejecutarAnalisisLocalReglas(numItem, nombreArchivo, contenido) {
     let fechaDetectadaISO   = null;
 
     if (esBinario) {
-        advertenciasExtra.push('🗓️ Documento sin texto legible (imagen o PDF escaneado): no fue posible verificar automáticamente la fecha de vigencia. Revise manualmente.');
+        const motivo = contenido.motivoSinTexto || 'Documento sin texto legible (imagen o PDF escaneado).';
+        advertenciasExtra.push(`🗓️ ${motivo} No fue posible verificar automáticamente la fecha de vigencia. Revise manualmente.`);
     } else if (texto.length > 15) {
         const resFecha = _verificarVigenciaFecha(numItem, texto);
         if (resFecha) {
