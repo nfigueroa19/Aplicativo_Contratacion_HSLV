@@ -45,19 +45,27 @@
             <div class="form-group">
                 <label>Objeto Contractual</label>
                 <textarea id="mp_objeto" rows="4" placeholder="Ingrese el objeto contractual" autocomplete="off"></textarea>
+                <button type="button" class="btn" id="mp_verificar_btn"
+                    style="margin-top:10px;"
+                    onclick="verificarObjetoContractual()">
+                    🔍 Verificar objeto contractual
+                </button>
+                <div id="mp_verificacion_resultado" style="margin-top:10px;"></div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="fg_area" style="display:none;">
                 <label>Área Solicitante</label>
                 <input id="mp_area" type="text" placeholder="Dependencia solicitante" autocomplete="off">
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="fg_responsable" style="display:none;">
               <label>Responsable del Área Solicitante</label>
               <input id="mp_responsable" type="text" placeholder="Nombre del supervisor o responsable" autocomplete="off">
             </div>
         </div>
-        </div>
+        </div><!-- fin section-card Datos del Proceso -->
+
+        <div id="cd1p-post-verificacion" style="display:none;">
 
         <!-- CHECKLIST DOCUMENTAL -->
         <div class="section-card" style="margin-bottom:22px;">
@@ -69,7 +77,52 @@
                 como soporte del expediente contractual.
             </div>
 
-            <div class="checklist-wrapper">
+            <!-- JURISKILLS IA -->
+            <div class="agente-ia-box" style="margin-top:0;margin-bottom:18px;">
+
+                <div class="agente-ia-header">
+                    <div class="agente-ia-info">
+                        <div class="agente-ia-icon">🤖</div>
+                        <div>
+                            <div class="agente-ia-title">
+                                JURISKILLS IA - Análisis Inteligente de Contratacion
+                                <span class="beta-tag">BETA</span>
+                            </div>
+                            <div class="agente-ia-text">
+                                Carga documentos en el checklist y JURISKILLS los analiza con base en el <strong>Acuerdo 015/2024</strong> y la <strong>Resolución 0456/2024</strong> del HSLV, Ley 80/1993 y
+                                Decreto 1082/2015. El resultado de cada documento aparece junto a su fila, en la columna "Análisis JURISKILLS".
+                            </div>
+                            <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;">
+                                <span id="iaContadorDocs">0 documentos</span>
+                                <span id="iaEstadoBadge" class="ia-badge badge-analizando" style="display:none;"></span>
+                            </div>
+                            <div id="iaResumenGlobal"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-actualizar" onclick="reAnalizarTodo()">
+                        ⟳ Actualizar análisis
+                    </button>
+                </div>
+
+                <div class="normativa-box" style="margin-top:16px;">
+                    <h4>Normativa aplicada por JURISKILLS</h4>
+                    <ul>
+                        <li>Ley 80 de 1993 y Ley 1150 de 2007</li>
+                        <li>Decreto 1082 de 2015</li>
+                        <li><strong>Acuerdo 015/2024 HSLV</strong> – Estatuto de Contratación (base principal)</li>
+                        <li><strong>Resolución 0456/2024 HSLV</strong> – Manual de Contratación (base principal)</li>
+                        <li>Ley 734/2002 · Ley 610/2000 · Ley 1918/2018</li>
+                        <li>Ley 43/1990 · Ley 48/1993</li>
+                    </ul>
+                </div>
+
+                <div class="agente-ia-footer">
+                    ⓘ El análisis es generado por IA con base en el contenido real de cada documento cargado y la normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación.
+                </div>
+
+            </div>
+
+            <div class="checklist-wrapper" id="cd1p-checklist">
                 <table>
                     <thead>
                         <tr>
@@ -77,18 +130,18 @@
                             <th>Documento Requerido</th>
                             <th>Validación</th>
                             <th>Carga de Documento</th>
+                            <th>🤖 Análisis JURISKILLS</th>
                         </tr>
                     </thead>
                     <tbody>
 
-                        <!-- 1 — PAA con mini-modal -->
                         <tr>
-                            <td>1</td><td>CERTIFICADO PAA</td>
+                            <td>1</td>
+                            <td>CERTIFICADO PAA</td>
                             <td><input type="checkbox"></td>
                             <td>
                                 <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                    onclick="document.getElementById('i3_modalPAAItem')
-                                                 .style.display='flex'">
+                                    onclick="document.getElementById('i3_arch_1').click()">
                                     📎 Cargar Documento
                                 </button>
                                 <input type="file" id="i3_arch_1" style="display:none;"
@@ -96,27 +149,16 @@
                                     onchange="mostrarArchivo(this,'i3_nom_1')">
                                 <div id="i3_nom_1" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                <div id="i3_paa_unspsc_preview" style="display:none;
-                                    margin-top:6px;font-size:11px;color:#374151;
-                                    background:#F0FDF4;border-radius:8px;padding:6px 10px;
-                                    border:1px solid #BBF7D0;">
-                                    <strong>UNSPSC:</strong>
-                                    <span id="i3_paa_unspsc_label"></span><br>
-                                    <strong>Detalle:</strong>
-                                    <span id="i3_paa_detalle_label"></span>
-                                </div>
                             </td>
                         </tr>
 
-                        <!-- 2 — Solicitud CDP con mini-modal -->
                         <tr>
                             <td>2</td>
                             <td>SOLICITUD DE CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL</td>
                             <td><input type="checkbox"></td>
                             <td>
                                 <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                    onclick="document.getElementById('i3_modalSolicitudCDPItem')
-                                                 .style.display='flex'">
+                                    onclick="document.getElementById('i3_arch_2').click()">
                                     📎 Cargar Documento
                                 </button>
                                 <input type="file" id="i3_arch_2" style="display:none;"
@@ -124,31 +166,16 @@
                                     onchange="mostrarArchivo(this,'i3_nom_2')">
                                 <div id="i3_nom_2" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                <div id="i3_scdp_preview" style="display:none;margin-top:6px;
-                                    font-size:11px;color:#374151;background:#EFF6FF;
-                                    border-radius:8px;padding:6px 10px;
-                                    border:1px solid #BFDBFE;">
-                                    <strong>Rubro:</strong>
-                                    <span id="i3_scdp_rubro-label"></span><br>
-                                    <strong>N° Rubro:</strong>
-                                    <span id="i3_scdp_numrubro-label"></span><br>
-                                    <strong>Valor:</strong>
-                                    <span id="i3_scdp_valor-label"></span><br>
-                                    <strong>Fecha:</strong>
-                                    <span id="i3_scdp_fecha-label"></span>
-                                </div>
                             </td>
                         </tr>
 
-                        <!-- 3 — CDP con mini-modal -->
                         <tr>
                             <td>3</td>
                             <td>CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL</td>
                             <td><input type="checkbox"></td>
                             <td>
                                 <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                    onclick="document.getElementById('i3_modalCDPItem')
-                                                 .style.display='flex'">
+                                    onclick="document.getElementById('i3_arch_3').click()">
                                     📎 Cargar Documento
                                 </button>
                                 <input type="file" id="i3_arch_3" style="display:none;"
@@ -156,60 +183,16 @@
                                     onchange="mostrarArchivo(this,'i3_nom_3')">
                                 <div id="i3_nom_3" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                <div id="i3_cdp_preview" style="display:none;margin-top:6px;
-                                    font-size:11px;color:#374151;background:#FFF7ED;
-                                    border-radius:8px;padding:6px 10px;
-                                    border:1px solid #FED7AA;">
-                                    <strong>N° CDP:</strong>
-                                    <span id="i3_cdp_num-label"></span><br>
-                                    <strong>Fecha:</strong>
-                                    <span id="i3_cdp_fecha-label"></span><br>
-                                    <strong>Objeto:</strong>
-                                    <span id="i3_cdp_objeto-label"></span>
-                                </div>
                             </td>
                         </tr>
 
-                        <!-- 4 — Con historial de versiones -->
-                        <tr>
-                            <td>4</td><td>SOLICITUD PARA CONTRATAR</td>
-                            <td><input type="checkbox"></td>
-                            <td>
-                                <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                    onclick="document.getElementById('i3_arch_4').click()">
-                                    📎 Cargar Documento
-                                </button>
-                                <input type="file" id="i3_arch_4" style="display:none;"
-                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onchange="mostrarArchivo(this,'i3_nom_4')">
-                                <div id="i3_nom_4" style="margin-top:8px;font-size:12px;
-                                    color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                <button onclick="histU_toggle('i3_',4)"
-                                    style="margin-top:8px;background:none;
-                                           border:1px solid #CBD5E1;border-radius:8px;
-                                           padding:5px 10px;font-size:11px;color:#123C7B;
-                                           cursor:pointer;font-weight:600;
-                                           display:flex;align-items:center;gap:5px;">
-                                    🕓 Ver historial
-                                    <span id="i3_badge_hist_4"
-                                        style="background:#123C7B;color:white;
-                                               border-radius:10px;padding:1px 7px;
-                                               font-size:10px;">0</span>
-                                </button>
-                                <div id="i3_historial_4" style="display:none;margin-top:8px;
-                                    max-height:160px;overflow-y:auto;
-                                    border:1px solid #E5E7EB;border-radius:10px;
-                                    font-size:11px;background:#F8FAFC;">
-                                    <div id="i3_historial_empty_4"
-                                        style="padding:8px 10px;color:#6B7280;font-style:italic;">
-                                        Sin cargas registradas aún.</div>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <!-- 5 — Con historial de versiones -->
-                        <tr>
-                            <td>5</td><td>ESTUDIOS PREVIOS</td>
+                        <!-- Ítem real #5 (Estudios Previos) — se muestra como "4" al
+                             usuario para que la numeración visible sea consecutiva
+                             1..7; data-item-num conserva el número real que usa el
+                             motor de análisis JURISKILLS (criterios/normativa por ítem
+                             están indexados con la numeración de CD1P). -->
+                        <tr data-item-num="5">
+                            <td>4</td><td>ESTUDIOS PREVIOS</td>
                             <td><input type="checkbox"></td>
                             <td>
                                 <button class="btn" style="padding:10px 14px;font-size:13px;"
@@ -244,8 +227,7 @@
                             </td>
                         </tr>
 
-                        <!-- 6 al 12 — ítems simples -->
-                        <tr><td>6</td><td>MATRIZ DE RIESGO</td>
+                        <tr data-item-num="6"><td>5</td><td>MATRIZ DE RIESGO</td>
                         <td><input type="checkbox"></td><td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('i3_arch_6').click()">
@@ -257,19 +239,7 @@
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
 
-                        <tr><td>7</td><td>ANEXO IO PRESENTACIÓN DE LA PROPUESTA</td>
-                        <td><input type="checkbox"></td><td>
-                            <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                onclick="document.getElementById('i3_arch_7').click()">
-                                📎 Cargar Documento</button>
-                            <input type="file" id="i3_arch_7" style="display:none;"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_7')">
-                            <div id="i3_nom_7" style="margin-top:8px;font-size:12px;
-                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                        </td></tr>
-
-                        <tr><td>8</td><td>PROPUESTA</td>
+                        <tr data-item-num="8"><td>6</td><td>PROPUESTA</td>
                         <td><input type="checkbox"></td><td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('i3_arch_8').click()">
@@ -281,9 +251,9 @@
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
 
-                        <!-- 9 — Con historial -->
-                        <tr>
-                            <td>9</td><td>ESTUDIO DE MERCADO</td>
+                        <!-- Ítem real #9 (Estudio de Mercado) — se muestra como "7" -->
+                        <tr data-item-num="9">
+                            <td>7</td><td>ESTUDIO DE MERCADO</td>
                             <td><input type="checkbox"></td>
                             <td>
                                 <button class="btn" style="padding:10px 14px;font-size:13px;"
@@ -318,840 +288,42 @@
                             </td>
                         </tr>
 
-                        <tr><td>10</td><td>EXPERIENCIA</td>
-                        <td><input type="checkbox"></td><td>
-                            <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                onclick="document.getElementById('i3_arch_10').click()">
-                                📎 Cargar Documento</button>
-                            <input type="file" id="i3_arch_10" style="display:none;"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_10')">
-                            <div id="i3_nom_10" style="margin-top:8px;font-size:12px;
-                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                        </td></tr>
-
-                        <tr><td>11</td>
-                        <td>CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN</td>
-                        <td><input type="checkbox"></td><td>
-                            <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                onclick="document.getElementById('i3_arch_11').click()">
-                                📎 Cargar Documento</button>
-                            <input type="file" id="i3_arch_11" style="display:none;"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_11')">
-                            <div id="i3_nom_11" style="margin-top:8px;font-size:12px;
-                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                        </td></tr>
-
-                        <tr><td>12</td><td>CÉDULA DE CIUDADANÍA</td>
-                        <td><input type="checkbox"></td><td>
-                            <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                onclick="document.getElementById('i3_arch_12').click()">
-                                📎 Cargar Documento</button>
-                            <input type="file" id="i3_arch_12" style="display:none;"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_12')">
-                            <div id="i3_nom_12" style="margin-top:8px;font-size:12px;
-                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                        </td></tr>
-
-                        <!-- 13 — Libreta militar con aplica/no aplica -->
-                        <tr id="i3_fila_13">
-                            <td>13</td>
-                            <td>LIBRETA MILITAR
-                                <div id="i3_badge_aplica_13"
-                                     style="display:none;margin-top:6px;"></div>
-                            </td>
-                            <td><input type="checkbox" id="i3_check_13"></td>
-                            <td>
-                                <div style="background:#EFF6FF;border:1px solid #BFDBFE;
-                                            border-radius:12px;padding:10px 12px;
-                                            margin-bottom:10px;">
-                                    <div style="font-size:11.5px;font-weight:700;
-                                                color:#1e40af;margin-bottom:8px;">
-                                        ⚠️ Solo aplica para hombres menores de 50 años
-                                        (Ley 48/1993)
-                                    </div>
-                                    <div style="display:flex;gap:8px;flex-wrap:wrap;
-                                                align-items:center;">
-                                        <label style="display:flex;align-items:center;
-                                                      gap:6px;cursor:pointer;font-size:12px;
-                                                      font-weight:600;color:#166534;">
-                                            <input type="radio" name="aplica_13"
-                                                   value="aplica"
-                                                   onchange="evaluarAplica13(this)"
-                                                   style="accent-color:#0B7A43;
-                                                          width:15px;height:15px;">
-                                            ✅ Aplica
-                                        </label>
-                                        <label style="display:flex;align-items:center;
-                                                      gap:6px;cursor:pointer;font-size:12px;
-                                                      font-weight:600;color:#DC2626;">
-                                            <input type="radio" name="aplica_13"
-                                                   value="no_aplica"
-                                                   onchange="evaluarAplica13(this)"
-                                                   style="accent-color:#DC2626;
-                                                          width:15px;height:15px;">
-                                            🚫 No aplica
-                                        </label>
-                                    </div>
-                                    <div id="i3_justif_13_wrap"
-                                         style="display:none;margin-top:8px;">
-                                        <label style="font-size:11px;font-weight:700;
-                                                      color:#92400E;display:block;
-                                                      margin-bottom:4px;">
-                                            📝 Motivo:
-                                        </label>
-                                        <select id="i3_justif_13_sel"
-                                                onchange="actualizarJustif13()"
-                                                style="width:100%;padding:8px 10px;
-                                                       border-radius:9px;
-                                                       border:1px solid #FCD34D;
-                                                       font-size:12px;background:#FFFBEB;
-                                                       color:#374151;cursor:pointer;">
-                                            <option value="">— Seleccione el motivo —</option>
-                                            <option>Contratista de género femenino</option>
-                                            <option>Contratista hombre mayor de 50 años</option>
-                                            <option>Persona jurídica — no aplica</option>
-                                            <option value="Otro motivo">Otro motivo</option>
-                                        </select>
-                                        <div id="i3_justif_13_otro_wrap"
-                                             style="display:none;margin-top:6px;">
-                                            <input type="text" id="i3_justif_13_otro"
-                                                   placeholder="Describa el motivo..."
-                                                   oninput="actualizarJustif13()"
-                                                   style="width:100%;padding:8px 10px;
-                                                          border-radius:9px;
-                                                          border:1px solid #FCD34D;
-                                                          font-size:12px;">
-                                        </div>
-                                        <div id="i3_justif_13_preview"
-                                             style="margin-top:7px;font-size:11px;
-                                                    color:#6B7280;font-style:italic;"></div>
-                                    </div>
-                                </div>
-                                <div id="i3_carga_13_wrap" style="display:none;">
-                                    <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                        onclick="document.getElementById('i3_arch_13').click()">
-                                        📎 Cargar Documento</button>
-                                    <input type="file" id="i3_arch_13" style="display:none;"
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                        onchange="mostrarArchivo(this,'i3_nom_13')">
-                                    <div id="i3_nom_13" style="margin-top:8px;font-size:12px;
-                                        color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                </div>
-                                <div id="i3_noaplica_13_banner"
-                                     style="display:none;background:#FEF2F2;
-                                            border:1px solid #FECACA;border-radius:10px;
-                                            padding:10px 12px;font-size:12px;
-                                            color:#DC2626;font-weight:600;">
-                                    🚫 Documento no requerido —
-                                    <span id="i3_noaplica_13_motivo"
-                                          style="font-weight:400;color:#374151;"></span>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr><td>14</td><td>REGISTRO ÚNICO TRIBUTARIO</td>
-                        <td><input type="checkbox"></td><td>
-                            <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                onclick="document.getElementById('i3_arch_14').click()">
-                                📎 Cargar Documento</button>
-                            <input type="file" id="i3_arch_14" style="display:none;"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_14')">
-                            <div id="i3_nom_14" style="margin-top:8px;font-size:12px;
-                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                        </td></tr>
-
-                        <!-- 15 — Sub-documentos -->
-                        <tr>
-                            <td>15</td>
-                            <td>CERTIFICADO ANTECEDENTES (DISCIPLINARIOS,
-                                FISCALES Y JUDICIALES)</td>
-                            <td><input type="checkbox" id="i3_check_15"></td>
-                            <td>
-                                <div class="subdoc-bloque" style="border:1px solid #E5E7EB;
-                                    border-radius:12px;padding:12px 14px;
-                                    margin-bottom:10px;background:#FAFAFA;">
-                                    <div style="font-size:11.5px;font-weight:700;
-                                                color:#123C7B;margin-bottom:8px;
-                                                display:flex;align-items:center;gap:6px;">
-                                        <span style="background:#123C7B;color:white;
-                                                     border-radius:6px;padding:2px 8px;
-                                                     font-size:10px;">1 de 3</span>
-                                        🏛️ Antecedentes disciplinarios — Procuraduría
-                                    </div>
-                                    <button class="btn" style="padding:9px 14px;font-size:12px;"
-                                        onclick="document.getElementById('i3_arch_15a').click()">
-                                        📎 Cargar</button>
-                                    <input type="file" id="i3_arch_15a" style="display:none;"
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                        onchange="mostrarArchivoSub(this,'i3_nom_15a',
-                                            'i3_check_15',
-                                            ['i3_arch_15a','i3_arch_15b','i3_arch_15c'])">
-                                    <div id="i3_nom_15a" style="margin-top:7px;font-size:12px;
-                                        color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                </div>
-                                <div class="subdoc-bloque" style="border:1px solid #E5E7EB;
-                                    border-radius:12px;padding:12px 14px;
-                                    margin-bottom:10px;background:#FAFAFA;">
-                                    <div style="font-size:11.5px;font-weight:700;
-                                                color:#123C7B;margin-bottom:8px;
-                                                display:flex;align-items:center;gap:6px;">
-                                        <span style="background:#123C7B;color:white;
-                                                     border-radius:6px;padding:2px 8px;
-                                                     font-size:10px;">2 de 3</span>
-                                        💰 Antecedentes fiscales — Contraloría
-                                    </div>
-                                    <button class="btn" style="padding:9px 14px;font-size:12px;"
-                                        onclick="document.getElementById('i3_arch_15b').click()">
-                                        📎 Cargar</button>
-                                    <input type="file" id="i3_arch_15b" style="display:none;"
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                        onchange="mostrarArchivoSub(this,'i3_nom_15b',
-                                            'i3_check_15',
-                                            ['i3_arch_15a','i3_arch_15b','i3_arch_15c'])">
-                                    <div id="i3_nom_15b" style="margin-top:7px;font-size:12px;
-                                        color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                </div>
-                                <div class="subdoc-bloque" style="border:1px solid #E5E7EB;
-                                    border-radius:12px;padding:12px 14px;background:#FAFAFA;">
-                                    <div style="font-size:11.5px;font-weight:700;
-                                                color:#123C7B;margin-bottom:8px;
-                                                display:flex;align-items:center;gap:6px;">
-                                        <span style="background:#123C7B;color:white;
-                                                     border-radius:6px;padding:2px 8px;
-                                                     font-size:10px;">3 de 3</span>
-                                        ⚖️ Antecedentes judiciales — Policía Nacional
-                                    </div>
-                                    <button class="btn" style="padding:9px 14px;font-size:12px;"
-                                        onclick="document.getElementById('i3_arch_15c').click()">
-                                        📎 Cargar</button>
-                                    <input type="file" id="i3_arch_15c" style="display:none;"
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                        onchange="mostrarArchivoSub(this,'i3_nom_15c',
-                                            'i3_check_15',
-                                            ['i3_arch_15a','i3_arch_15b','i3_arch_15c'])">
-                                    <div id="i3_nom_15c" style="margin-top:7px;font-size:12px;
-                                        color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                </div>
-                                <div style="margin-top:10px;font-size:11px;color:#6B7280;
-                                    background:#EFF6FF;border-radius:8px;padding:7px 10px;
-                                    display:flex;align-items:center;gap:8px;">
-                                    <span>📁 Cargados:</span>
-                                    <span id="i3_progreso_15_txt"
-                                          style="font-weight:700;color:#123C7B;">0 / 3</span>
-                                    <div style="flex:1;background:#DBEAFE;border-radius:10px;
-                                                height:6px;overflow:hidden;">
-                                        <div id="i3_progreso_15_bar"
-                                             style="background:linear-gradient(90deg,
-                                                    #0B7A43,#123C7B);height:6px;width:0%;
-                                                    border-radius:10px;transition:width .4s;">
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr><td>16</td>
-                        <td>CERTIFICADO ANTECEDENTES DE DELITOS SEXUALES</td>
-                        <td><input type="checkbox"></td><td>
-                            <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                onclick="document.getElementById('i3_arch_16').click()">
-                                📎 Cargar Documento</button>
-                            <input type="file" id="i3_arch_16" style="display:none;"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_16')">
-                            <div id="i3_nom_16" style="margin-top:8px;font-size:12px;
-                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                        </td></tr>
-
-                        <tr><td>17</td>
-                        <td>CERTIFICADO INEXISTENCIA DE INHABILIDADES
-                            E INCOMPATIBILIDADES</td>
-                        <td><input type="checkbox"></td><td>
-                            <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                onclick="document.getElementById('i3_arch_17').click()">
-                                📎 Cargar Documento</button>
-                            <input type="file" id="i3_arch_17" style="display:none;"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_17')">
-                            <div id="i3_nom_17" style="margin-top:8px;font-size:12px;
-                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                        </td></tr>
-
-                        <tr><td>18</td><td>CERTIFICADO DE MEDIDAS CORRECTIVAS</td>
-                        <td><input type="checkbox"></td><td>
-                            <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                onclick="document.getElementById('i3_arch_18').click()">
-                                📎 Cargar Documento</button>
-                            <input type="file" id="i3_arch_18" style="display:none;"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_18')">
-                            <div id="i3_nom_18" style="margin-top:8px;font-size:12px;
-                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                        </td></tr>
-
-                        <tr><td>19</td><td>CERTIFICADO REDAM</td>
-                        <td><input type="checkbox"></td><td>
-                            <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                onclick="document.getElementById('i3_arch_19').click()">
-                                📎 Cargar Documento</button>
-                            <input type="file" id="i3_arch_19" style="display:none;"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_19')">
-                            <div id="i3_nom_19" style="margin-top:8px;font-size:12px;
-                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                        </td></tr>
-
-                        <!-- 20 — Revisor fiscal sub-documentos -->
-                        <tr>
-                            <td>20</td>
-                            <td>REVISOR FISCAL (CÉDULA, ANTECEDENTES,
-                                TARJETA PROFESIONAL)</td>
-                            <td><input type="checkbox" id="i3_check_20"></td>
-                            <td>
-                                <div class="subdoc-bloque" style="border:1px solid #E5E7EB;
-                                    border-radius:12px;padding:12px 14px;
-                                    margin-bottom:10px;background:#FAFAFA;">
-                                    <div style="font-size:11.5px;font-weight:700;
-                                                color:#123C7B;margin-bottom:8px;
-                                                display:flex;align-items:center;gap:6px;">
-                                        <span style="background:#123C7B;color:white;
-                                                     border-radius:6px;padding:2px 8px;
-                                                     font-size:10px;">1 de 3</span>
-                                        🪪 Cédula del Revisor Fiscal
-                                    </div>
-                                    <button class="btn" style="padding:9px 14px;font-size:12px;"
-                                        onclick="document.getElementById('i3_arch_20a').click()">
-                                        📎 Cargar</button>
-                                    <input type="file" id="i3_arch_20a" style="display:none;"
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                        onchange="mostrarArchivoSub(this,'i3_nom_20a',
-                                            'i3_check_20',
-                                            ['i3_arch_20a','i3_arch_20b','i3_arch_20c'])">
-                                    <div id="i3_nom_20a" style="margin-top:7px;font-size:12px;
-                                        color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                </div>
-                                <div class="subdoc-bloque" style="border:1px solid #E5E7EB;
-                                    border-radius:12px;padding:12px 14px;
-                                    margin-bottom:10px;background:#FAFAFA;">
-                                    <div style="font-size:11.5px;font-weight:700;
-                                                color:#123C7B;margin-bottom:8px;
-                                                display:flex;align-items:center;gap:6px;">
-                                        <span style="background:#123C7B;color:white;
-                                                     border-radius:6px;padding:2px 8px;
-                                                     font-size:10px;">2 de 3</span>
-                                        📋 Antecedentes del Revisor Fiscal
-                                    </div>
-                                    <button class="btn" style="padding:9px 14px;font-size:12px;"
-                                        onclick="document.getElementById('i3_arch_20b').click()">
-                                        📎 Cargar</button>
-                                    <input type="file" id="i3_arch_20b" style="display:none;"
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                        onchange="mostrarArchivoSub(this,'i3_nom_20b',
-                                            'i3_check_20',
-                                            ['i3_arch_20a','i3_arch_20b','i3_arch_20c'])">
-                                    <div id="i3_nom_20b" style="margin-top:7px;font-size:12px;
-                                        color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                </div>
-                                <div class="subdoc-bloque" style="border:1px solid #E5E7EB;
-                                    border-radius:12px;padding:12px 14px;background:#FAFAFA;">
-                                    <div style="font-size:11.5px;font-weight:700;
-                                                color:#123C7B;margin-bottom:8px;
-                                                display:flex;align-items:center;gap:6px;">
-                                        <span style="background:#123C7B;color:white;
-                                                     border-radius:6px;padding:2px 8px;
-                                                     font-size:10px;">3 de 3</span>
-                                        🏅 Tarjeta profesional del Revisor Fiscal
-                                    </div>
-                                    <button class="btn" style="padding:9px 14px;font-size:12px;"
-                                        onclick="document.getElementById('i3_arch_20c').click()">
-                                        📎 Cargar</button>
-                                    <input type="file" id="i3_arch_20c" style="display:none;"
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                        onchange="mostrarArchivoSub(this,'i3_nom_20c',
-                                            'i3_check_20',
-                                            ['i3_arch_20a','i3_arch_20b','i3_arch_20c'])">
-                                    <div id="i3_nom_20c" style="margin-top:7px;font-size:12px;
-                                        color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                </div>
-                                <div style="margin-top:10px;font-size:11px;color:#6B7280;
-                                    background:#EFF6FF;border-radius:8px;padding:7px 10px;
-                                    display:flex;align-items:center;gap:8px;">
-                                    <span>📁 Cargados:</span>
-                                    <span id="i3_progreso_20_txt"
-                                          style="font-weight:700;color:#123C7B;">0 / 3</span>
-                                    <div style="flex:1;background:#DBEAFE;border-radius:10px;
-                                                height:6px;overflow:hidden;">
-                                        <div id="i3_progreso_20_bar"
-                                             style="background:linear-gradient(90deg,
-                                                    #0B7A43,#123C7B);height:6px;width:0%;
-                                                    border-radius:10px;transition:width .4s;">
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <!-- 21 — Seguridad social sub-documentos -->
-                        <tr>
-                            <td>21</td>
-                            <td>CERTIFICACIÓN Y PLANILLAS DE SEGURIDAD SOCIAL</td>
-                            <td><input type="checkbox" id="i3_check_21"></td>
-                            <td>
-                                <div class="subdoc-bloque" style="border:1px solid #E5E7EB;
-                                    border-radius:12px;padding:12px 14px;
-                                    margin-bottom:10px;background:#FAFAFA;">
-                                    <div style="font-size:11.5px;font-weight:700;
-                                                color:#123C7B;margin-bottom:8px;
-                                                display:flex;align-items:center;gap:6px;">
-                                        <span style="background:#123C7B;color:white;
-                                                     border-radius:6px;padding:2px 8px;
-                                                     font-size:10px;">1 de 2</span>
-                                        📄 Certificación de pago de seguridad social
-                                    </div>
-                                    <button class="btn" style="padding:9px 14px;font-size:12px;"
-                                        onclick="document.getElementById('i3_arch_21a').click()">
-                                        📎 Cargar</button>
-                                    <input type="file" id="i3_arch_21a" style="display:none;"
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                        onchange="mostrarArchivoSub(this,'i3_nom_21a',
-                                            'i3_check_21',
-                                            ['i3_arch_21a','i3_arch_21b'])">
-                                    <div id="i3_nom_21a" style="margin-top:7px;font-size:12px;
-                                        color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                </div>
-                                <div class="subdoc-bloque" style="border:1px solid #E5E7EB;
-                                    border-radius:12px;padding:12px 14px;background:#FAFAFA;">
-                                    <div style="font-size:11.5px;font-weight:700;
-                                                color:#123C7B;margin-bottom:8px;
-                                                display:flex;align-items:center;gap:6px;">
-                                        <span style="background:#123C7B;color:white;
-                                                     border-radius:6px;padding:2px 8px;
-                                                     font-size:10px;">2 de 2</span>
-                                        🧾 Planillas de pago
-                                    </div>
-                                    <button class="btn" style="padding:9px 14px;font-size:12px;"
-                                        onclick="document.getElementById('i3_arch_21b').click()">
-                                        📎 Cargar</button>
-                                    <input type="file" id="i3_arch_21b" style="display:none;"
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                        onchange="mostrarArchivoSub(this,'i3_nom_21b',
-                                            'i3_check_21',
-                                            ['i3_arch_21a','i3_arch_21b'])">
-                                    <div id="i3_nom_21b" style="margin-top:7px;font-size:12px;
-                                        color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                </div>
-                                <div style="margin-top:10px;font-size:11px;color:#6B7280;
-                                    background:#EFF6FF;border-radius:8px;padding:7px 10px;
-                                    display:flex;align-items:center;gap:8px;">
-                                    <span>📁 Cargados:</span>
-                                    <span id="i3_progreso_21_txt"
-                                          style="font-weight:700;color:#123C7B;">0 / 2</span>
-                                    <div style="flex:1;background:#DBEAFE;border-radius:10px;
-                                                height:6px;overflow:hidden;">
-                                        <div id="i3_progreso_21_bar"
-                                             style="background:linear-gradient(90deg,
-                                                    #0B7A43,#123C7B);height:6px;width:0%;
-                                                    border-radius:10px;transition:width .4s;">
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr><td>22</td>
-                        <td>FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT</td>
-                        <td><input type="checkbox"></td><td>
-                            <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                onclick="document.getElementById('i3_arch_22').click()">
-                                📎 Cargar Documento</button>
-                            <input type="file" id="i3_arch_22" style="display:none;"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_22')">
-                            <div id="i3_nom_22" style="margin-top:8px;font-size:12px;
-                                color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                        </td></tr>
-
-                        <!-- 23 — Con historial -->
-                        <tr>
-                            <td>23</td><td>ACTA DE EVALUACIÓN</td>
-                            <td><input type="checkbox"></td>
-                            <td>
-                                <button class="btn" style="padding:10px 14px;font-size:13px;"
-                                    onclick="document.getElementById('i3_arch_23').click()">
-                                    📎 Cargar Documento
-                                </button>
-                                <input type="file" id="i3_arch_23" style="display:none;"
-                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onchange="mostrarArchivo(this,'i3_nom_23')">
-                                <div id="i3_nom_23" style="margin-top:8px;font-size:12px;
-                                    color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                <button onclick="histU_toggle('i3_',23)"
-                                    style="margin-top:8px;background:none;
-                                           border:1px solid #CBD5E1;border-radius:8px;
-                                           padding:5px 10px;font-size:11px;color:#123C7B;
-                                           cursor:pointer;font-weight:600;
-                                           display:flex;align-items:center;gap:5px;">
-                                    🕓 Ver historial
-                                    <span id="i3_badge_hist_23"
-                                        style="background:#123C7B;color:white;
-                                               border-radius:10px;padding:1px 7px;
-                                               font-size:10px;">0</span>
-                                </button>
-                                <div id="i3_historial_23" style="display:none;margin-top:8px;
-                                    max-height:160px;overflow-y:auto;
-                                    border:1px solid #E5E7EB;border-radius:10px;
-                                    font-size:11px;background:#F8FAFC;">
-                                    <div id="i3_historial_empty_23"
-                                        style="padding:8px 10px;color:#6B7280;font-style:italic;">
-                                        Sin cargas registradas aún.</div>
-                                </div>
-                            </td>
-                        </tr>
-
                     </tbody>
                 </table>
             </div>
+        </div><!-- fin section-card Checklist -->
+
+        <div id="d3p-avance-bar" style="margin-bottom:14px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:14px;padding:14px 18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:12px;font-weight:700;color:#0B7A43;text-transform:uppercase;letter-spacing:.5px;">✅ Avance Documental</span>
+            <span id="d3p-avance-pct" style="font-size:18px;font-weight:800;color:#0B7A43;">0%</span>
+          </div>
+          <div style="height:10px;border-radius:6px;background:#D1FAE5;overflow:hidden;">
+            <div id="d3p-avance-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#0B7A43,#123C7B);border-radius:6px;transition:width .4s ease;"></div>
+          </div>
+          <div id="d3p-avance-texto" style="font-size:12px;color:#374151;margin-top:6px;">0 de 7 documentos verificados</div>
         </div>
 
-        <!-- JURISKILLS IA -->
-        <div class="agente-ia-box" style="margin-bottom:22px;">
-            <div class="agente-ia-header">
-                <div class="agente-ia-info">
-                    <div class="agente-ia-icon">🤖</div>
-                    <div>
-                        <div class="agente-ia-title">
-                            JURISKILLS IA - Análisis Inteligente de Contratación
-                            <span class="beta-tag">BETA</span>
-                        </div>
-                        <div class="agente-ia-text">
-                            Carga documentos en el checklist y JURISKILLS los analiza
-                            con base en el <strong>Acuerdo 015/2024</strong> y la
-                            <strong>Resolución 0456/2024</strong> del HSLV,
-                            Ley 80/1993 y Decreto 1082/2015.
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px;
-                                    margin-top:8px;flex-wrap:wrap;">
-                            <span id="d3p_iaContadorDocs">0 documentos</span>
-                            <span id="d3p_iaEstadoBadge"
-                                  class="ia-badge badge-analizando"
-                                  style="display:none;"></span>
-                        </div>
-                        <div id="d3p_iaResumenGlobal"></div>
-                    </div>
-                </div>
-                <button class="btn btn-actualizar" onclick="reAnalizarTodo()">
-                    ⟳ Actualizar análisis
-                </button>
-            </div>
-            <div id="d3p_iaResultadosContenedor">
-                <div style="text-align:center;padding:30px;color:#9CA3AF;">
-                    <div style="font-size:40px;margin-bottom:10px;">📂</div>
-                    <p>Carga documentos en el checklist para que JURISKILLS
-                       los analice automáticamente.</p>
-                </div>
-            </div>
-            <div class="ia-grid" style="margin-top:18px;">
-                <div>
-                    <div class="ia-section-title">Observaciones adicionales</div>
-                    <textarea class="ia-observaciones" id="d3p_iaObservaciones"
-                        placeholder="Escriba observaciones o justificaciones adicionales…"
-                        oninput="document.getElementById('d3p_iaCharCount')
-                                     .textContent=this.value.length+'/1000 caracteres'"
-                        maxlength="1000"></textarea>
-                    <div id="d3p_iaCharCount"
-                        style="margin-top:6px;color:#6B7280;font-size:12px;">
-                        0/1000 caracteres
-                    </div>
-                </div>
-                <div>
-                    <div class="normativa-box">
-                        <h4>Normativa aplicada por JURISKILLS</h4>
-                        <ul>
-                            <li>Ley 80 de 1993 y Ley 1150 de 2007</li>
-                            <li>Decreto 1082 de 2015 Art. 2.2.1.2.1.2.9</li>
-                            <li>Ley 1150/2007 Art. 2° Lit. b</li>
-                            <li><strong>Acuerdo 015/2024 HSLV</strong>
-                                — Estatuto de Contratación</li>
-                            <li><strong>Resolución 0456/2024 HSLV</strong>
-                                — Manual de Contratación</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="agente-ia-footer">
-                ⓘ El análisis es generado por IA con base en el contenido real
-                de cada documento cargado y la normativa contractual vigente.
-                No reemplaza el criterio jurídico del equipo de contratación.
-            </div>
-        </div>
-
-        <!-- BOTONES -->
-        <div style="display:flex;justify-content:flex-end;gap:12px;
-                    flex-wrap:wrap;padding-bottom:32px;">
-            <button class="btn"
-                onclick="window.location.href='/dashboard'"
-                style="background:#F3F4F6;color:#374151;border:none;">
-                ← Volver al Dashboard
-            </button>
+        <!-- BOTÓN GUARDAR (solo visible tras verificar el objeto contractual) -->
+        <div class="acciones-modal-final" style="justify-content:flex-end;">
             <button class="btn finalizar-btn"
                 onclick="guardarProcesoHistorial('D3P')">
                 💾 Guardar Proceso
             </button>
         </div>
 
+        </div><!-- fin cd1p-post-verificacion -->
+
+        <!-- BOTONES -->
+        <div class="acciones-modal-final" style="justify-content:flex-end;">
+            <button class="btn"
+                onclick="window.location.href='/dashboard'"
+                style="background:#F3F4F6;color:#374151;border:none;">
+                ← Volver al Dashboard
+            </button>
+        </div>
+
     </div><!-- fin content -->
-
-    <!-- ═══════════════════════════════════════════
-         MINI-MODAL — CERTIFICADO PAA
-    ═══════════════════════════════════════════ -->
-    <div id="i3_modalPAAItem" style="display:none;position:fixed;inset:0;
-        z-index:999999;background:rgba(0,0,0,.6);
-        justify-content:center;align-items:center;padding:20px;">
-        <div style="background:#fff;border-radius:20px;padding:28px;width:100%;
-                    max-width:480px;box-shadow:0 20px 50px rgba(0,0,0,.3);">
-            <div style="display:flex;justify-content:space-between;
-                        align-items:center;margin-bottom:18px;">
-                <h3 style="color:#123C7B;font-size:18px;margin:0;">
-                    📋 Certificado PAA
-                </h3>
-                <span onclick="document.getElementById('i3_modalPAAItem')
-                                   .style.display='none'"
-                    style="font-size:26px;cursor:pointer;
-                           color:#6B7280;line-height:1;">&times;</span>
-            </div>
-            <div style="margin-bottom:14px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:6px;font-size:13px;">
-                    Código(s) UNSPSC
-                </label>
-                <input id="i3_paa_unspsc_input" type="text"
-                    placeholder="Ej: 42142500, 81112100"
-                    style="width:100%;padding:11px 13px;border-radius:10px;
-                           border:1.5px solid #CBD5E1;font-size:13px;">
-                <div style="font-size:11px;color:#6B7280;margin-top:4px;">
-                    Separe múltiples códigos con coma.
-                </div>
-            </div>
-            <div style="margin-bottom:18px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:6px;font-size:13px;">
-                    Detalle / Descripción
-                </label>
-                <textarea id="i3_paa_detalle_input" rows="3"
-                    placeholder="Descripción del bien o servicio…"
-                    style="width:100%;padding:11px 13px;border-radius:10px;
-                           border:1.5px solid #CBD5E1;font-size:13px;
-                           resize:vertical;"></textarea>
-            </div>
-            <div style="margin-bottom:18px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:6px;font-size:13px;">
-                    Documento PAA
-                </label>
-                <button onclick="document.getElementById('i3_arch_1').click()"
-                    style="width:100%;background:#F8FAFC;
-                           border:1.5px dashed #94A3B8;color:#374151;
-                           padding:11px;border-radius:10px;font-size:13px;
-                           cursor:pointer;font-weight:600;">
-                    📎 Seleccionar archivo
-                </button>
-                <div id="i3_nom_1_modal"
-                    style="margin-top:6px;font-size:12px;
-                           color:#0B7A43;font-weight:600;"></div>
-            </div>
-            <div style="display:flex;gap:10px;">
-                <button onclick="i3_guardarPAAItem()"
-                    style="flex:1;background:linear-gradient(90deg,#0B7A43,#123C7B);
-                           color:#fff;border:none;padding:12px;border-radius:12px;
-                           font-weight:700;font-size:14px;cursor:pointer;">
-                    ✅ Guardar
-                </button>
-                <button onclick="document.getElementById('i3_modalPAAItem')
-                                     .style.display='none'"
-                    style="flex:1;background:#F3F4F6;color:#374151;border:none;
-                           padding:12px;border-radius:12px;font-weight:600;
-                           font-size:14px;cursor:pointer;">
-                    Cancelar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════
-         MINI-MODAL — SOLICITUD CDP
-    ═══════════════════════════════════════════ -->
-    <div id="i3_modalSolicitudCDPItem" style="display:none;position:fixed;inset:0;
-        z-index:999999;background:rgba(0,0,0,.6);
-        justify-content:center;align-items:center;padding:20px;">
-        <div style="background:#fff;border-radius:20px;padding:28px;width:100%;
-                    max-width:520px;box-shadow:0 20px 50px rgba(0,0,0,.3);
-                    max-height:92vh;overflow-y:auto;">
-            <div style="display:flex;justify-content:space-between;
-                        align-items:center;margin-bottom:18px;">
-                <h3 style="color:#123C7B;font-size:17px;margin:0;">
-                    📄 Solicitud CDP
-                </h3>
-                <span onclick="document.getElementById('i3_modalSolicitudCDPItem')
-                                   .style.display='none'"
-                    style="font-size:26px;cursor:pointer;
-                           color:#6B7280;line-height:1;">&times;</span>
-            </div>
-            <div style="margin-bottom:13px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:5px;font-size:13px;">Nombre del Rubro</label>
-                <input id="i3_scdp_rubro" type="text"
-                    placeholder="Ej: Servicios Personales Indirectos"
-                    style="width:100%;padding:11px 13px;border-radius:10px;
-                           border:1.5px solid #CBD5E1;font-size:13px;">
-            </div>
-            <div style="margin-bottom:13px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:5px;font-size:13px;">Número del Rubro</label>
-                <input id="i3_scdp_numrubro" type="text"
-                    placeholder="Ej: 2-1-01-01"
-                    style="width:100%;padding:11px 13px;border-radius:10px;
-                           border:1.5px solid #CBD5E1;font-size:13px;">
-            </div>
-            <div style="margin-bottom:13px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:5px;font-size:13px;">
-                    Valor (en números)
-                </label>
-                <input id="i3_scdp_valor-num" type="number"
-                    placeholder="Ej: 15000000"
-                    oninput="scdpAutoLetras()"
-                    style="width:100%;padding:11px 13px;border-radius:10px;
-                           border:1.5px solid #CBD5E1;font-size:13px;">
-            </div>
-            <div style="margin-bottom:13px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:5px;font-size:13px;">
-                    Valor (en letras)
-                </label>
-                <input id="i3_scdp_valor-letras" type="text"
-                    placeholder="Se genera automáticamente…"
-                    style="width:100%;padding:11px 13px;border-radius:10px;
-                           border:1.5px solid #CBD5E1;font-size:13px;">
-            </div>
-            <div style="margin-bottom:13px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:5px;font-size:13px;">
-                    Fecha de Solicitud
-                </label>
-                <input id="i3_scdp_fecha" type="date"
-                    style="width:100%;padding:11px 13px;border-radius:10px;
-                           border:1.5px solid #CBD5E1;font-size:13px;">
-            </div>
-            <div style="margin-bottom:18px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:5px;font-size:13px;">Documento</label>
-                <button onclick="document.getElementById('i3_arch_2').click()"
-                    style="width:100%;background:#F8FAFC;
-                           border:1.5px dashed #94A3B8;color:#374151;
-                           padding:11px;border-radius:10px;font-size:13px;
-                           cursor:pointer;font-weight:600;">
-                    📎 Seleccionar archivo
-                </button>
-                <div id="i3_nom_2_modal"
-                    style="margin-top:6px;font-size:12px;
-                           color:#0B7A43;font-weight:600;"></div>
-            </div>
-            <div style="display:flex;gap:10px;">
-                <button onclick="i3_guardarSolicitudCDPItem()"
-                    style="flex:1;background:linear-gradient(90deg,#0B7A43,#123C7B);
-                           color:#fff;border:none;padding:12px;border-radius:12px;
-                           font-weight:700;font-size:14px;cursor:pointer;">
-                    ✅ Guardar
-                </button>
-                <button onclick="document.getElementById('i3_modalSolicitudCDPItem')
-                                     .style.display='none'"
-                    style="flex:1;background:#F3F4F6;color:#374151;border:none;
-                           padding:12px;border-radius:12px;font-weight:600;
-                           font-size:14px;cursor:pointer;">
-                    Cancelar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════
-         MINI-MODAL — CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL
-    ═══════════════════════════════════════════ -->
-    <div id="i3_modalCDPItem" style="display:none;position:fixed;inset:0;
-        z-index:999999;background:rgba(0,0,0,.6);
-        justify-content:center;align-items:center;padding:20px;">
-        <div style="background:#fff;border-radius:20px;padding:28px;width:100%;
-                    max-width:480px;box-shadow:0 20px 50px rgba(0,0,0,.3);
-                    max-height:92vh;overflow-y:auto;">
-            <div style="display:flex;justify-content:space-between;
-                        align-items:center;margin-bottom:18px;">
-                <h3 style="color:#123C7B;font-size:17px;margin:0;">
-                    📋 Certificado de Disponibilidad Presupuestal
-                </h3>
-                <span onclick="document.getElementById('i3_modalCDPItem')
-                                   .style.display='none'"
-                    style="font-size:26px;cursor:pointer;
-                           color:#6B7280;line-height:1;">&times;</span>
-            </div>
-            <div style="margin-bottom:13px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:5px;font-size:13px;">Número de CDP</label>
-                <input id="i3_cdp_num" type="text"
-                    placeholder="Ej: CDP-2025-001"
-                    style="width:100%;padding:11px 13px;border-radius:10px;
-                           border:1.5px solid #CBD5E1;font-size:13px;">
-            </div>
-            <div style="margin-bottom:13px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:5px;font-size:13px;">Fecha del CDP</label>
-                <input id="i3_cdp_fecha" type="date"
-                    style="width:100%;padding:11px 13px;border-radius:10px;
-                           border:1.5px solid #CBD5E1;font-size:13px;">
-            </div>
-            <div style="margin-bottom:18px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:5px;font-size:13px;">Objeto del CDP</label>
-                <textarea id="i3_cdp_objeto" rows="3"
-                    placeholder="Describa el objeto…"
-                    style="width:100%;padding:11px 13px;border-radius:10px;
-                           border:1.5px solid #CBD5E1;font-size:13px;
-                           resize:vertical;"></textarea>
-            </div>
-            <div style="margin-bottom:18px;">
-                <label style="display:block;font-weight:700;color:#123C7B;
-                               margin-bottom:5px;font-size:13px;">Documento CDP</label>
-                <button onclick="document.getElementById('i3_arch_3').click()"
-                    style="width:100%;background:#F8FAFC;
-                           border:1.5px dashed #94A3B8;color:#374151;
-                           padding:11px;border-radius:10px;font-size:13px;
-                           cursor:pointer;font-weight:600;">
-                    📎 Seleccionar archivo
-                </button>
-                <div id="i3_nom_3_modal"
-                    style="margin-top:6px;font-size:12px;
-                           color:#0B7A43;font-weight:600;"></div>
-            </div>
-            <div style="display:flex;gap:10px;">
-                <button onclick="i3_guardarCDPItem()"
-                    style="flex:1;background:linear-gradient(90deg,#0B7A43,#123C7B);
-                           color:#fff;border:none;padding:12px;border-radius:12px;
-                           font-weight:700;font-size:14px;cursor:pointer;">
-                    ✅ Guardar
-                </button>
-                <button onclick="document.getElementById('i3_modalCDPItem')
-                                     .style.display='none'"
-                    style="flex:1;background:#F3F4F6;color:#374151;border:none;
-                           padding:12px;border-radius:12px;font-weight:600;
-                           font-size:14px;cursor:pointer;">
-                    Cancelar
-                </button>
-            </div>
-        </div>
-    </div>
 
     <script src="/js/sidebar.js"></script>
     <script src="/js/db.js"></script>

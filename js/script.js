@@ -2271,74 +2271,6 @@ function scdpAutoLetras() {
     }
 }
 
-// NOTA: esta función tenía un bug — usaba los IDs de Contratación Directa 1
-// Propuesta (sin prefijo) en vez de los de Directa 3 Invitaciones (i3_),
-// por lo que el botón "Guardar" de este mini-modal nunca funcionaba ahí.
-function i3_guardarPAAItem() {
-    const unspsc  = document.getElementById('i3_paa_unspsc_input').value.trim();
-    const detalle = document.getElementById('i3_paa_detalle_input').value.trim();
-
-    if (!unspsc) {
-        alert('Por favor ingrese al menos un código UNSPSC.');
-        return;
-    }
-
-    // Mostrar preview en la celda
-    document.getElementById('i3_paa_unspsc_label').textContent  = unspsc;
-    document.getElementById('i3_paa_detalle_label').textContent = detalle || '—';
-    var preview = document.getElementById('i3_paa_unspsc_preview');
-    if (preview) preview.style.display = 'block';
-    if (typeof histU_actualizarExtra === 'function') histU_actualizarExtra('i3_', 1);
-
-    document.getElementById('i3_modalPAAItem').style.display = 'none';
-}
-
-// Igual que i3_guardarPAAItem: faltaban por completo (Directa 3 Invitaciones
-// usaba las funciones de Contratación Directa 1, con IDs que no existen ahí).
-function i3_guardarSolicitudCDPItem() {
-    const rubro    = document.getElementById('i3_scdp_rubro').value.trim();
-    const numrubro = document.getElementById('i3_scdp_numrubro').value.trim();
-    const valNum   = document.getElementById('i3_scdp_valor-num').value.trim();
-    const valLetra = document.getElementById('i3_scdp_valor-letras').value.trim();
-    const fecha    = document.getElementById('i3_scdp_fecha').value;
-
-    if (!rubro || !numrubro || !valNum || !fecha) {
-        alert('Por favor complete: Nombre del rubro, Número del rubro, Valor y Fecha de solicitud.');
-        return;
-    }
-
-    var valorFmt = parseInt(valNum).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
-    document.getElementById('i3_scdp_rubro-label').textContent    = rubro;
-    document.getElementById('i3_scdp_numrubro-label').textContent = numrubro;
-    document.getElementById('i3_scdp_valor-label').textContent    = valorFmt + (valLetra ? ' (' + valLetra + ')' : '');
-    document.getElementById('i3_scdp_fecha-label').textContent    = fecha;
-    var preview = document.getElementById('i3_scdp_preview');
-    if (preview) preview.style.display = 'block';
-    if (typeof histU_actualizarExtra === 'function') histU_actualizarExtra('i3_', 2);
-
-    document.getElementById('i3_modalSolicitudCDPItem').style.display = 'none';
-}
-
-function i3_guardarCDPItem() {
-    const num    = document.getElementById('i3_cdp_num').value.trim();
-    const fecha  = document.getElementById('i3_cdp_fecha').value;
-    const objeto = document.getElementById('i3_cdp_objeto').value.trim();
-
-    if (!num || !fecha || !objeto) {
-        alert('Por favor complete: Número de CDP, Fecha y Objeto.');
-        return;
-    }
-
-    document.getElementById('i3_cdp_num-label').textContent    = num;
-    document.getElementById('i3_cdp_fecha-label').textContent  = fecha;
-    document.getElementById('i3_cdp_objeto-label').textContent = objeto.slice(0, 70) + (objeto.length > 70 ? '…' : '');
-    var preview = document.getElementById('i3_cdp_preview');
-    if (preview) preview.style.display = 'block';
-    if (typeof histU_actualizarExtra === 'function') histU_actualizarExtra('i3_', 3);
-
-    document.getElementById('i3_modalCDPItem').style.display = 'none';
-}
-
 function d3p_mostrarArchivo(input, labelId, miniLabelId) {
   if (!input.files || !input.files[0]) return;
   var nombre = input.files[0].name;
@@ -2481,35 +2413,32 @@ function hist_checklistCount(tipo) {
   return { checks: checks, total: total };
 }
 
+// ── Números de ítem reales por tipo de proceso, cuando NO son contiguos ──
+// D3P reutiliza un subconjunto de los 7 ítems de CD1P con sus mismos números
+// (1,2,3,5,6,8,9 — sin 4,7,10..23), para que el motor de análisis JURISKILLS
+// (SKILLS_JURIDICOS, ITEMS_CHECKLIST, _MODO_ANALISIS_CD1P, todos indexados
+// por número real de ítem) le aplique los criterios correctos a cada
+// documento. CONV/SUB no están aquí porque sus 15 ítems sí son contiguos
+// (1..15) — ver ITEMS_POR_TIPO_NO_CONTIGUOS.
+var ITEMS_POR_TIPO_NO_CONTIGUOS = {
+    D3P: [1, 2, 3, 5, 6, 8, 9]
+};
+
 // ── Etiquetas reales de los checklists, por tipo de proceso ──
 // Misma lista que CHECKLISTS_POR_TIPO en js/proceso-detalle.js (esa página
-// no carga script.js, por eso mantiene su propia copia). D3P comparte el
-// checklist de 23 ítems de CD1P; Convocatoria y Subasta tienen 15 propios.
+// no carga script.js, por eso mantiene su propia copia). D3P tiene su propio
+// checklist reducido de 7 ítems (independiente de los 23 de CD1P); Convocatoria
+// y Subasta tienen 15 propios. El orden de las etiquetas debe coincidir con
+// el de ITEMS_POR_TIPO_NO_CONTIGUOS.D3P (misma posición → mismo ítem).
 var CHECKLIST_LABELS_POR_TIPO = {
     D3P: [
         'CERTIFICADO PAA',
         'SOLICITUD DE CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',
         'CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',
-        'SOLICITUD PARA CONTRATAR',
         'ESTUDIOS PREVIOS',
         'MATRIZ DE RIESGO',
-        'ANEXO IO PRESENTACIÓN DE LA PROPUESTA',
         'PROPUESTA',
-        'ESTUDIO DE MERCADO',
-        'EXPERIENCIA',
-        'CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN',
-        'CÉDULA DE CIUDADANÍA',
-        'LIBRETA MILITAR (si aplica)',
-        'REGISTRO ÚNICO TRIBUTARIO',
-        'CERTIFICADO ANTECEDENTES (DISCIPLINARIOS, FISCALES Y JUDICIALES)',
-        'CERTIFICADO ANTECEDENTES DE DELITOS SEXUALES',
-        'CERTIFICADO INEXISTENCIA DE INHABILIDADES E INCOMPATIBILIDADES',
-        'CERTIFICADO DE MEDIDAS CORRECTIVAS',
-        'CERTIFICADO REDAM',
-        'REVISOR FISCAL (CÉDULA, ANTECEDENTES, TARJETA PROFESIONAL)',
-        'CERTIFICACIÓN Y PLANILLAS DE SEGURIDAD SOCIAL',
-        'FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT',
-        'ACTA DE EVALUACIÓN'
+        'ESTUDIO DE MERCADO'
     ],
     CONV: [
         'CERTIFICADO PAA',
@@ -2606,18 +2535,26 @@ async function guardarProcesoHistorial(tipo) {
     var ITEMS_RESTRINGIDOS = ITEMS_RESTRINGIDOS_GLOBAL;
     var checklist = [];
 
-    // Etiquetas reales de cada checklist (D3P comparte los 23 ítems de CD1P;
-    // Convocatoria y Subasta tienen su propio checklist de 15 ítems). Antes
-    // se guardaba el label genérico "Ítem N" y se recorrían siempre 23 ítems,
-    // aunque CONV/SUB solo tienen 15 (inflaba el conteo del historial).
+    // Etiquetas reales de cada checklist (D3P tiene su propio checklist
+    // reducido de 7 ítems; Convocatoria y Subasta tienen su propio checklist
+    // de 15 ítems). Antes se guardaba el label genérico "Ítem N" y se
+    // recorrían siempre 23 ítems, aunque CONV/SUB solo tienen 15 (inflaba el
+    // conteo del historial).
     var labelsModulo = (typeof CHECKLIST_LABELS_POR_TIPO !== 'undefined' &&
                         CHECKLIST_LABELS_POR_TIPO[tipoKey])
         ? CHECKLIST_LABELS_POR_TIPO[tipoKey]
         : null;
-    var totalItems = labelsModulo ? labelsModulo.length
-                                  : (tipoKey === 'D3P' ? 23 : 15);
+    var totalItems = labelsModulo ? labelsModulo.length : 15;
 
-    for (var n = 1; n <= totalItems; n++) {
+    // D3P usa números de ítem no contiguos (comparte numeración con CD1P) —
+    // ver ITEMS_POR_TIPO_NO_CONTIGUOS. CONV/SUB siguen siendo 1..totalItems.
+    var itemsNoContiguos = (typeof ITEMS_POR_TIPO_NO_CONTIGUOS !== 'undefined')
+        ? ITEMS_POR_TIPO_NO_CONTIGUOS[tipoKey]
+        : null;
+    var listaNumeros = itemsNoContiguos || Array.apply(null, { length: totalItems })
+        .map(function(_, idx) { return idx + 1; });
+
+    listaNumeros.forEach(function(n, idx) {
         // Se guardan TODOS los archivos de los ítems con varios recuadros
         // (antes solo se guardaba el primero y los demás se perdían)
         var archivos = [];
@@ -2628,22 +2565,8 @@ async function guardarProcesoHistorial(tipo) {
             archivos.push(archEl.files[0]);
         }
 
-        // Sub-archivos para ítems 15, 20, 21 (solo existen en D3P)
-        var subSufijos = {
-            15: ['15a','15b','15c'],
-            20: ['20a','20b','20c'],
-            21: ['21a','21b']
-        };
-        if (subSufijos[n]) {
-            subSufijos[n].forEach(function(s) {
-                var si = document.getElementById(pref + '_arch_' + s);
-                if (si && si.files && si.files[0]) archivos.push(si.files[0]);
-            });
-        }
-
         // Checkbox del ítem
-        var cbEl = document.getElementById(pref + '_chk_' + n) ||
-                   document.getElementById('i3_check_' + n);
+        var cbEl = document.getElementById(pref + '_chk_' + n);
         var ok = cbEl ? cbEl.checked : false;
 
         var comentEl2  = document.getElementById(pref + '_coment_' + n);
@@ -2651,14 +2574,14 @@ async function guardarProcesoHistorial(tipo) {
 
         checklist.push({
             num:           n,
-            label:         labelsModulo ? labelsModulo[n - 1] : ('Ítem ' + n),
+            label:         labelsModulo ? labelsModulo[idx] : ('Ítem ' + n),
             ok:            ok,
             archivo:       archivos[0] || null,
             archivos:      archivos,
             esRestringido: ITEMS_RESTRINGIDOS.indexOf(n) !== -1,
             comentario:    comentario
         });
-    }
+    });
 
     // ── Guardar en Supabase ───────────────────────────
     var resultado = await db_guardarProceso({
@@ -2786,6 +2709,42 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+
+// ── Avance Documental en tiempo real (D3P — Directa 3 Invitaciones) ──────
+// Checklist propio y reducido de 7 ítems, con la misma numeración de CD1P
+// (1,2,3,5,6,8,9 — ver ITEMS_POR_TIPO_NO_CONTIGUOS.D3P), independiente del
+// de 23 ítems de CD1P — ver cd1p_actualizarAvance() arriba.
+function d3p_actualizarAvance() {
+  var ITEMS = (typeof ITEMS_POR_TIPO_NO_CONTIGUOS !== 'undefined' && ITEMS_POR_TIPO_NO_CONTIGUOS.D3P)
+      || [1, 2, 3, 5, 6, 8, 9];
+  var TOTAL = ITEMS.length;
+  var ok = 0;
+
+  ITEMS.forEach(function(n) {
+    var div = document.getElementById('i3_nom_' + n);
+    if (div) {
+      var t = (div.textContent || div.innerText || '').trim();
+      if (t && t !== 'Sin archivo cargado' && t.indexOf('⏳') === -1) ok++;
+    }
+  });
+
+  var pct = Math.round((ok / TOTAL) * 100);
+
+  var fill  = document.getElementById('d3p-avance-fill');
+  var pctEl = document.getElementById('d3p-avance-pct');
+  var txt   = document.getElementById('d3p-avance-texto');
+  if (!fill) return;
+
+  fill.style.width  = pct + '%';
+  pctEl.textContent = pct + '%';
+  txt.textContent   = ok + ' de ' + TOTAL + ' documentos verificados';
+
+  var color = pct === 100 ? 'linear-gradient(90deg,#0B7A43,#059669)'
+            : pct >= 60   ? 'linear-gradient(90deg,#0B7A43,#123C7B)'
+            : pct >= 30   ? 'linear-gradient(90deg,#D97706,#0B7A43)'
+            :               'linear-gradient(90deg,#DC2626,#D97706)';
+  fill.style.background = color;
+}
 
 function hist_filtrarProcesos() {
   var filtroTipo = document.getElementById('hist-filtro-modal').value;
@@ -3374,18 +3333,31 @@ document.querySelectorAll('.modal').forEach(modal=>{
 
 
 // ════════════════════════════════════════════════════
-//  COLUMNA "ANÁLISIS JURISKILLS" — Contratación Directa 1 Propuesta
-//  Se agrega por JS a cada una de las 23 filas (no se editó el HTML a
-//  mano, para no arriesgar el balance de <div>/<tr>). El contenido de
-//  cada celda lo llena actualizarPanelAgente() más abajo.
+//  COLUMNA "ANÁLISIS JURISKILLS" — Contratación Directa 1 Propuesta y
+//  Directa 3 Invitaciones (comparten el mismo id #cd1p-checklist).
+//  Se agrega por JS a cada fila (no se editó el HTML a mano, para no
+//  arriesgar el balance de <div>/<tr>). El contenido de cada celda lo
+//  llena actualizarPanelAgente() más abajo.
+//  El número de ítem real se lee del atributo data-item-num de la fila si
+//  existe; si no, de la 1ª celda (número visible). CD1P numera 1..23 de
+//  forma consecutiva y visible = real, así que no necesita el atributo.
+//  D3P en cambio muestra una numeración 1..7 consecutiva para el usuario
+//  (más cómoda de leer) pero internamente reutiliza los números reales de
+//  CD1P (1,2,3,5,6,8,9) en data-item-num, para quedar alineado con el
+//  numItem que usa el motor de análisis (SKILLS_JURIDICOS,
+//  _MODO_ANALISIS_CD1P, etc., indexados por el número real del ítem).
 // ════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
     var wrapper = document.getElementById('cd1p-checklist');
-    if (!wrapper) return; // esta página no es Contratación Directa 1 Propuesta
+    if (!wrapper) return; // esta página no tiene columna de análisis JURISKILLS
 
-    wrapper.querySelectorAll('table tbody > tr').forEach(function(fila, i) {
-        var num = i + 1;
-        if (document.getElementById('ia-item-' + num)) return; // ya existe
+    wrapper.querySelectorAll('table tbody > tr').forEach(function(fila) {
+        var num = parseInt(fila.getAttribute('data-item-num'));
+        if (!num) {
+            var primerTd = fila.querySelector('td');
+            num = primerTd ? parseInt(primerTd.textContent) : NaN;
+        }
+        if (!num || document.getElementById('ia-item-' + num)) return; // ya existe
 
         var celda = document.createElement('td');
         celda.id = 'ia-item-' + num;
@@ -3594,7 +3566,7 @@ async function analizarDocumentoCD1P(clave) {
 // "sin análisis" para los ítems que no lo requieren) — el análisis real
 // arranca con el botón "🔎 Analizar" que aparece en la columna JURISKILLS.
 async function mostrarArchivo(input, elementoId) {
-    const sufijo = elementoId.replace('nombreArchivo_', '');
+    const sufijo = elementoId.replace(/^(nombreArchivo_|i3_nom_)/, '');
     const numItem = parseInt(sufijo);
     const divNombre = document.getElementById(elementoId);
 
@@ -3619,6 +3591,7 @@ async function mostrarArchivo(input, elementoId) {
 
     actualizarPanelAgente();
     if (typeof cd1p_actualizarAvance === 'function') cd1p_actualizarAvance();
+    if (typeof d3p_actualizarAvance === 'function') d3p_actualizarAvance();
 }
 
 // ════════════════════════════════════════════════════

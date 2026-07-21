@@ -3,9 +3,10 @@
 //  Lógica de la página de detalle de un proceso (/proceso/CODIGO)
 // ════════════════════════════════════════════════════
 
-// El checklist de CD1P y D3P es idéntico (23 ítems). Convocatoria y Subasta
-// usan uno propio y más corto (15 ítems) — no se pueden compartir las mismas
-// etiquetas entre los 4 módulos.
+// D3P tiene su propio checklist reducido de 7 ítems (no comparte el de 23
+// ítems de CD1P). Convocatoria y Subasta usan uno propio y más corto
+// (15 ítems) — no se pueden compartir las mismas etiquetas entre los 4
+// módulos.
 var CHECKLISTS_POR_TIPO = {
     CD1P: [
         'CERTIFICADO PAA',
@@ -67,7 +68,24 @@ var CHECKLISTS_POR_TIPO = {
         'MINUTA DE CONTRATO'
     ]
 };
-CHECKLISTS_POR_TIPO.D3P = CHECKLISTS_POR_TIPO.CD1P; // mismo checklist de 23 ítems
+CHECKLISTS_POR_TIPO.D3P = [
+    'CERTIFICADO PAA',
+    'SOLICITUD DE CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',
+    'CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL',
+    'ESTUDIOS PREVIOS',
+    'MATRIZ DE RIESGO',
+    'PROPUESTA',
+    'ESTUDIO DE MERCADO'
+]; // checklist propio y reducido de D3P (7 ítems)
+
+// D3P reutiliza los números de ítem de CD1P (1,2,3,5,6,8,9 — sin huecos
+// contiguos) para que el análisis JURISKILLS aplique los criterios
+// correctos a cada documento — ver ITEMS_POR_TIPO_NO_CONTIGUOS en
+// js/script.js (esta página no lo carga, por eso mantiene su propia copia).
+// Misma posición → mismo ítem que CHECKLISTS_POR_TIPO.D3P.
+var ITEMS_POR_TIPO_NO_CONTIGUOS_DETALLE = {
+    D3P: [1, 2, 3, 5, 6, 8, 9]
+};
 
 // Nota: la lista de ítems restringidos (solo Jurídica/Admin) sigue pendiente
 // de confirmar cuáles aplican en Convocatoria/Subasta — se deja igual que
@@ -362,10 +380,11 @@ function renderizarChecklist() {
     var puedeComentar = puedeComentarProceso(proceso, _perfilActual);
     var esBiomedica   = _perfilActual && _perfilActual.area === 'biomedica';
     var labelsProceso = CHECKLISTS_POR_TIPO[proceso.tipo] || CHECKLISTS_POR_TIPO.CD1P;
+    var itemsNoContiguos = ITEMS_POR_TIPO_NO_CONTIGUOS_DETALLE[proceso.tipo] || null;
 
     var filas = '';
     labelsProceso.forEach(function(label, i) {
-        var num = i + 1;
+        var num = itemsNoContiguos ? itemsNoContiguos[i] : (i + 1);
         var esRestringido = ITEMS_RESTRINGIDOS_DETALLE.indexOf(num) !== -1;
 
         // Biomédica no ve ítems restringidos, igual que en el formulario de creación
@@ -625,12 +644,14 @@ async function pd_guardar() {
         btnGuardar.innerHTML = '⏳ Guardando…';
     }
 
-    var labelsProceso = CHECKLISTS_POR_TIPO[_procesoActual.tipo] || CHECKLISTS_POR_TIPO.CD1P;
+    var labelsProceso    = CHECKLISTS_POR_TIPO[_procesoActual.tipo] || CHECKLISTS_POR_TIPO.CD1P;
+    var itemsNoContiguos2 = ITEMS_POR_TIPO_NO_CONTIGUOS_DETALLE[_procesoActual.tipo] || null;
 
     for (var i = 0; i < itemsPendientes.length; i++) {
         var num         = parseInt(itemsPendientes[i]);
         var archivo     = _archivosPendientes[num];
-        var label       = labelsProceso[num - 1] || ('Ítem ' + num);
+        var idxLabel    = itemsNoContiguos2 ? itemsNoContiguos2.indexOf(num) : (num - 1);
+        var label       = (idxLabel !== -1 ? labelsProceso[idxLabel] : null) || ('Ítem ' + num);
         var restringido = ITEMS_RESTRINGIDOS_DETALLE.indexOf(num) !== -1;
         await db_subirDocumento(_procesoActual.id, num, label, archivo, restringido);
     }
