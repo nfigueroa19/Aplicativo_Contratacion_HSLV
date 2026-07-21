@@ -1621,6 +1621,102 @@ function mostrarNombreArchivo(input, elementoId){
 // ═══════════════════════════════════════════════════════════
 const BD_PROCESOS = [];
 
+// ── Verificación de objeto contractual duplicado (CD1P) ───────
+// El usuario debe verificar que el objeto no se repita en el año antes
+// de que aparezcan los campos de Área, Responsable y el checklist.
+var _cd1pObjetoVerificado = false;
+
+function _cd1pMostrarCamposPostVerificacion() {
+    ['fg_area', 'fg_responsable', 'cd1p-post-verificacion'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = '';
+    });
+}
+
+function _cd1pOcultarCamposPostVerificacion() {
+    ['fg_area', 'fg_responsable', 'cd1p-post-verificacion'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+}
+
+async function verificarObjetoContractual() {
+    var objetoEl    = document.getElementById('mp_objeto');
+    var resultadoEl = document.getElementById('mp_verificacion_resultado');
+    var objeto      = objetoEl ? objetoEl.value.trim() : '';
+
+    if (!objeto) {
+        alert('⚠️ Ingrese el Objeto Contractual antes de verificar.');
+        return;
+    }
+
+    var btn = document.getElementById('mp_verificar_btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Verificando...'; }
+
+    var resultado = await db_verificarObjetoSimilar(objeto);
+
+    if (btn) { btn.disabled = false; btn.textContent = '🔍 Verificar objeto contractual'; }
+    if (!resultadoEl) return;
+
+    if (resultado.error) {
+        resultadoEl.innerHTML =
+            '<div style="background:#FEF2F2;border-left:4px solid #DC2626;' +
+            'padding:10px 12px;border-radius:8px;color:#DC2626;font-size:13px;">' +
+            '❌ No se pudo verificar en este momento. Intente nuevamente.</div>';
+        _cd1pObjetoVerificado = false;
+        _cd1pOcultarCamposPostVerificacion();
+        return;
+    }
+
+    if (resultado.coincidencia) {
+        var perfil = await db_perfil();
+        var fecha  = new Date(resultado.coincidencia.fecha_creacion)
+            .toLocaleDateString('es-CO', {day:'2-digit', month:'2-digit', year:'numeric'});
+        var pct    = Math.round((resultado.coincidencia.similitud || 0) * 100);
+
+        var msg = '⚠️ Ya existe un objeto contractual muy similar (' + pct + '% de coincidencia), ' +
+                  'registrado el ' + fecha + ' con el código <strong>' + resultado.coincidencia.codigo + '</strong>.';
+        if (!perfil || perfil.rol !== 'admin') {
+            msg += ' Por favor comuníquese con un administrador para continuar.';
+        }
+
+        resultadoEl.innerHTML =
+            '<div style="background:#FEF2F2;border-left:4px solid #DC2626;' +
+            'padding:10px 12px;border-radius:8px;color:#991B1B;font-size:13px;">' + msg + '</div>';
+
+        _cd1pObjetoVerificado = false;
+        _cd1pOcultarCamposPostVerificacion();
+        return;
+    }
+
+    resultadoEl.innerHTML =
+        '<div style="background:#ECFDF5;border-left:4px solid #0B7A43;' +
+        'padding:10px 12px;border-radius:8px;color:#0B7A43;font-size:13px;">' +
+        '✅ No se encontraron objetos similares este año. Puede continuar.</div>';
+
+    _cd1pObjetoVerificado = true;
+    _cd1pMostrarCamposPostVerificacion();
+}
+
+// Si el usuario modifica el objeto después de verificarlo, se oculta todo
+// de nuevo y se exige re-verificar — evita verificar un texto y luego
+// cambiarlo antes de guardar.
+document.addEventListener('DOMContentLoaded', function() {
+    var objetoEl = document.getElementById('mp_objeto');
+    if (!objetoEl) return;
+    objetoEl.addEventListener('input', function() {
+        if (!_cd1pObjetoVerificado) return;
+        _cd1pObjetoVerificado = false;
+        _cd1pOcultarCamposPostVerificacion();
+        var resultadoEl = document.getElementById('mp_verificacion_resultado');
+        if (resultadoEl) {
+            resultadoEl.innerHTML =
+                '<div style="font-size:12px;color:#92400E;">✏️ Modificó el objeto — ' +
+                'verifique nuevamente antes de continuar.</div>';
+        }
+    });
+});
+
 async function guardarProceso() {
 
     // ── Validaciones básicas ──────────────────────────
@@ -1629,6 +1725,10 @@ async function guardarProceso() {
 
     if (!objeto.trim()) {
         alert('⚠️ Debe ingresar el Objeto Contractual antes de guardar.');
+        return;
+    }
+    if (document.getElementById('mp_verificar_btn') && !_cd1pObjetoVerificado) {
+        alert('⚠️ Debe verificar el Objeto Contractual antes de guardar el proceso.');
         return;
     }
     if (!area.trim()) {
@@ -1724,7 +1824,7 @@ async function guardarProceso() {
         // este ítem nunca guardaba ningún archivo en la base de datos.
         var subSufijos = {
             9:  ['9_mercado','9_propuestas','9_carta'],
-            15: ['15a','15b','15c'],
+            15: ['15a','15b','15c','15d'],
             20: ['20a','20b','20c'],
             21: ['21a','21b']
         };
@@ -1806,6 +1906,14 @@ function limpiarFormularioProceso() {
     if (mod) mod.selectedIndex = 0;
     if (are) are.value = '';
 
+    // Re-exigir verificación del objeto contractual para el próximo proceso
+    if (document.getElementById('mp_verificar_btn')) {
+        _cd1pObjetoVerificado = false;
+        _cd1pOcultarCamposPostVerificacion();
+        var resultadoEl = document.getElementById('mp_verificacion_resultado');
+        if (resultadoEl) resultadoEl.innerHTML = '';
+    }
+
     // Checkboxes
     document.querySelectorAll('#modalProceso input[type="checkbox"]').forEach(cb => {
         cb.checked = false;
@@ -1819,8 +1927,8 @@ function limpiarFormularioProceso() {
         const nom = document.getElementById('nombreArchivo_' + i);
         if (nom) nom.innerHTML = 'Sin archivo cargado';
     }
-    // Sub-archivos (15a, 15b, 15c, 20a, 20b, 20c, 21a, 21b)
-    ['15a','15b','15c','20a','20b','20c','21a','21b'].forEach(s => {
+    // Sub-archivos (15a, 15b, 15c, 15d, 20a, 20b, 20c, 21a, 21b)
+    ['15a','15b','15c','15d','20a','20b','20c','21a','21b'].forEach(s => {
         const inp = document.getElementById('archivo_' + s);
         if (inp) inp.value = '';
         const nom = document.getElementById('nombreArchivo_' + s);
@@ -1874,7 +1982,7 @@ function limpiarFormularioProceso() {
     ['15','20','21'].forEach(n => {
         const txt = document.getElementById('progreso_' + n + '_txt');
         const bar = document.getElementById('progreso_' + n + '_bar');
-        if (txt) txt.textContent = '0 / ' + (n === '20' ? '3' : n === '15' ? '3' : '2');
+        if (txt) txt.textContent = '0 / ' + (n === '20' ? '3' : n === '15' ? '4' : '2');
         if (bar) bar.style.width = '0%';
     });
 
@@ -2630,7 +2738,7 @@ function cd1p_actualizarAvance() {
   // nunca contaba como verificado en itemsSimples ni al subir ni al quitar.
   var multiItems = {
     9:  ['nombreArchivo_9_mercado','nombreArchivo_9_propuestas','nombreArchivo_9_carta'],
-    15: ['nombreArchivo_15a','nombreArchivo_15b','nombreArchivo_15c'],
+    15: ['nombreArchivo_15a','nombreArchivo_15b','nombreArchivo_15c','nombreArchivo_15d'],
     20: ['nombreArchivo_20a','nombreArchivo_20b','nombreArchivo_20c'],
     21: ['nombreArchivo_21a','nombreArchivo_21b']
   };
@@ -3333,11 +3441,11 @@ const ITEMS_CHECKLIST = {
   2:  { nombre: "Solicitud de Certificado de Disponibilidad Presupuestal", criterios: "Verifica que contenga: área solicitante, objeto, valor estimado, justificación de la necesidad, rubro presupuestal, firma del jefe de área. Aplica Manual Interno de Contratación HSLV, Decreto 1082/2015 art 2.2.1.1.1.3." },
   3:  { nombre: "Certificado de Disponibilidad Presupuestal (CDP)", criterios: "Verifica número CDP, fecha de expedición (no puede ser posterior a la firma del contrato), valor, rubro presupuestal correcto, vigencia, firma del jefe de presupuesto. Aplica Ley 38/1989, Decreto 111/1996." },
   4:  { nombre: "Solicitud para contratar", criterios: "Verifica que la justificación de la necesidad esté alineada con el PAA y el Plan de Desarrollo. Debe incluir: objeto, modalidad de selección propuesta, valor estimado, área requirente, firma. Aplica Decreto 1082/2015 art 2.2.1.1.1.6." },
-  5:  { nombre: "Estudios previos", criterios: "Verifica: descripción de la necesidad, fundamento legal, modalidad de selección y justificación, objeto del contrato, estimación del valor, riesgo previsible, garantías, análisis del sector, estudio de mercado con mínimo 3 cotizaciones. Aplica Decreto 1082/2015 art 2.2.1.1.1.6.1." },
+  5:  { nombre: "Estudios previos", criterios: "Verifica: descripción de la necesidad, forma de satisfacer la necesidad, fundamento legal, modalidad de selección y justificación, objeto del contrato, especificaciones técnicas, plazo y lugar de ejecución, estimación del valor, forma de pago, obligaciones del contratista y del contratante, riesgo previsible, garantías, análisis del sector, estudio de mercado con mínimo 2 cotizaciones. Aplica Decreto 1082/2015 art 2.2.1.1.1.6.1 y Art. 20.2 Acuerdo 015/2024." },
   6:  { nombre: "Matriz de riesgo", criterios: "Verifica: identificación de riesgos, probabilidad, impacto, mitigación por cada riesgo previsible. Aplica Decreto 1082/2015 art 2.2.1.1.1.6.3." },
   7:  { nombre: "Anexo IO Presentación de la Propuesta", criterios: "Verifica: formato de presentación de propuesta debidamente diligenciado, datos del proponente, objeto, valor ofertado, plazo, firma del representante legal. Aplica Ley 80/1993 y pliego de condiciones." },
   8:  { nombre: "Propuesta", criterios: "Verifica: oferta económica firmada, propuesta técnica, documentos habilitantes (cámara de comercio, RUT, estados financieros), vigencia de la oferta. Aplica Ley 80/1993 art 25." },
-  9:  { nombre: "Estudio de mercado", criterios: "Verifica: mínimo 3 cotizaciones, análisis comparativo de precios, valor de mercado resultante, fuentes consultadas, fecha de consulta reciente. Aplica Decreto 1082/2015 art 2.2.1.1.1.6.1." },
+  9:  { nombre: "Estudio de mercado", criterios: "Verifica: mínimo 2 cotizaciones escritas de establecimientos matriculados en Cámara de Comercio (o, si no se obtuvieron cotizaciones adecuadas, análisis de precios históricos o de mínimo 3 procesos similares en SECOP del año anterior), análisis comparativo de precios, valor de mercado resultante, fuentes consultadas, fecha de consulta reciente. Aplica Art. 20.5 Acuerdo 015/2024 y Decreto 1082/2015 art 2.2.1.1.1.6.1." },
   10: { nombre: "Experiencia", criterios: "Verifica: contratos o certificaciones en objeto similar, valores, fechas, entidades contratantes, firmas. La experiencia debe cumplir los requisitos mínimos del proceso. Aplica Decreto 1082/2015." },
   11: { nombre: "Certificado de existencia y representación legal", criterios: "Verifica: vigencia (no mayor a 30 días), objeto social compatible con el contrato, representante legal y facultades, capital social. Aplica Decreto 1082/2015." },
   12: { nombre: "Cédula de ciudadanía", criterios: "Verifica: legibilidad, documento vigente, coincidencia del número con el RUT y demás documentos del expediente. Aplica normas de identificación." },
@@ -3755,7 +3863,7 @@ function _histU_quitarEntradaPorIndice(prefijo, num, idx) {
     // se llama desde mostrarArchivoSub()) — nunca al quitarlo con este botón,
     // por eso se quedaba mostrando un número más alto del real.
     var _subdocInputIds = {
-        15: ['archivo_15a','archivo_15b','archivo_15c'],
+        15: ['archivo_15a','archivo_15b','archivo_15c','archivo_15d'],
         20: ['archivo_20a','archivo_20b','archivo_20c'],
         21: ['archivo_21a','archivo_21b']
     };
@@ -3798,6 +3906,89 @@ function histU_quitarVersion(prefijo, num, id) {
     };
 })();
 
+// ── Calidad global del texto extraído por OCR ──────────────────────────
+// Un OCR de mala calidad no siempre produce CERO texto: a veces produce
+// bastante texto, pero mayormente ruido (letras sueltas, símbolos
+// mezclados con dígitos erráticos, restos de sellos/bordes de tabla mal
+// leídos). Si ese ruido se deja pasar como "texto legible" termina
+// alimentando tanto las reglas locales (coincidencias de palabras clave
+// falsas por ruido con pinta de palabra) como el prompt que se envía a
+// Groq — y al mismo tiempo, palabras reales que el OCR deformó dejan de
+// coincidir con las reglas (`includes()` literal) y se reportan como
+// ausentes aunque sí estaban. Este chequeo se aplica SOLO a la salida de
+// Tesseract (motorTexto:'ocr'), no al texto real extraído con pdf.js, que
+// viene de la capa de texto del PDF y es confiable por definición.
+function _calidadTextoOCR(texto) {
+    const limpio = (texto || '').trim();
+    const sinEspacios = limpio.replace(/\s/g, '');
+    if (sinEspacios.length < 40) return null;
+
+    const fragmentos = limpio.split(/[^a-zA-ZÀ-ÖØ-öø-ÿ0-9]+/).filter(Boolean);
+    if (fragmentos.length === 0) return null;
+
+    // Fragmentos "ruido": una sola letra o dígito aislado — el ruido de OCR
+    // sobre sellos, bordes de tabla y marcas de agua produce muchos de estos.
+    const ratioRuido = fragmentos.filter(f => f.length === 1).length / fragmentos.length;
+
+    // Proporción de letras sobre el total de caracteres (sin espacios).
+    const letras = (sinEspacios.match(/[a-zA-ZÀ-ÖØ-öø-ÿ]/g) || []).length;
+    const ratioLetras = letras / sinEspacios.length;
+
+    // Proporción de fragmentos que son palabras reales (3+ letras seguidas,
+    // sin dígitos mezclados) — un documento legítimo, aunque tenga números
+    // de NIT/CDP/cédula, sigue teniendo prosa real entre esos números.
+    const ratioPalabra = fragmentos.filter(f => /^[a-zA-ZÀ-ÖØ-öø-ÿ]{3,}$/.test(f)).length / fragmentos.length;
+
+    return { ratioRuido, ratioLetras, ratioPalabra };
+}
+
+// ── Limpieza de ruido LOCALIZADO en el texto OCR (marcas de agua, sellos,
+// firmas) ────────────────────────────────────────────────────────────────
+// _calidadTextoOCR()/_textoOCREsConfiable() evalúan el documento COMPLETO y
+// descartan solo si casi todo es ruido — pero una marca de agua diagonal,
+// un sello o una firma escaneada suelen ensuciar solo UNA o pocas líneas
+// dentro de un documento por lo demás legible, y ese ruido puntual no baja
+// el promedio global lo suficiente como para activar esa compuerta. Aun
+// así puede colarse en las reglas locales (palabra clave que "por
+// casualidad" aparece en el ruido) o en lo que se le manda a Groq. Por eso
+// se limpia línea por línea ANTES de evaluar la calidad global: toda línea
+// que en sí misma parezca ruido de OCR se descarta, el resto se deja
+// intacto. Se aplica siempre sobre la salida de Tesseract, antes de
+// _textoOCREsConfiable().
+function _limpiarRuidoLocalizadoOCR(texto) {
+    if (!texto) return texto;
+    return texto.split('\n').map(linea => {
+        const t = linea.trim();
+        const sinEsp = t.replace(/\s/g, '');
+        // Líneas cortas: no hay suficiente señal para juzgarlas con esta
+        // heurística (podría ser un título, un número de folio, etc.) — se
+        // dejan igual en vez de arriesgar un falso positivo.
+        if (sinEsp.length < 10) return linea;
+
+        const fragmentos = t.split(/[^a-zA-ZÀ-ÖØ-öø-ÿ0-9]+/).filter(Boolean);
+        if (fragmentos.length === 0) return linea;
+
+        const ratioRuido   = fragmentos.filter(f => f.length === 1).length / fragmentos.length;
+        const letras       = (sinEsp.match(/[a-zA-ZÀ-ÖØ-öø-ÿ]/g) || []).length;
+        const ratioLetras  = letras / sinEsp.length;
+        const ratioPalabra = fragmentos.filter(f => /^[a-zA-ZÀ-ÖØ-öø-ÿ]{3,}$/.test(f)).length / fragmentos.length;
+
+        const esRuido = ratioRuido > 0.4 && ratioLetras < 0.5 && ratioPalabra < 0.3;
+        return esRuido ? '' : linea;
+    }).join('\n');
+}
+
+// Umbral deliberadamente permisivo: preferimos dejar pasar un documento
+// dudoso a bloquear uno legítimo con muchos números (CDP, NIT, cédulas).
+// Solo se descarta cuando el texto es predominantemente ruido en varios
+// indicadores a la vez. Ajustar estos números si en la práctica se filtran
+// documentos válidos o se dejan pasar demasiados escaneos malos.
+function _textoOCREsConfiable(texto) {
+    const c = _calidadTextoOCR(texto);
+    if (!c) return false;
+    return !(c.ratioRuido > 0.35 && c.ratioLetras < 0.45 && c.ratioPalabra < 0.35);
+}
+
 // Leer el archivo como texto o base64. `onProgress(mensaje)` es opcional —
 // se usa para avisar el avance del OCR en documentos escaneados, que puede
 // tardar bastante (varios segundos por página) al no tener tope de páginas.
@@ -3832,11 +4023,17 @@ async function leerArchivo(archivo, onProgress) {
 
         try {
             if (onProgress) onProgress('🔎 Extrayendo texto con OCR (puede tardar varios minutos en documentos largos)…');
-            const textoOCR = await _pdfEscaneadoAOcr(archivo, onProgress);
+            const textoOCRcrudo = await _pdfEscaneadoAOcr(archivo, onProgress);
+            const textoOCR = _limpiarRuidoLocalizadoOCR(textoOCRcrudo);
             if (textoOCR && textoOCR.replace(/\s/g, '').length > 40) {
-                return { tipo: 'texto', data: textoOCR.slice(0, 300000), motorTexto: 'ocr' };
+                if (_textoOCREsConfiable(textoOCR)) {
+                    return { tipo: 'texto', data: textoOCR.slice(0, 300000), motorTexto: 'ocr' };
+                }
+                motivoSinTexto = 'El OCR extrajo texto de este PDF, pero de muy baja calidad (mayormente ruido o caracteres sueltos), probablemente por la resolución del escaneo. No se usó ese texto para el análisis automático — revise el documento manualmente.';
+                console.warn(`OCR del PDF con calidad insuficiente (mucho ruido), se descarta: ${archivo.name}`);
+            } else {
+                console.warn(`OCR aplicado pero con muy poco texto extraído del PDF: ${archivo.name}`);
             }
-            console.warn(`OCR aplicado pero con muy poco texto extraído del PDF: ${archivo.name}`);
         } catch (e) {
             motivoSinTexto = 'No se pudo cargar o procesar el OCR (posible problema de conexión). Intente analizar de nuevo.';
             console.warn('Falló el OCR del PDF escaneado con Tesseract.js:', e);
@@ -3863,13 +4060,18 @@ async function leerArchivo(archivo, onProgress) {
             if (onProgress) onProgress('🔎 Extrayendo texto de la imagen con OCR…');
             const canvasImagen = await _archivoACanvas(archivo);
             _preprocesarCanvasOCR(canvasImagen);
-            const textoOCR = await _ocrImagen(canvasImagen, (pct) => {
+            const textoOCRcrudo = await _ocrImagen(canvasImagen, (pct) => {
                 if (onProgress) onProgress(`🔎 Extrayendo texto de la imagen con OCR… ${pct}%`);
             });
+            const textoOCR = _limpiarRuidoLocalizadoOCR(textoOCRcrudo);
             if (textoOCR && textoOCR.replace(/\s/g, '').length > 40) {
-                return { tipo: 'texto', data: textoOCR.slice(0, 300000), motorTexto: 'ocr' };
+                if (_textoOCREsConfiable(textoOCR)) {
+                    return { tipo: 'texto', data: textoOCR.slice(0, 300000), motorTexto: 'ocr' };
+                }
+                console.warn(`OCR de la imagen con calidad insuficiente (mucho ruido), se descarta: ${archivo.name}`);
+            } else {
+                console.warn(`OCR aplicado pero con muy poco texto extraído de la imagen: ${archivo.name}`);
             }
-            console.warn(`OCR aplicado pero con muy poco texto extraído de la imagen: ${archivo.name}`);
         } catch (e) {
             console.warn('Falló el OCR de la imagen con Tesseract.js:', e);
         }
@@ -3882,7 +4084,7 @@ async function leerArchivo(archivo, onProgress) {
                 tipo: 'imagen',
                 data: reader.result.split(',')[1],
                 mimeType,
-                motivoSinTexto: 'La imagen no tiene texto legible detectable por OCR.'
+                motivoSinTexto: 'La imagen no tiene texto legible detectable por OCR (o el texto extraído era de muy baja calidad).'
             });
             reader.readAsDataURL(archivo);
         });
@@ -5436,23 +5638,42 @@ function _esCitaNormativa(texto, indexAnio) {
 // ¿El contenido capturado dentro de un posible marcador de plantilla
 // ([...], {...}, guiones bajos) parece texto legible y coherente, o es en
 // realidad ruido de OCR? Un escaneo de mala calidad genera basura con pinta
-// de "[* BO PE o - VIGILADO:. tii LA A ES [2 —”% .eÍ——]" al leer sellos,
-// marcas de agua o bordes de tabla — eso NO es un campo de plantilla sin
-// diligenciar, es ruido visual mal interpretado por el OCR. Se acepta como
-// coherente: un mismo carácter repetido ("XXXX", "____", típico de blancos
-// para llenar) o texto donde la mayoría de caracteres son letras y no hay
-// rachas de 3+ símbolos sueltos seguidos (la firma típica del ruido de OCR).
+// de "[CEE CAR 9 A 06 TIE VIGIADO : 5: AA Le]" al leer sellos, marcas de
+// agua o bordes de tabla — eso NO es un campo de plantilla sin diligenciar,
+// es ruido visual mal interpretado por el OCR.
+//
+// La sola proporción de letras no alcanza: ese tipo de ruido suele estar
+// hecho casi enteramente de letras (o de fragmentos que PARECEN palabras,
+// como "VIGIADO" o "MAN"), solo que sueltas y sin formar texto real. Por eso
+// además se exige que la MAYORÍA de los fragmentos separados por espacios o
+// símbolos sean "palabras" de verdad: 3+ letras seguidas sin dígitos
+// mezclados. El ruido de OCR típicamente produce muchos fragmentos de 1-2
+// caracteres o con dígitos intercalados de forma errática ("9", "06", "5",
+// "AA", "Le") que rara vez aparecen así en un campo de plantilla real
+// ("Nombre del Contratista", "Fecha de expedición", "pendiente").
 function _pareceTextoCoherente(contenido) {
     const limpio = (contenido || '').trim();
     if (!limpio) return false;
     const sinEspacios = limpio.replace(/\s/g, '');
     if (sinEspacios.length === 0) return false;
 
-    if (/^(.)\1*$/.test(sinEspacios)) return true;
+    // Un mismo carácter repetido ("XXXX", "____", "----") sigue siendo un
+    // placeholder válido, aunque no sean letras.
+    if (sinEspacios.length >= 3 && /^(.)\1*$/.test(sinEspacios)) return true;
+
+    // Rachas de 3+ símbolos sueltos seguidos (guiones, comillas, %, #, ~...)
+    // son la firma típica del ruido de OCR sobre sellos/marcas de agua.
     if (/[^\w\sÀ-ÖØ-öø-ÿ]{3,}/.test(limpio)) return false;
 
     const letras = (sinEspacios.match(/[a-zA-ZÀ-ÖØ-öø-ÿ]/g) || []).length;
-    return (letras / sinEspacios.length) >= 0.55;
+    if ((letras / sinEspacios.length) < 0.55) return false;
+
+    // Dividir en fragmentos alfanuméricos (cualquier símbolo/espacio separa)
+    // y exigir que la mayoría sean palabras reales de 3+ letras, sin dígitos.
+    const fragmentos = limpio.split(/[^a-zA-ZÀ-ÖØ-öø-ÿ0-9]+/).filter(Boolean);
+    if (fragmentos.length === 0) return false;
+    const fragmentosPalabra = fragmentos.filter(f => /^[a-zA-ZÀ-ÖØ-öø-ÿ]{3,}$/.test(f));
+    return (fragmentosPalabra.length / fragmentos.length) >= 0.6;
 }
 
 function _analizarRedaccion(texto, textoLow, numItem) {

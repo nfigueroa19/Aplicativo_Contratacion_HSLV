@@ -87,6 +87,34 @@ async function db_generarCodigo(tipo, objeto) {
 
 
 // ════════════════════════════════════════════════════
+//  VERIFICAR OBJETO CONTRACTUAL SIMILAR
+//  Evita crear dos procesos con el mismo objeto en un año.
+//  Usa la RPC verificar_objeto_similar (pg_trgm) en Supabase.
+// ════════════════════════════════════════════════════
+async function db_verificarObjetoSimilar(objeto) {
+    try {
+        var anio = new Date().getFullYear();
+        var { data, error } = await supabaseClient
+            .rpc('verificar_objeto_similar', {
+                p_objeto: objeto,
+                p_anio:   anio
+            });
+
+        if (error) {
+            console.error('Error verificando objeto similar:', error);
+            return { error: true, coincidencia: null };
+        }
+
+        return { error: false, coincidencia: (data && data[0]) || null };
+
+    } catch (err) {
+        console.error('Error en db_verificarObjetoSimilar:', err);
+        return { error: true, coincidencia: null };
+    }
+}
+
+
+// ════════════════════════════════════════════════════
 //  GUARDAR PROCESO COMPLETO
 // ════════════════════════════════════════════════════
 async function db_guardarProceso(datos) {
@@ -141,7 +169,7 @@ async function db_guardarProceso(datos) {
                 var item = datos.checklist[i];
 
                 // Un ítem puede traer VARIOS archivos (ej. el ítem 9 tiene
-                // 3 recuadros, el 15 tiene 3, el 21 tiene 2...). Antes solo
+                // 3 recuadros, el 15 tiene 4, el 21 tiene 2...). Antes solo
                 // se subía el primero y los demás se perdían en silencio.
                 var archivosItem = (item.archivos && item.archivos.length)
                     ? item.archivos

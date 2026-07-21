@@ -45,19 +45,27 @@
             <div class="form-group">
                 <label>Objeto Contractual</label>
                 <textarea id="mp_objeto" rows="4" placeholder="Ingrese el objeto contractual" autocomplete="off"></textarea>
+                <button type="button" class="btn" id="mp_verificar_btn"
+                    style="margin-top:10px;"
+                    onclick="verificarObjetoContractual()">
+                    🔍 Verificar objeto contractual
+                </button>
+                <div id="mp_verificacion_resultado" style="margin-top:10px;"></div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="fg_area" style="display:none;">
                 <label>Área Solicitante</label>
                 <input id="mp_area" type="text" placeholder="Dependencia solicitante" autocomplete="off">
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="fg_responsable" style="display:none;">
               <label>Responsable del Área Solicitante</label>
               <input id="mp_responsable" type="text" placeholder="Nombre del supervisor o responsable" autocomplete="off">
             </div>
         </div>
         </div><!-- fin section-card Datos del Proceso -->
+
+        <div id="cd1p-post-verificacion" style="display:none;">
 
         <!-- CHECKLIST DOCUMENTAL -->
         <div class="section-card" style="margin-bottom:22px;">
@@ -625,67 +633,89 @@
             <input type="checkbox" id="check_15">
         </td>
         <td>
-            <!-- ── SUB-DOCUMENTO 15-A: DISCIPLINARIOS ── -->
+            <!-- ── SUB-DOCUMENTO 15-A: DISCIPLINARIOS PERSONA NATURAL ── -->
             <div class="subdoc-bloque" style="border:1px solid #E5E7EB;border-radius:12px;
                 padding:12px 14px;margin-bottom:10px;background:#FAFAFA;">
                 <div style="font-size:11.5px;font-weight:700;color:#123C7B;margin-bottom:8px;
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
-                                 padding:2px 8px;font-size:10px;">1 de 3</span>
-                    🏛️ Antecedentes disciplinarios — Procuraduría General
+                                 padding:2px 8px;font-size:10px;">1.1 de 4</span>
+                    🏛️ Antecedentes disciplinarios personales — Procuraduría General
                 </div>
                 <button class="btn" style="padding:9px 14px;font-size:12px;"
                     onclick="document.getElementById('archivo_15a').click()">
-                    📎 Cargar Antecedentes Disciplinarios
+                    📎 Cargar Antecedentes Disciplinarios Personales
                 </button>
                 <input type="file" id="archivo_15a" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_15a','check_15',['archivo_15a','archivo_15b','archivo_15c'])">
+                    onchange="mostrarArchivoSub(this,'nombreArchivo_15a','check_15',['archivo_15a','archivo_15b','archivo_15c','archivo_15d'])">
                 <div id="nombreArchivo_15a"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
                 </div>
             </div>
 
-            <!-- ── SUB-DOCUMENTO 15-B: FISCALES ── -->
+            <!-- ── SUB-DOCUMENTO 15-B: DISCIPLINARIOS EMPRESA ── -->
             <div class="subdoc-bloque" style="border:1px solid #E5E7EB;border-radius:12px;
                 padding:12px 14px;margin-bottom:10px;background:#FAFAFA;">
                 <div style="font-size:11.5px;font-weight:700;color:#123C7B;margin-bottom:8px;
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
-                                 padding:2px 8px;font-size:10px;">2 de 3</span>
-                    💰 Antecedentes fiscales — Contraloría General
+                                 padding:2px 8px;font-size:10px;">1.2 de 4</span>
+                    🏛️ Antecedentes disciplinarios de la empresa — Procuraduría General
                 </div>
                 <button class="btn" style="padding:9px 14px;font-size:12px;"
                     onclick="document.getElementById('archivo_15b').click()">
-                    📎 Cargar Antecedentes Fiscales
+                    📎 Cargar Antecedentes Disciplinarios de la Empresa
                 </button>
                 <input type="file" id="archivo_15b" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_15b','check_15',['archivo_15a','archivo_15b','archivo_15c'])">
+                    onchange="mostrarArchivoSub(this,'nombreArchivo_15b','check_15',['archivo_15a','archivo_15b','archivo_15c','archivo_15d'])">
                 <div id="nombreArchivo_15b"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
                 </div>
             </div>
 
-            <!-- ── SUB-DOCUMENTO 15-C: JUDICIALES ── -->
+            <!-- ── SUB-DOCUMENTO 15-C: FISCALES ── -->
+            <div class="subdoc-bloque" style="border:1px solid #E5E7EB;border-radius:12px;
+                padding:12px 14px;margin-bottom:10px;background:#FAFAFA;">
+                <div style="font-size:11.5px;font-weight:700;color:#123C7B;margin-bottom:8px;
+                            display:flex;align-items:center;gap:6px;">
+                    <span style="background:#123C7B;color:white;border-radius:6px;
+                                 padding:2px 8px;font-size:10px;">2 de 4</span>
+                    💰 Antecedentes fiscales — Contraloría General
+                </div>
+                <button class="btn" style="padding:9px 14px;font-size:12px;"
+                    onclick="document.getElementById('archivo_15c').click()">
+                    📎 Cargar Antecedentes Fiscales
+                </button>
+                <input type="file" id="archivo_15c" style="display:none;"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                    onchange="mostrarArchivoSub(this,'nombreArchivo_15c','check_15',['archivo_15a','archivo_15b','archivo_15c','archivo_15d'])">
+                <div id="nombreArchivo_15c"
+                    style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
+                    Sin archivo cargado
+                </div>
+            </div>
+
+            <!-- ── SUB-DOCUMENTO 15-D: JUDICIALES ── -->
             <div class="subdoc-bloque" style="border:1px solid #E5E7EB;border-radius:12px;
                 padding:12px 14px;background:#FAFAFA;">
                 <div style="font-size:11.5px;font-weight:700;color:#123C7B;margin-bottom:8px;
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
-                                 padding:2px 8px;font-size:10px;">3 de 3</span>
+                                 padding:2px 8px;font-size:10px;">3 de 4</span>
                     ⚖️ Antecedentes judiciales — Policía Nacional
                 </div>
                 <button class="btn" style="padding:9px 14px;font-size:12px;"
-                    onclick="document.getElementById('archivo_15c').click()">
+                    onclick="document.getElementById('archivo_15d').click()">
                     📎 Cargar Antecedentes Judiciales
                 </button>
-                <input type="file" id="archivo_15c" style="display:none;"
+                <input type="file" id="archivo_15d" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_15c','check_15',['archivo_15a','archivo_15b','archivo_15c'])">
-                <div id="nombreArchivo_15c"
+                    onchange="mostrarArchivoSub(this,'nombreArchivo_15d','check_15',['archivo_15a','archivo_15b','archivo_15c','archivo_15d'])">
+                <div id="nombreArchivo_15d"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
                 </div>
@@ -696,7 +726,7 @@
                 background:#EFF6FF;border-radius:8px;padding:7px 10px;display:flex;
                 align-items:center;gap:8px;">
                 <span>📁 Documentos cargados:</span>
-                <span id="progreso_15_txt" style="font-weight:700;color:#123C7B;">0 / 3</span>
+                <span id="progreso_15_txt" style="font-weight:700;color:#123C7B;">0 / 4</span>
                 <div style="flex:1;background:#DBEAFE;border-radius:10px;height:6px;overflow:hidden;">
                     <div id="progreso_15_bar" style="background:linear-gradient(90deg,#0B7A43,#123C7B);
                         height:6px;width:0%;border-radius:10px;transition:width .4s;"></div>
@@ -1033,15 +1063,21 @@
   <div id="cd1p-avance-texto" style="font-size:12px;color:#374151;margin-top:6px;">0 de 23 documentos verificados</div>
 </div>
 
+    <!-- BOTÓN GUARDAR (solo visible tras verificar el objeto contractual) -->
+    <div class="acciones-modal-final" style="justify-content:flex-end;">
+        <button class="btn finalizar-btn" onclick="guardarProceso()">
+            💾 Guardar Proceso
+        </button>
+    </div>
+
+</div><!-- fin cd1p-post-verificacion -->
+
     <!-- BOTONES -->
     <div class="acciones-modal-final" style="justify-content:flex-end;">
         <button class="btn"
             onclick="window.location.href='/dashboard'"
             style="background:#F3F4F6;color:#374151;border:none;">
             ← Volver al Dashboard
-        </button>
-        <button class="btn finalizar-btn" onclick="guardarProceso()">
-            💾 Guardar Proceso
         </button>
     </div>
 
