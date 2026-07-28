@@ -2015,15 +2015,59 @@ var _cd1pObjetoVerificado = false;
 // del rol ocurre en el trigger de Supabase, no aquí.
 var _cd1pForzarDuplicado = false;
 
+// ════════════════════════════════════════════════════
+//  FORMATO EN VIVO DEL CAMPO "VALOR DEL PROCESO" (mp_valor)
+//  El usuario solo escribe dígitos (y opcionalmente una coma para
+//  decimales) — el separador de miles (.) y el símbolo $ se agregan solos
+//  en cada tecla. Copia de las mismas funciones en js/proceso-detalle.js
+//  (esa página no carga script.js, ver comentario ahí).
+// ════════════════════════════════════════════════════
+function _fmt_formatearValorInput(input) {
+    var valorPrevio = input.value;
+    var posCursor   = input.selectionStart;
+
+    // Cuántos caracteres significativos (dígitos o coma) había antes del
+    // cursor, para reubicarlo en el mismo punto después de reformatear.
+    var antesDelCursor = valorPrevio.slice(0, posCursor).replace(/[^\d,]/g, '').length;
+
+    var partes  = valorPrevio.split(',');
+    var entero  = partes[0].replace(/[^\d]/g, '').replace(/^0+(?=\d)/, '');
+    var decimal = partes.length > 1 ? partes[1].replace(/[^\d]/g, '') : null;
+
+    var enteroFormateado = entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    var nuevoValor = entero
+        ? '$ ' + enteroFormateado + (decimal !== null ? ',' + decimal : '')
+        : '';
+
+    input.value = nuevoValor;
+
+    var contados = 0, nuevaPos = nuevoValor.length;
+    for (var i = 0; i < nuevoValor.length; i++) {
+        if (/[\d,]/.test(nuevoValor[i])) contados++;
+        if (contados >= antesDelCursor) { nuevaPos = i + 1; break; }
+    }
+    input.setSelectionRange(nuevaPos, nuevaPos);
+}
+
+// Convierte "$ 15.000.000,50" -> "15000000.50" (formato numérico estándar,
+// el mismo que ya esperan _moneda()/hist_formatMoney() al leer p.valor).
+function _fmt_valorARaw(valorFormateado) {
+    if (!valorFormateado) return '';
+    var limpio = valorFormateado.replace(/\$/g, '').replace(/\s/g, '');
+    limpio = limpio.replace(/\./g, '');
+    limpio = limpio.replace(',', '.');
+    return limpio;
+}
+
 function _cd1pMostrarCamposPostVerificacion() {
-    ['fg_area', 'fg_responsable', 'cd1p-post-verificacion'].forEach(function(id) {
+    ['fg_area', 'fg_responsable', 'fg_valor', 'cd1p-post-verificacion'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.style.display = '';
     });
 }
 
 function _cd1pOcultarCamposPostVerificacion() {
-    ['fg_area', 'fg_responsable', 'cd1p-post-verificacion'].forEach(function(id) {
+    ['fg_area', 'fg_responsable', 'fg_valor', 'cd1p-post-verificacion'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
@@ -2189,6 +2233,7 @@ async function guardarProceso() {
 
     // ── Recopilar datos del formulario ─────────────────
     var responsable = (document.getElementById('mp_responsable') || {}).value || '';
+    var valor       = _fmt_valorARaw((document.getElementById('mp_valor') || {}).value || '');
 
     // ── Ítems que Biomédica NO puede ver ni subir ─────
     // (única fuente de verdad: ITEMS_RESTRINGIDOS_GLOBAL en js/db.js)
@@ -2266,7 +2311,7 @@ async function guardarProceso() {
         tipo:            'CD1P',
         objeto:          objeto.trim(),
         area:            area.trim(),
-        valor:           '',
+        valor:           valor.trim(),
         responsable:     responsable.trim(),
         checklist:       checklist,
         forzarDuplicado: _cd1pForzarDuplicado
@@ -2934,11 +2979,11 @@ async function guardarProcesoHistorial(tipo) {
     var objeto = '', area = '', valor = '', responsable = '';
 
     // Los 3 módulos comparten los mismos IDs para estos campos (mp_objeto,
-    // mp_area, mp_responsable) — ninguno tiene campo de "valor" propio.
+    // mp_area, mp_responsable, mp_valor).
     var campos = {
-        D3P:  { obj:'mp_objeto', area:'mp_area', val:null, resp:'mp_responsable' },
-        CONV: { obj:'mp_objeto', area:'mp_area', val:null, resp:'mp_responsable' },
-        SUB:  { obj:'mp_objeto', area:'mp_area', val:null, resp:'mp_responsable' }
+        D3P:  { obj:'mp_objeto', area:'mp_area', val:'mp_valor', resp:'mp_responsable' },
+        CONV: { obj:'mp_objeto', area:'mp_area', val:'mp_valor', resp:'mp_responsable' },
+        SUB:  { obj:'mp_objeto', area:'mp_area', val:'mp_valor', resp:'mp_responsable' }
     };
 
     var c = campos[tipoKey];
@@ -2949,7 +2994,7 @@ async function guardarProcesoHistorial(tipo) {
         var rEl = document.getElementById(c.resp);
         objeto      = (oEl && oEl.value) ? oEl.value.trim() : '(sin objeto)';
         area        = (aEl && aEl.value) ? aEl.value.trim() : '(sin área)';
-        valor       = (vEl && vEl.value) ? vEl.value.trim() : '';
+        valor       = (vEl && vEl.value) ? _fmt_valorARaw(vEl.value) : '';
         responsable = (rEl && rEl.value) ? rEl.value.trim() : '';
     }
 
@@ -3275,8 +3320,18 @@ function hist_renderTabla() {
   lista.forEach(function(p, i) {
     var t = HIST_TIPOS[p.tipo] || HIST_TIPOS['D3P'];
     var bg = i % 2 === 0 ? '#fff' : '#F9FAFB';
-    // Construir celda de responsable según perfil del usuario actual
-  var responsableCell;
+    // Responsable del área solicitante (dato propio del proceso)
+    var areaResponsableCell = p.responsable
+        ? escaparHTML(p.responsable)
+        : '<span style="color:#9CA3AF;font-style:italic;">—</span>';
+
+    // Celdas de "Responsable Jurídico Asignado" y "Proceso Asignado Por"
+    // según perfil del usuario actual
+    var juridicoCell, asignadoPorCell;
+
+    asignadoPorCell = p.responsable_asignado_por_nombre
+        ? escaparHTML(p.responsable_asignado_por_nombre)
+        : '<span style="color:#9CA3AF;font-style:italic;">—</span>';
 
   if (_perfilCache && _perfilCache.rol === 'admin') {
     // Admin ve un selector con usuarios jurídicos
@@ -3289,18 +3344,12 @@ function hist_renderTabla() {
           });
     }
 
-      var textoAsignadoPor = p.responsable_asignado_por_nombre
-          ? '<div style="font-size:10px;color:#6B7280;margin-bottom:4px;">' +
-            'Asignado por: ' + escaparHTML(p.responsable_asignado_por_nombre) + '</div>'
-          : '';
-
       var textoAsignado = p.responsable_asignado_nombre
-          ? '<div style="font-size:11px;color:#0B7A43;font-weight:700;margin-bottom:2px;">' +
-            '✅ Asignado: ' + escaparHTML(p.responsable_asignado_nombre) + '</div>' + textoAsignadoPor
+          ? ''
            : '<div style="font-size:11px;color:#9CA3AF;font-style:italic;margin-bottom:6px;">' +
             'Sin responsable asignado</div>';
 
-      responsableCell =
+      juridicoCell =
           '<div style="min-width:200px;">' +
               textoAsignado +
               '<div style="display:flex;gap:6px;align-items:center;">' +
@@ -3324,17 +3373,13 @@ function hist_renderTabla() {
 
   } else {
     // No admin: solo ver el nombre del responsable asignado
-      var textoAsignadoPorNoAdmin = p.responsable_asignado_por_nombre
-          ? '<div style="font-size:10px;color:#6B7280;margin-top:3px;">' +
-            'Asignado por: ' + escaparHTML(p.responsable_asignado_por_nombre) + '</div>'
-          : '';
-      responsableCell =
+      juridicoCell =
         '<div style="font-size:13px;color:#374151;">' +
             (p.responsable_asignado_nombre
                 ? '<span style="display:inline-flex;align-items:center;gap:4px;' +
                   'background:#EFF6FF;color:#123C7B;border:1px solid #BFDBFE;' +
                   'border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;">' +
-                  '👤 ' + escaparHTML(p.responsable_asignado_nombre) + '</span>' + textoAsignadoPorNoAdmin
+                  '👤 ' + escaparHTML(p.responsable_asignado_nombre) + '</span>'
                 : '<span style="color:#9CA3AF;font-style:italic;font-size:11px;">' +
                   'Sin asignar</span>') +
         '</div>';
@@ -3348,7 +3393,9 @@ function hist_renderTabla() {
       '<td style="padding:12px 14px;"><span class="hist-badge ' + t.badge + '">' + t.label + '</span></td>' +
       '<td style="padding:12px 14px;max-width:260px;"><span title="' + escaparHTML(p.objeto||'') + '" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + (p.objeto ? escaparHTML(p.objeto) : '—') + '</span></td>' +
       '<td style="padding:12px 14px;color:#374151;white-space:nowrap;">' + (p.area ? escaparHTML(p.area) : '—') + '</td>' +
-      '<td style="padding:10px 14px;">' + responsableCell + '</td>' +
+      '<td style="padding:12px 14px;color:#374151;white-space:nowrap;">' + areaResponsableCell + '</td>' +
+      '<td style="padding:10px 14px;">' + juridicoCell + '</td>' +
+      '<td style="padding:12px 14px;color:#374151;white-space:nowrap;">' + asignadoPorCell + '</td>' +
       '<td style="padding:12px 14px;white-space:nowrap;color:#0B7A43;font-weight:600;">' + hist_formatMoney(p.valor) + '</td>' +
       '<td style="padding:12px 14px;white-space:nowrap;color:#6B7280;font-size:12px;">' + p.fecha + '<br><span style="font-size:11px;">' + p.hora + '</span></td>' +
       '<td style="padding:12px 14px;text-align:center;">' +
@@ -3375,7 +3422,7 @@ function hist_verDetalle(id) {
   var checklistHTML = '';
   if (p.checklist && p.checklist.length > 0) {
     var filasCheck = '';
-    p.checklist.forEach(function(item) {
+    p.checklist.forEach(function(item, idxItem) {
       var archivoGuardado = item.archivo || '';
       var rowBg = item.ok ? '#F0FDF4' : '#FFF';
       var estadoIcon = item.ok
@@ -3388,9 +3435,14 @@ function hist_verDetalle(id) {
           (archivoGuardado ? '📄 ' + escaparHTML(archivoGuardado) : 'Sin archivo') +
         '</div>';
 
+      // Se muestra la posición secuencial (idxItem+1), no item.num — para
+      // D3P item.num salta (1,2,3,5,6,8,9, ver ITEMS_POR_TIPO_NO_CONTIGUOS.D3P
+      // en este mismo archivo) y esos huecos no eran intuitivos para el
+      // usuario. item.num se sigue usando sin cambios en el id del archivo
+      // (hist-arch-nom-*), que es lo único que necesita el número real.
       filasCheck +=
         '<tr style="background:' + rowBg + ';border-bottom:1px solid #E5E7EB;">' +
-          '<td style="padding:8px 6px;text-align:center;font-weight:700;color:#6B7280;font-size:12px;">' + item.num + '</td>' +
+          '<td style="padding:8px 6px;text-align:center;font-weight:700;color:#6B7280;font-size:12px;">' + (idxItem + 1) + '</td>' +
           '<td style="padding:8px 10px;font-size:12px;color:#1F2937;overflow-wrap:break-word;">' + escaparHTML(item.label) + '</td>' +
           '<td style="padding:8px 6px;text-align:center;">' + estadoIcon + '</td>' +
           '<td style="padding:8px 10px;overflow-wrap:break-word;">' + archCell + '</td>' +
@@ -3547,30 +3599,39 @@ async function hist_asignarResponsable(procesoId, supabaseId) {
     hist_renderTabla();
 }
 
-function hist_exportarCSV() {
+function hist_exportarExcel() {
   var lista = hist_filtrarProcesos();
   if (!lista.length) { alert('No hay procesos para exportar.'); return; }
-  var csv = 'ID Proceso,Modalidad,Objeto,Área,Responsable,Valor,Docs Ok,Docs Total,Fecha,Hora\n';
-  lista.forEach(function(p) {
+  if (typeof XLSX === 'undefined') { alert('⚠️ No se pudo cargar el módulo de Excel.'); return; }
+
+  var encabezados = [
+    'ID Proceso', 'Modalidad', 'Objeto Contractual', 'Área Solicitante',
+    'Responsable del Área Solicitante', 'Responsable Jurídico Asignado',
+    'Proceso Asignado Por', 'Valor', 'Fecha'
+  ];
+  var filas = lista.map(function(p) {
     var t = HIST_TIPOS[p.tipo] || { label: p.tipo };
-    csv += [
-      '"' + p.id + '"',
-      '"' + t.label + '"',
-      '"' + (p.objeto||'').replace(/"/g,'""') + '"',
-      '"' + (p.area||'').replace(/"/g,'""') + '"',
-      '"' + (p.responsable||'').replace(/"/g,'""') + '"',
-      p.valor || '',
-      p.checksOk,
-      p.checksTotal,
-      p.fecha,
-      p.hora
-    ].join(',') + '\n';
+    return [
+      p.id || '',
+      t.label || '',
+      p.objeto || '',
+      p.area || '',
+      p.responsable || '',
+      p.responsable_asignado_nombre || '',
+      p.responsable_asignado_por_nombre || '',
+      p.valor || 0,
+      p.fecha || ''
+    ];
   });
-  var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'historial_procesos_HSLV_' + new Date().toISOString().slice(0,10) + '.csv';
-  a.click();
+
+  var hoja = XLSX.utils.aoa_to_sheet([encabezados].concat(filas));
+  hoja['!cols'] = [
+    {wch:14}, {wch:20}, {wch:40}, {wch:20}, {wch:26}, {wch:26}, {wch:22}, {wch:14}, {wch:12}
+  ];
+
+  var libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, 'Historial de Procesos');
+  XLSX.writeFile(libro, 'historial_procesos_HSLV_' + new Date().toISOString().slice(0,10) + '.xlsx');
 }
 
 // Abrir el modal siempre refresca la tabla

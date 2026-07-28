@@ -682,6 +682,62 @@ async function db_asignarResponsable(procesoId, usuarioId) {
     }
 }
 
+// ════════════════════════════════════════════════════
+//  ACTUALIZAR VALOR DEL PROCESO (proceso-detalle.html)
+//  Único campo editable desde la página de detalle — mismo criterio de
+//  permiso que puedeEditarProceso() en js/proceso-detalle.js (admin, o el
+//  biomédico que lo creó, o el jurídico asignado), duplicado aquí porque
+//  db.js no depende de scripts de página específicos.
+// ════════════════════════════════════════════════════
+async function db_actualizarValorProceso(procesoId, valor) {
+    try {
+        var perfil = await db_perfil();
+        if (!perfil) return false;
+
+        var { data: proceso, error: errorProceso } = await supabaseClient
+            .from('procesos')
+            .select('estado, creado_por, responsable_asignado')
+            .eq('id', procesoId)
+            .single();
+
+        if (errorProceso || !proceso) {
+            console.error('Error consultando proceso para actualizar valor:', errorProceso);
+            return false;
+        }
+
+        var puedeEditar =
+            proceso.estado !== 'cerrado' && (
+                perfil.rol === 'admin' ||
+                (perfil.area === 'biomedica' && proceso.creado_por === perfil.id) ||
+                (perfil.area === 'juridica'  && proceso.responsable_asignado === perfil.id)
+            );
+
+        if (!puedeEditar) {
+            alert('⚠️ No tiene permiso para modificar el valor de este proceso.');
+            return false;
+        }
+
+        var { error } = await supabaseClient
+            .from('procesos')
+            .update({
+                valor:                 valor,
+                ultima_actualizacion:  new Date().toISOString()
+            })
+            .eq('id', procesoId);
+
+        if (error) {
+            console.error('Error actualizando valor del proceso:', error);
+            return false;
+        }
+
+        return true;
+
+    } catch (err) {
+        console.error('Error en db_actualizarValorProceso:', err);
+        return false;
+    }
+}
+
 
 // ════════════════════════════════════════════════════
 //  CARGAR PROCESOS DESDE SUPABASE
@@ -806,7 +862,7 @@ async function db_cargarDocumentos(procesoId) {
     try {
         var { data, error } = await supabaseClient
             .from('documentos')
-            .select('*')
+            .select('*, subidoPor:profiles(nombre)')
             .eq('proceso_id', procesoId)
             .order('item_num', { ascending: true })
             .order('version',  { ascending: false });

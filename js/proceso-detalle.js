@@ -105,7 +105,11 @@ var _procesoActual       = null;
 var _perfilActual        = null;
 var _documentosActuales  = [];
 var _comentariosActuales = [];
-var _archivosPendientes  = {}; // { itemNum: File }
+// { itemNum: [File, File, ...] } — arreglo, no un solo File, para que elegir
+// un segundo archivo del mismo ítem ANTES de guardar agregue una versión
+// nueva en vez de reemplazar/perder la anterior (igual que _histU_datos en
+// contratacion.html/js/script.js — ver pd_archivoElegido()/pd_quitarPendiente()).
+var _archivosPendientes  = {};
 var _comentariosPendientes = {}; // { itemNum: texto sin guardar todavía }
 // Ítems cuyo comentario pendiente ya fue "confirmado" con el botón de envío
 // (se muestra como si fuera un comentario real, con opción de editar/borrar,
@@ -282,6 +286,122 @@ function campoSoloLectura(label, valor) {
     '</div>';
 }
 
+// ════════════════════════════════════════════════════
+//  FORMATO EN VIVO DEL CAMPO "VALOR" (pd-valor-input)
+//  Mismas funciones que en js/script.js (_fmt_formatearValorInput /
+//  _fmt_valorARaw) — se duplican acá porque esta página no carga script.js
+//  (mismo criterio que ITEMS_POR_TIPO_NO_CONTIGUOS_DETALLE, más arriba).
+// ════════════════════════════════════════════════════
+function _fmt_formatearValorInput(input) {
+    var valorPrevio = input.value;
+    var posCursor   = input.selectionStart;
+
+    var antesDelCursor = valorPrevio.slice(0, posCursor).replace(/[^\d,]/g, '').length;
+
+    var partes  = valorPrevio.split(',');
+    var entero  = partes[0].replace(/[^\d]/g, '').replace(/^0+(?=\d)/, '');
+    var decimal = partes.length > 1 ? partes[1].replace(/[^\d]/g, '') : null;
+
+    var enteroFormateado = entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    var nuevoValor = entero
+        ? '$ ' + enteroFormateado + (decimal !== null ? ',' + decimal : '')
+        : '';
+
+    input.value = nuevoValor;
+
+    var contados = 0, nuevaPos = nuevoValor.length;
+    for (var i = 0; i < nuevoValor.length; i++) {
+        if (/[\d,]/.test(nuevoValor[i])) contados++;
+        if (contados >= antesDelCursor) { nuevaPos = i + 1; break; }
+    }
+    input.setSelectionRange(nuevaPos, nuevaPos);
+}
+
+function _fmt_valorARaw(valorFormateado) {
+    if (!valorFormateado) return '';
+    var limpio = valorFormateado.replace(/\$/g, '').replace(/\s/g, '');
+    limpio = limpio.replace(/\./g, '');
+    limpio = limpio.replace(',', '.');
+    return limpio;
+}
+
+// Convierte el valor crudo guardado en Supabase ("15000000" o
+// "15000000.5") al mismo formato visual que produce _fmt_formatearValorInput
+// ("$ 15.000.000" o "$ 15.000.000,5"), para precargar el input al abrir la
+// página o después de guardar.
+function _fmt_rawAValorInput(raw) {
+    if (raw === null || raw === undefined || raw === '') return '';
+    var partes  = String(raw).split('.');
+    var entero  = partes[0].replace(/[^\d]/g, '');
+    if (!entero) return '';
+    var decimal = partes.length > 1 ? partes[1].replace(/[^\d]/g, '') : null;
+    var enteroFormateado = entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return '$ ' + enteroFormateado + (decimal ? ',' + decimal : '');
+}
+
+// El campo "Valor" es el único editable desde el detalle del proceso (todo
+// lo demás — objeto, área, responsable — se define una sola vez al crear el
+// proceso). Mismo criterio de permiso que puedeEditarProceso().
+function campoValorProceso(p) {
+    if (!puedeEditarProceso(p, _perfilActual)) {
+        return campoSoloLectura('Valor', p.valor ? formatMoney(p.valor) : '—');
+    }
+    return '<div>' +
+        '<div style="font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;margin-bottom:3px;">' +
+            'Valor' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;align-items:center;">' +
+            '<input id="pd-valor-input" type="text" inputmode="decimal" value="' + escapeHTML(_fmt_rawAValorInput(p.valor)) + '" ' +
+                'placeholder="Valor estimado del proceso ($)" ' +
+                'oninput="_fmt_formatearValorInput(this)" ' +
+                'style="flex:1;min-width:0;padding:7px 10px;border-radius:8px;border:1.5px solid #BFDBFE;' +
+                'font-size:13px;color:#1F2937;outline:none;background:#F8FAFF;">' +
+            '<button id="pd-valor-btn" onclick="pd_actualizarValor()" ' +
+                'style="background:#123C7B;color:white;border:none;border-radius:8px;' +
+                'padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">' +
+                '💾 Guardar' +
+            '</button>' +
+        '</div>' +
+    '</div>';
+}
+
+async function pd_actualizarValor() {
+    var inputEl = document.getElementById('pd-valor-input');
+    if (!inputEl) return;
+
+    var nuevoValor = _fmt_valorARaw(inputEl.value);
+
+    var btnEl = document.getElementById('pd-valor-btn');
+    if (btnEl) {
+        btnEl.disabled    = true;
+        btnEl.textContent = '⏳';
+    }
+
+    var ok = await db_actualizarValorProceso(_procesoActual.id, nuevoValor);
+
+    if (!ok) {
+        if (btnEl) {
+            btnEl.disabled    = false;
+            btnEl.textContent = '💾 Guardar';
+        }
+        alert('❌ No se pudo actualizar el valor del proceso. Intente de nuevo.');
+        return;
+    }
+
+    _procesoActual.valor = nuevoValor;
+    renderizarInfo(_procesoActual);
+
+    var toast = document.createElement('div');
+    toast.style.cssText =
+        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
+        'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
+        'box-shadow:0 8px 24px rgba(0,0,0,.3);';
+    toast.textContent = '✅ Valor del proceso actualizado';
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 4000);
+}
+
 var ESTADOS_TEXTO = {
     borrador:     'En edición',
     en_revision:  'En revisión',
@@ -346,7 +466,7 @@ function renderizarInfo(p) {
         '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">' +
             campoSoloLectura('Objeto contractual', p.objeto) +
             campoSoloLectura('Área solicitante', p.area_solicitante) +
-            campoSoloLectura('Valor', p.valor ? formatMoney(p.valor) : '—') +
+            campoValorProceso(p) +
             campoSoloLectura('Responsable (área solicitante)', p.responsable) +
         '</div>' +
         '<div style="margin-top:16px;">' +
@@ -422,8 +542,12 @@ function renderizarChecklist() {
             .filter(function(d) { return d.item_num === num; })
             .sort(function(a, b) { return b.version - a.version; });
 
-        var vigente   = docsItem.find(function(d) { return d.activo; });
-        var pendiente = _archivosPendientes[num];
+        var vigente      = docsItem.find(function(d) { return d.activo; });
+        var pendientesArr = _archivosPendientes[num] || [];
+        // La más reciente de las elegidas-sin-guardar es la que manda para el
+        // encabezado y el análisis JURISKILLS — las anteriores del mismo
+        // ítem quedan como versiones dentro del historial (ver pendienteHTML).
+        var pendiente = pendientesArr.length ? pendientesArr[pendientesArr.length - 1] : null;
 
         totalItems++;
         if (vigente || pendiente) itemsVerificados++;
@@ -443,7 +567,7 @@ function renderizarChecklist() {
         // elegido cuenta de inmediato, esté guardado o no, porque en
         // contratacion.html no hay una distinción "guardado vs. pendiente"
         // (todo vive en memoria hasta el botón final "Guardar Proceso").
-        var totalVersiones = docsItem.length + (pendiente ? 1 : 0);
+        var totalVersiones = docsItem.length + pendientesArr.length;
 
         // Mismo botón-pastilla + badge que "🕓 Ver historial" en contratacion.html
         // — ahí se agrega desde el inicio (mostrando "0") a TODOS los ítems,
@@ -467,7 +591,7 @@ function renderizarChecklist() {
         // (idx === 0 del arreglo) la lleva.
         var entradasHistorial = docsItem.map(function(d) {
             var esPrimera = d.version === 1;
-            var esLaMasReciente = !pendiente && d.activo;
+            var esLaMasReciente = pendientesArr.length === 0 && d.activo;
             var fechaObj  = d.subido_en ? new Date(d.subido_en) : null;
             var fecha = fechaObj
                 ? fechaObj.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -478,6 +602,7 @@ function renderizarChecklist() {
             var tamano = (d.tamano_bytes || d.tamano_bytes === 0)
                 ? formatearTamanoArchivo(d.tamano_bytes)
                 : '—';
+            var subidoPorNombre = (d.subidoPor && d.subidoPor.nombre) || '';
 
             return '<div class="hist-entrada">' +
                 '<div class="hist-num ' + (esPrimera ? 'hist-num-v1' : 'hist-num-vN') + '">' + d.version + '</div>' +
@@ -494,7 +619,8 @@ function renderizarChecklist() {
                         (esLaMasReciente ? '<span class="hist-tag-last">⬆ Actual</span>' : '') +
                     '</div>' +
                     '<div class="hist-meta">📅 ' + fecha + ' &nbsp;·&nbsp; 🕐 ' + hora +
-                        ' &nbsp;·&nbsp; 💾 ' + tamano + '</div>' +
+                        ' &nbsp;·&nbsp; 💾 ' + tamano +
+                        (subidoPorNombre ? ' &nbsp;·&nbsp; 👤 Subido por: ' + escapeHTML(subidoPorNombre) : '') + '</div>' +
                 '</div>' +
             '</div>';
         }).join('');
@@ -506,20 +632,28 @@ function renderizarChecklist() {
         // fuera de la caja gris del historial (fondo blanco, ícono ⏳,
         // "Quitar" aparte) y por eso se veía distinta a contratacion.html.
         var pendienteHTML = '';
-        if (pendiente) {
+        if (pendientesArr.length) {
             var maxVersion = docsItem.reduce(function(max, d) { return Math.max(max, d.version); }, 0);
             var ahora = new Date();
             var fechaHoy = ahora.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
             var horaHoy  = ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            pendienteHTML =
-                '<div class="hist-entrada">' +
-                    '<div class="hist-num hist-num-vN">' + (maxVersion + 1) + '</div>' +
+            // Cada archivo elegido (sin guardar todavía) es su propia tarjeta,
+            // más reciente arriba — igual que histU_render() en contratacion.html.
+            // Solo la última lleva "⬆ Actual"; las demás quedan como versiones
+            // intermedias del historial local, en vez de perderse al elegir
+            // un archivo nuevo para el mismo ítem.
+            pendienteHTML = pendientesArr.map(function(f, idx) {
+                return { archivo: f, idx: idx, version: maxVersion + idx + 1 };
+            }).reverse().map(function(entry) {
+                var esActual = entry.idx === pendientesArr.length - 1;
+                return '<div class="hist-entrada">' +
+                    '<div class="hist-num hist-num-vN">' + entry.version + '</div>' +
                     '<div class="hist-info">' +
-                        '<div class="hist-nombre">📄 ' + escapeHTML(pendiente.name) +
-                            '<span class="hist-tag-vN">v' + (maxVersion + 1) + '</span>' +
-                            '<span class="hist-tag-last">⬆ Actual</span>' +
-                            ' <button onclick="pd_quitarPendiente(' + num + ')" title="Quitar este archivo" ' +
+                        '<div class="hist-nombre">📄 ' + escapeHTML(entry.archivo.name) +
+                            '<span class="hist-tag-vN">v' + entry.version + '</span>' +
+                            (esActual ? '<span class="hist-tag-last">⬆ Actual</span>' : '') +
+                            ' <button onclick="pd_quitarPendiente(' + num + ',' + entry.idx + ')" title="Quitar este archivo" ' +
                                 'style="background:none;border:1px solid #DC2626;color:#DC2626;' +
                                 'border-radius:6px;padding:1px 7px;font-size:10.5px;cursor:pointer;font-weight:600;margin-left:6px;">' +
                                 '🗑️ Quitar' +
@@ -527,10 +661,11 @@ function renderizarChecklist() {
                         '</div>' +
                         '<div class="hist-meta">' +
                             '📅 ' + fechaHoy + ' &nbsp;·&nbsp; 🕐 ' + horaHoy +
-                            ' &nbsp;·&nbsp; 💾 ' + formatearTamanoArchivo(pendiente.size) +
+                            ' &nbsp;·&nbsp; 💾 ' + formatearTamanoArchivo(entry.archivo.size) +
                         '</div>' +
                     '</div>' +
                 '</div>';
+            }).join('');
         }
 
         // Misma caja de historial (bordeada, con scroll, fondo gris #F8FAFC)
@@ -659,7 +794,7 @@ function renderizarChecklist() {
         filas +=
             '<tr>' +
                 '<td style="text-align:center;font-weight:700;color:#6B7280;width:36px;">' +
-                    num +
+                    (i + 1) +
                 '</td>' +
                 '<td style="color:#1F2937;">' + label + '</td>' +
                 '<td>' +
@@ -763,7 +898,13 @@ function pd_toggleHistorial(num) {
 
 function pd_archivoElegido(num, inputEl) {
     if (!inputEl.files || !inputEl.files[0]) return;
-    _archivosPendientes[num] = inputEl.files[0];
+    // Cada archivo elegido se AGREGA al arreglo del ítem en vez de
+    // reemplazar al anterior — igual que histU_registrar() en
+    // contratacion.html/js/script.js. Antes se sobreescribía
+    // _archivosPendientes[num] con el nuevo File, así que elegir un segundo
+    // archivo para el mismo ítem borraba el primero sin dejar rastro.
+    if (!_archivosPendientes[num]) _archivosPendientes[num] = [];
+    _archivosPendientes[num].push(inputEl.files[0]);
     // Mismo comportamiento que histU_render() en contratacion.html: la caja
     // de historial se despliega sola en cuanto se elige un archivo, sin que
     // el usuario tenga que abrirla a mano.
@@ -773,12 +914,27 @@ function pd_archivoElegido(num, inputEl) {
 
 // Quitar un archivo elegido por error, mientras siga pendiente (todavía no
 // se ha presionado "Guardar" y por lo tanto no se ha subido a Supabase).
-function pd_quitarPendiente(num) {
+// idx identifica la posición dentro del arreglo de pendientes de ese ítem
+// (puede haber más de uno — ver pd_archivoElegido).
+function pd_quitarPendiente(num, idx) {
     if (!confirm('¿Quitar este archivo? Deberá volver a seleccionarlo si lo necesita.')) return;
-    delete _archivosPendientes[num];
+    var arr = _archivosPendientes[num];
+    if (!arr || !arr[idx]) return;
 
-    var inp = document.getElementById('pd-file-' + num);
-    if (inp) inp.value = '';
+    var archivoQuitado = arr[idx];
+    arr.splice(idx, 1);
+
+    // Limpiar el análisis JURISKILLS ligado al archivo que se quitó (si no,
+    // la columna seguía mostrando el análisis de un archivo que ya no está).
+    if (typeof estadoDocumentos !== 'undefined') {
+        delete estadoDocumentos[num + '__' + archivoQuitado.name];
+    }
+
+    if (arr.length === 0) {
+        delete _archivosPendientes[num];
+        var inp = document.getElementById('pd-file-' + num);
+        if (inp) inp.value = '';
+    }
 
     renderizarChecklist();
 }
@@ -843,11 +999,16 @@ async function pd_guardar() {
 
     for (var i = 0; i < itemsPendientes.length; i++) {
         var num         = parseInt(itemsPendientes[i]);
-        var archivo     = _archivosPendientes[num];
+        var archivos    = _archivosPendientes[num];
         var idxLabel    = itemsNoContiguos2 ? itemsNoContiguos2.indexOf(num) : (num - 1);
         var label       = (idxLabel !== -1 ? labelsProceso[idxLabel] : null) || ('Ítem ' + num);
         var restringido = ITEMS_RESTRINGIDOS_DETALLE.indexOf(num) !== -1;
-        await db_subirDocumento(_procesoActual.id, num, label, archivo, restringido);
+        // Se suben en el orden en que se eligieron, uno por uno (await en
+        // serie) para que cada llamada a db_subirDocumento vea la versión
+        // anterior ya marcada como inactiva y calcule bien la siguiente.
+        for (var k = 0; k < archivos.length; k++) {
+            await db_subirDocumento(_procesoActual.id, num, label, archivos[k], restringido);
+        }
     }
 
     for (var j = 0; j < itemsConComentario.length; j++) {
@@ -980,19 +1141,27 @@ function pd_celdaAnalisis(num) {
         return '<div style="color:#9CA3AF;font-style:italic;font-size:12px;">No disponible para este tipo de proceso.</div>';
     }
 
-    var pendiente = _archivosPendientes[num];
-    if (!pendiente) {
+    var pendientesArrIA = _archivosPendientes[num] || [];
+    if (!pendientesArrIA.length) {
         return '<div style="color:#9CA3AF;font-style:italic;font-size:12px;">Cargue un documento nuevo para analizarlo.</div>';
     }
 
-    var clave = num + '__' + pendiente.name;
-    var entry = (typeof estadoDocumentos !== 'undefined') ? estadoDocumentos[clave] : null;
+    // Cada archivo pendiente del ítem consigue su propia tarjeta — igual que
+    // _renderTarjetasJuriskills() en contratacion.html/js/script.js, donde
+    // TODOS los archivos elegidos (no solo el último) quedan disponibles
+    // para analizar. Antes acá solo se leía el último del arreglo, así que
+    // el análisis del primero desaparecía en cuanto se elegía un segundo.
+    return pendientesArrIA.map(function(pendiente, idxDoc) {
+        var clave = num + '__' + pendiente.name;
+        var entry = (typeof estadoDocumentos !== 'undefined') ? estadoDocumentos[clave] : null;
 
-    if (!entry) {
-        entry = { numItem: num, archivo: pendiente, analisis: null, estado: 'pendiente' };
-    }
+        if (!entry) {
+            entry = { numItem: num, archivo: pendiente, analisis: null, estado: 'pendiente' };
+        }
 
-    return pd_renderTarjetaAnalisis(entry);
+        var separador = idxDoc > 0 ? 'border-top:1px solid #F1F5F9;padding-top:8px;margin-top:8px;' : '';
+        return '<div style="' + separador + '">' + pd_renderTarjetaAnalisis(entry, clave) + '</div>';
+    }).join('');
 }
 
 // Tarjeta compacta de la celda "Análisis JURISKILLS": mismo markup que
@@ -1000,7 +1169,9 @@ function pd_celdaAnalisis(num) {
 // directa-3p.html) para que las dos páginas se vean idénticas — semáforo +
 // barra de cumplimiento + resumen corto + enlace que abre el modal de
 // detalle completo (pd_juriskillsAbrirModal).
-function pd_renderTarjetaAnalisis(val) {
+function pd_renderTarjetaAnalisis(val, clave) {
+    clave = clave || ((val.numItem != null ? val.numItem : '') + '__' + (val.archivo ? val.archivo.name : ''));
+
     if (val.estado === 'analizando') {
         return '<div style="display:flex;align-items:center;gap:6px;color:#6366F1;font-size:11px;">' +
                 '<span class="ia-badge badge-analizando">⏳ Analizando</span>' +
@@ -1018,7 +1189,7 @@ function pd_renderTarjetaAnalisis(val) {
         return '<div style="margin-bottom:8px;font-size:12px;color:#0B7A43;font-weight:600;">✅ <strong>' +
                 escapeHTML(val.archivo ? val.archivo.name : '') + '</strong></div>' +
             '<button class="btn" style="padding:10px 14px;font-size:13px;" ' +
-                'onclick="pd_analizarDocumento(' + val.numItem + ')">🔎 Analizar</button>';
+                'onclick="pd_analizarDocumento(\'' + clave.replace(/'/g, "\\'") + '\')">🔎 Analizar</button>';
     }
 
     var a = val.analisis;
@@ -1035,7 +1206,6 @@ function pd_renderTarjetaAnalisis(val) {
     var pColor = puntaje >= 80 ? '#22C55E' : puntaje >= 50 ? '#F59E0B' : '#EF4444';
     var badgeClase = a.estado === 'ok' ? 'badge-ok' : a.estado === 'advertencia' ? 'badge-warning' : 'badge-error';
     var badgeTexto = a.estado === 'ok' ? '✅ Correcto' : a.estado === 'advertencia' ? '⚠️ Advertencia' : '🔴 Corrección';
-    var clave = (val.numItem != null ? val.numItem : '') + '__' + (val.archivo ? val.archivo.name : '');
 
     return '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">' +
             '<span class="ia-badge ' + badgeClase + '" style="flex-shrink:0;">' + badgeTexto + '</span>' +
@@ -1151,13 +1321,21 @@ function pd_renderContenidoCompletoAnalisis(val) {
     '</div>';
 }
 
-// Analiza el archivo pendiente de un ítem con el motor JURISKILLS (mismo
+// Analiza UN archivo pendiente específico con el motor JURISKILLS (mismo
 // enrutamiento Groq/local que analizarDocumentoCD1P en js/script.js, pero
 // actualizando la UI propia de esta página en vez de actualizarPanelAgente()).
-async function pd_analizarDocumento(num) {
-    var archivo = _archivosPendientes[num];
+// Recibe la clave "numItem__nombreArchivo" (igual que analizarDocumentoCD1P)
+// en vez de solo el número de ítem, porque un mismo ítem puede tener varios
+// archivos pendientes a la vez (ver pd_celdaAnalisis) y cada uno se analiza
+// por separado.
+async function pd_analizarDocumento(clave) {
+    var separador = String(clave).indexOf('__');
+    var num = parseInt(String(clave).slice(0, separador), 10);
+    var nombreArchivo = String(clave).slice(separador + 2);
+
+    var pendientesArrAnalisis = _archivosPendientes[num] || [];
+    var archivo = pendientesArrAnalisis.filter(function(f) { return f.name === nombreArchivo; }).pop();
     if (!archivo) return;
-    var clave = num + '__' + archivo.name;
 
     estadoDocumentos[clave] = { numItem: num, archivo: archivo, analisis: null, estado: 'analizando' };
     renderizarChecklist();
@@ -1214,13 +1392,21 @@ async function reAnalizarTodo() {
         alert('ℹ️ El análisis JURISKILLS todavía no está habilitado para este tipo de proceso.');
         return;
     }
-    var pendientes = Object.keys(_archivosPendientes);
-    if (pendientes.length === 0) {
+    // Una clave por CADA archivo pendiente, no una por ítem — un ítem puede
+    // tener varios archivos elegidos sin guardar todavía (ver
+    // pd_archivoElegido/pd_celdaAnalisis) y todos deben analizarse.
+    var claves = [];
+    Object.keys(_archivosPendientes).forEach(function(num) {
+        (_archivosPendientes[num] || []).forEach(function(archivo) {
+            claves.push(num + '__' + archivo.name);
+        });
+    });
+    if (claves.length === 0) {
         alert('No hay documentos nuevos cargados para analizar. Use "📎 Agregar nueva versión" en el ítem que quiera analizar.');
         return;
     }
-    for (var i = 0; i < pendientes.length; i++) {
-        await pd_analizarDocumento(parseInt(pendientes[i], 10));
+    for (var i = 0; i < claves.length; i++) {
+        await pd_analizarDocumento(claves[i]);
     }
 }
 

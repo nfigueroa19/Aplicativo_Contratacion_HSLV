@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="js/supabase.js"></script>
   <script src="js/auth-guard.js"></script>
   <meta charset="UTF-8" />
@@ -1503,7 +1504,7 @@
       </div>
       <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
         <span id="hist-contador" style="font-size:13px;color:#6B7280;font-weight:600;"></span>
-        <button onclick="hist_exportarCSV()" style="background:#0B7A43;color:white;border:none;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">⬇ Exportar CSV</button>
+        <button onclick="hist_exportarExcel()" style="background:#0B7A43;color:white;border:none;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">⬇ Exportar Excel</button>
       </div>
     </div>
 
@@ -1512,11 +1513,13 @@
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead>
           <tr style="background:linear-gradient(90deg,#123C7B,#0B7A43);color:white;">
-            <th style="padding:13px 14px;text-align:left;font-weight:700;border-radius:0;">ID Proceso</th>
+            <th style="padding:13px 14px;text-align:left;font-weight:700;border-radius:0;">ID del Proceso</th>
             <th style="padding:13px 14px;text-align:left;font-weight:700;">Modalidad</th>
             <th style="padding:13px 14px;text-align:left;font-weight:700;">Objeto Contractual</th>
-            <th style="padding:13px 14px;text-align:left;font-weight:700;">Área</th>
-            <th style="padding:13px 14px;text-align:left;font-weight:700;">👤 Responsable</th>
+            <th style="padding:13px 14px;text-align:left;font-weight:700;">Área Solicitante</th>
+            <th style="padding:13px 14px;text-align:left;font-weight:700;">Responsable del Área Solicitante</th>
+            <th style="padding:13px 14px;text-align:left;font-weight:700;">Responsable Jurídico Asignado</th>
+            <th style="padding:13px 14px;text-align:left;font-weight:700;">Proceso Asignado Por</th>
             <th style="padding:13px 14px;text-align:left;font-weight:700;">Valor</th>
             <th style="padding:13px 14px;text-align:left;font-weight:700;">Fecha</th>
             <th style="padding:13px 14px;text-align:center;font-weight:700;">Acciones</th>
