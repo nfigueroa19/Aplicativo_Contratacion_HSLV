@@ -38,94 +38,109 @@
         <div id="pd-contenido">
 
             <!-- Información general del proceso (solo lectura) -->
-            <div id="pd-info" style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;
-                                      padding:20px;margin-bottom:20px;">
+            <div id="pd-info" class="section-card" style="margin-bottom:22px;">
                 <div style="text-align:center;color:#9CA3AF;padding:20px;">Cargando proceso…</div>
             </div>
 
             <!-- Checklist de documentos -->
-            <div style="background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:20px;">
-                <div style="font-size:11px;color:#123C7B;font-weight:700;text-transform:uppercase;margin-bottom:10px;">
-                    📋 Documentos del Expediente
+            <div class="section-card">
+                <h3 style="color:#123C7B;margin-bottom:8px;">
+                    📂 Documentos del Expediente
+                </h3>
+                <div class="alert-box" style="margin-bottom:16px;">
+                    Consulte el estado del expediente y cargue nuevas versiones de cada documento requerido.
                 </div>
-                <div style="border-radius:12px;border:1px solid #E5E7EB;overflow:hidden;overflow-x:auto;">
-                    <table style="width:100%;border-collapse:collapse;">
+
+                <!-- JURISKILLS IA: panel general (contador + normativa). El detalle de
+                     análisis de cada documento NUEVO se muestra directamente en la
+                     columna "🤖 Análisis JURISKILLS" de su fila — igual que en
+                     contratacion.html / directa-3p.html. -->
+                <div class="agente-ia-box" style="margin-top:0;margin-bottom:18px;">
+
+                    <div class="agente-ia-header">
+                        <div class="agente-ia-info">
+                            <div class="agente-ia-icon">🤖</div>
+                            <div>
+                                <div class="agente-ia-title">
+                                    JURISKILLS IA - Análisis Inteligente de Contratacion
+                                    <span class="beta-tag">BETA</span>
+                                </div>
+                                <div class="agente-ia-text">
+                                    Carga documentos en el checklist y JURISKILLS los analiza con base en el <strong>Acuerdo 015/2024</strong> y la <strong>Resolución 0456/2024</strong> del HSLV, Ley 80/1993 y
+                                    Decreto 1082/2015. El resultado de cada documento aparece junto a su fila, en la columna "Análisis JURISKILLS".
+                                </div>
+                                <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;">
+                                    <span id="iaContadorDocs">0 documentos</span>
+                                    <span id="iaEstadoBadge" class="ia-badge badge-analizando" style="display:none;"></span>
+                                </div>
+                                <div id="iaResumenGlobal"></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-actualizar" onclick="reAnalizarTodo()">
+                            ⟳ Actualizar análisis
+                        </button>
+                    </div>
+
+                    <div class="normativa-box" style="margin-top:16px;">
+                        <h4>Normativa aplicada por JURISKILLS</h4>
+                        <ul>
+                            <li>Ley 80 de 1993 y Ley 1150 de 2007</li>
+                            <li>Decreto 1082 de 2015</li>
+                            <li><strong>Acuerdo 015/2024 HSLV</strong> – Estatuto de Contratación (base principal)</li>
+                            <li><strong>Resolución 0456/2024 HSLV</strong> – Manual de Contratación (base principal)</li>
+                            <li>Ley 734/2002 · Ley 610/2000 · Ley 1918/2018</li>
+                            <li>Ley 43/1990 · Ley 48/1993</li>
+                        </ul>
+                    </div>
+
+                    <div class="agente-ia-footer">
+                        ⓘ El análisis es generado por IA/reglas automáticas con base en el contenido real de cada documento cargado y la normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación. <strong>Independientemente del porcentaje o resultado obtenido — incluso al 100% — el documento siempre debe revisarse manualmente antes de continuar el proceso.</strong>
+                    </div>
+
+                </div>
+
+                <div class="checklist-wrapper" id="pd-checklist">
+                    <table>
                         <thead>
-                            <tr style="background:#F8FAFC;">
-                                <th style="padding:8px 10px;font-size:11px;color:#6B7280;text-align:center;">#</th>
-                                <th style="padding:8px 10px;font-size:11px;color:#6B7280;text-align:left;">Documento</th>
-                                <th style="padding:8px 10px;font-size:11px;color:#6B7280;text-align:left;">Versiones cargadas</th>
-                                <th style="padding:8px 10px;font-size:11px;color:#6B7280;text-align:left;">Comentarios</th>
+                            <tr>
+                                <th style="text-align:center;">#</th>
+                                <th>Documento Requerido</th>
+                                <th>Carga de Documento</th>
+                                <th>🤖 Análisis JURISKILLS</th>
                             </tr>
                         </thead>
                         <tbody id="pd-checklist-body"></tbody>
                     </table>
                 </div>
 
+                <div id="pd-avance-bar" style="margin-top:18px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:14px;padding:14px 18px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-size:12px;font-weight:700;color:#0B7A43;text-transform:uppercase;letter-spacing:.5px;">✅ Avance Documental</span>
+                        <span id="pd-avance-pct" style="font-size:18px;font-weight:800;color:#0B7A43;">0%</span>
+                    </div>
+                    <div style="height:10px;border-radius:6px;background:#D1FAE5;overflow:hidden;">
+                        <div id="pd-avance-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#0B7A43,#123C7B);border-radius:6px;transition:width .4s ease;"></div>
+                    </div>
+                    <div id="pd-avance-texto" style="font-size:12px;color:#374151;margin-top:6px;">0 de 0 documentos verificados</div>
+                </div>
+
                 <div id="pd-acciones" style="margin-top:18px;text-align:right;"></div>
             </div>
 
-            <!-- Recuadro de referencia JURISKILLS (aún no entrenado/conectado a un modelo real) -->
-            <div class="agente-ia-box" style="margin-top:20px;">
+        </div>
 
-                <div class="agente-ia-header">
-                    <div class="agente-ia-info">
-                        <div class="agente-ia-icon">🤖</div>
-                        <div>
-                            <div class="agente-ia-title">
-                                JURISKILLS IA - Análisis Inteligente de Contratación
-                                <span class="beta-tag">BETA</span>
-                            </div>
-                            <div class="agente-ia-text">
-                                Carga documentos en el checklist y JURISKILLS los analiza con base en el
-                                <strong>Acuerdo 015/2024</strong> y la <strong>Resolución 0456/2024</strong>
-                                del HSLV, Ley 80/1993 y Decreto 1082/2015.
-                            </div>
-                        </div>
-                    </div>
-                    <button class="btn btn-actualizar" onclick="reAnalizarTodo()">
-                        ⟳ Actualizar análisis
-                    </button>
+        <!-- Modal de detalle de análisis JURISKILLS (mismo markup que el que
+             script.js inyecta dinámicamente en contratacion.html / directa-3p.html
+             — ver juriskillsAbrirModal() en js/script.js y su equivalente
+             pd_juriskillsAbrirModal() en js/proceso-detalle.js). -->
+        <div class="modal" id="juriskillsModal">
+            <div class="modal-content" style="max-width:640px;max-height:85vh;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <h2 id="juriskillsModalTitulo" style="margin:0;font-size:16px;color:#123C7B;">🤖 Análisis JURISKILLS</h2>
+                    <button type="button" onclick="pd_juriskillsCerrarModal()" style="border:none;background:none;font-size:22px;line-height:1;cursor:pointer;color:#6B7280;">&times;</button>
                 </div>
-
-                <div id="iaResultadosContenedor">
-                    <div style="text-align:center;padding:30px;color:#9CA3AF;">
-                        <div style="font-size:40px;margin-bottom:10px;">📂</div>
-                        <p>Carga documentos en el checklist para que JURISKILLS los analice automáticamente.</p>
-                    </div>
-                </div>
-
-                <div class="ia-grid" style="margin-top:18px;">
-                    <div>
-                        <div class="ia-section-title">Observaciones adicionales</div>
-                        <textarea class="ia-observaciones" id="iaObservaciones"
-                            placeholder="Escriba observaciones o justificaciones adicionales…" autocomplete="off"
-                            oninput="document.getElementById('iaCharCount').textContent=this.value.length+'/1000 caracteres'"
-                            maxlength="1000"></textarea>
-                        <div id="iaCharCount" style="margin-top:6px;color:#6B7280;font-size:12px;">0/1000 caracteres</div>
-                    </div>
-                    <div>
-                        <div class="normativa-box">
-                            <h4>Normativa aplicada por JURISKILLS</h4>
-                            <ul>
-                                <li>Ley 80 de 1993 y Ley 1150 de 2007</li>
-                                <li>Decreto 1082 de 2015</li>
-                                <li><strong>Acuerdo 015/2024 HSLV</strong> – Estatuto de Contratación (base principal)</li>
-                                <li><strong>Resolución 0456/2024 HSLV</strong> – Manual de Contratación (base principal)</li>
-                                <li>Ley 734/2002 · Ley 610/2000 · Ley 1918/2018</li>
-                                <li>Ley 43/1990 · Ley 48/1993</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="agente-ia-footer">
-                    ⓘ El análisis es generado por IA con base en el contenido real de cada documento cargado y la
-                    normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación.
-                </div>
-
+                <div id="juriskillsModalContenido"></div>
             </div>
-
         </div>
 
     </div>
@@ -133,6 +148,7 @@
     <script src="/js/sidebar.js"></script>
     <script src="/js/db.js"></script>
     <script src="/js/notificaciones.js"></script>
+    <script src="/js/juriskills-engine.js"></script>
     <script src="/js/proceso-detalle.js"></script>
 
 </body>

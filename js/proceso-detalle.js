@@ -107,6 +107,17 @@ var _documentosActuales  = [];
 var _comentariosActuales = [];
 var _archivosPendientes  = {}; // { itemNum: File }
 var _comentariosPendientes = {}; // { itemNum: texto sin guardar todavía }
+// Ítems cuyo comentario pendiente ya fue "confirmado" con el botón de envío
+// (se muestra como si fuera un comentario real, con opción de editar/borrar,
+// pero sigue sin tocar la base de datos hasta que se presiona pd_guardar()).
+var _comentariosConfirmados = {};
+// Qué cajas de "Ver historial" quedan abiertas entre un re-render y otro
+// (renderizarChecklist() reconstruye todo el <tbody>, así que sin esto el
+// estado abierto/cerrado se perdería en cada cambio). Se abre solo cuando
+// el usuario lo pide (pd_toggleHistorial) o al cargar un archivo nuevo
+// (mismo comportamiento que histU_render() en contratacion.html, que
+// termina con contenedor.style.display = 'block').
+var _historialAbierto = {}; // { itemNum: true/false }
 var _usuariosJuridicosActuales = []; // solo se llena si el usuario actual es Admin
 
 function escapeHTML(texto) {
@@ -179,6 +190,24 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     _documentosActuales = await db_cargarDocumentos(proceso.id);
     _comentariosActuales = await db_cargarComentarios(proceso.id);
+
+    // Marca de "conocimiento": si quien abre es el jurídico asignado y
+    // todavía no existe una primera visita registrada, se guarda ahora.
+    // Es la base del panel de seguimiento del Admin (ver
+    // db_cargarSeguimientoConocimiento en js/db.js) — por eso solo se marca
+    // la PRIMERA vez (db_marcarProcesoVisto no pisa una fecha ya existente).
+    if (_perfilActual && proceso.responsable_asignado === _perfilActual.id &&
+        !proceso.responsable_asignado_visto_fecha) {
+        db_marcarProcesoVisto(proceso.id);
+    }
+
+    // Marca de "última actividad": a diferencia de la de arriba, esta se
+    // actualiza en CADA visita del jurídico asignado (no solo la primera),
+    // como una fecha de "última conexión" al proceso. Ver
+    // db_marcarActividadProceso en js/db.js.
+    if (_perfilActual && proceso.responsable_asignado === _perfilActual.id) {
+        db_marcarActividadProceso(proceso.id);
+    }
 
     renderizarInfo(_procesoActual);
     renderizarChecklist();
@@ -378,38 +407,67 @@ function renderizarChecklist() {
     var proceso       = _procesoActual;
     var puedeEditar   = puedeEditarProceso(proceso, _perfilActual);
     var puedeComentar = puedeComentarProceso(proceso, _perfilActual);
-    var esBiomedica   = _perfilActual && _perfilActual.area === 'biomedica';
     var labelsProceso = CHECKLISTS_POR_TIPO[proceso.tipo] || CHECKLISTS_POR_TIPO.CD1P;
     var itemsNoContiguos = ITEMS_POR_TIPO_NO_CONTIGUOS_DETALLE[proceso.tipo] || null;
+
+    var totalItems = 0;
+    var itemsVerificados = 0;
 
     var filas = '';
     labelsProceso.forEach(function(label, i) {
         var num = itemsNoContiguos ? itemsNoContiguos[i] : (i + 1);
         var esRestringido = ITEMS_RESTRINGIDOS_DETALLE.indexOf(num) !== -1;
 
-        // Biomédica no ve ítems restringidos, igual que en el formulario de creación
-        if (esRestringido && esBiomedica) return;
-
         var docsItem = _documentosActuales
             .filter(function(d) { return d.item_num === num; })
             .sort(function(a, b) { return b.version - a.version; });
 
-        var vigente = docsItem.find(function(d) { return d.activo; });
+        var vigente   = docsItem.find(function(d) { return d.activo; });
+        var pendiente = _archivosPendientes[num];
 
-        var encabezadoVigente = vigente
-            ? '<div style="font-size:12px;font-weight:700;color:#0B7A43;">✅ ' + escapeHTML(vigente.nombre_archivo || '') + '</div>'
-            : '<div style="color:#9CA3AF;font-style:italic;font-size:12px;">Sin documento cargado</div>';
+        totalItems++;
+        if (vigente || pendiente) itemsVerificados++;
 
-        var toggleHistorialHTML = docsItem.length > 0
-            ? '<button onclick="pd_toggleHistorial(' + num + ')" ' +
-                'style="background:none;border:none;color:#123C7B;font-size:11px;cursor:pointer;' +
-                'padding:0;margin-top:3px;text-decoration:underline;">' +
-                '🕓 Ver historial (' + docsItem.length + ')' +
-              '</button>'
-            : '';
+        // Igual que mostrarArchivo() en contratacion.html: en cuanto se elige
+        // un archivo se ve su nombre en verde de inmediato, sin esperar a
+        // guardar — antes acá seguía diciendo "Sin documento cargado" hasta
+        // que el proceso se guardaba.
+        var encabezadoVigente = pendiente
+            ? '<div style="font-size:12px;font-weight:600;color:#0B7A43;">✅ <strong>' + escapeHTML(pendiente.name) + '</strong></div>'
+            : vigente
+                ? '<div style="font-size:12px;font-weight:700;color:#0B7A43;">✅ ' + escapeHTML(vigente.nombre_archivo || '') + '</div>'
+                : '<div style="color:#9CA3AF;font-style:italic;font-size:12px;">Sin documento cargado</div>';
 
+        // Conteo del badge "Ver historial": igual que hist.length en
+        // histU_registrar()/histU_render() (js/script.js) — ahí TODO lo
+        // elegido cuenta de inmediato, esté guardado o no, porque en
+        // contratacion.html no hay una distinción "guardado vs. pendiente"
+        // (todo vive en memoria hasta el botón final "Guardar Proceso").
+        var totalVersiones = docsItem.length + (pendiente ? 1 : 0);
+
+        // Mismo botón-pastilla + badge que "🕓 Ver historial" en contratacion.html
+        // — ahí se agrega desde el inicio (mostrando "0") a TODOS los ítems,
+        // no solo a los que ya tienen archivo (ver bloque "COMENTARIOS EN EL
+        // CHECKLIST" en js/script.js, que inyecta el botón con badge en 0
+        // para los 4 módulos). Antes acá solo aparecía si ya había versiones.
+        var toggleHistorialHTML =
+            '<button onclick="pd_toggleHistorial(' + num + ')" ' +
+                'style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;' +
+                'padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;' +
+                'display:flex;align-items:center;gap:5px;">' +
+                '🕓 Ver historial <span style="background:#123C7B;color:white;' +
+                'border-radius:10px;padding:1px 7px;font-size:10px;">' + totalVersiones + '</span>' +
+              '</button>';
+
+        // Mientras haya un archivo pendiente (recién elegido, sin guardar),
+        // ES el que representa la versión más reciente — así que la versión
+        // ya guardada (d.activo) deja de llevar la etiqueta "⬆ Actual" para
+        // no mostrar dos "actuales" a la vez. Mismo criterio que
+        // histU_render() en js/script.js, donde solo la entrada más nueva
+        // (idx === 0 del arreglo) la lleva.
         var entradasHistorial = docsItem.map(function(d) {
             var esPrimera = d.version === 1;
+            var esLaMasReciente = !pendiente && d.activo;
             var fechaObj  = d.subido_en ? new Date(d.subido_en) : null;
             var fecha = fechaObj
                 ? fechaObj.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -433,7 +491,7 @@ function renderizarChecklist() {
                         (esPrimera
                             ? '<span class="hist-tag-v1">v1 · Inicial</span>'
                             : '<span class="hist-tag-vN">v' + d.version + '</span>') +
-                        (d.activo ? '<span class="hist-tag-last">⬆ Actual</span>' : '') +
+                        (esLaMasReciente ? '<span class="hist-tag-last">⬆ Actual</span>' : '') +
                     '</div>' +
                     '<div class="hist-meta">📅 ' + fecha + ' &nbsp;·&nbsp; 🕐 ' + hora +
                         ' &nbsp;·&nbsp; 💾 ' + tamano + '</div>' +
@@ -441,14 +499,12 @@ function renderizarChecklist() {
             '</div>';
         }).join('');
 
-        var versionesHTML =
-            encabezadoVigente +
-            toggleHistorialHTML +
-            '<div id="pd-historial-' + num + '" style="display:none;margin-top:6px;">' +
-                entradasHistorial +
-            '</div>';
-
-        var pendiente = _archivosPendientes[num];
+        // Tarjeta del archivo pendiente (elegido, aún sin guardar): MISMO
+        // markup que histU_render() genera para cada versión en
+        // contratacion.html (📄, tag de versión, "⬆ Actual" en la más nueva,
+        // botón "Quitar" en línea junto al nombre) — antes esta tarjeta vivía
+        // fuera de la caja gris del historial (fondo blanco, ícono ⏳,
+        // "Quitar" aparte) y por eso se veía distinta a contratacion.html.
         var pendienteHTML = '';
         if (pendiente) {
             var maxVersion = docsItem.reduce(function(max, d) { return Math.max(max, d.version); }, 0);
@@ -457,15 +513,15 @@ function renderizarChecklist() {
             var horaHoy  = ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
             pendienteHTML =
-                '<div class="hist-entrada" style="margin-top:6px;">' +
+                '<div class="hist-entrada">' +
                     '<div class="hist-num hist-num-vN">' + (maxVersion + 1) + '</div>' +
                     '<div class="hist-info">' +
-                        '<div class="hist-nombre">' +
-                            '⏳ ' + escapeHTML(pendiente.name) +
+                        '<div class="hist-nombre">📄 ' + escapeHTML(pendiente.name) +
                             '<span class="hist-tag-vN">v' + (maxVersion + 1) + '</span>' +
-                            '<button onclick="pd_quitarPendiente(' + num + ')" title="Quitar este archivo" ' +
-                                'style="margin-left:8px;background:none;border:1px solid #DC2626;color:#DC2626;' +
-                                'border-radius:6px;padding:1px 7px;font-size:10.5px;cursor:pointer;font-weight:600;">' +
+                            '<span class="hist-tag-last">⬆ Actual</span>' +
+                            ' <button onclick="pd_quitarPendiente(' + num + ')" title="Quitar este archivo" ' +
+                                'style="background:none;border:1px solid #DC2626;color:#DC2626;' +
+                                'border-radius:6px;padding:1px 7px;font-size:10.5px;cursor:pointer;font-weight:600;margin-left:6px;">' +
                                 '🗑️ Quitar' +
                             '</button>' +
                         '</div>' +
@@ -477,17 +533,29 @@ function renderizarChecklist() {
                 '</div>';
         }
 
+        // Misma caja de historial (bordeada, con scroll, fondo gris #F8FAFC)
+        // que historial_N en contratacion.html — el pendiente entra AQUÍ
+        // como la entrada más reciente (arriba de las ya guardadas), en vez
+        // de vivir aparte en fondo blanco.
+        var historialEstaAbierto = _historialAbierto[num] ? 'block' : 'none';
+        var versionesHTML =
+            encabezadoVigente +
+            toggleHistorialHTML +
+            '<div id="pd-historial-' + num + '" style="display:' + historialEstaAbierto + ';margin-top:8px;max-height:160px;' +
+                'overflow-y:auto;border:1px solid #E5E7EB;border-radius:10px;font-size:11px;background:#F8FAFC;">' +
+                (pendienteHTML + entradasHistorial ||
+                    '<div style="padding:8px 10px;color:#6B7280;font-style:italic;">Sin cargas registradas aún.</div>') +
+            '</div>';
+
         var controlSubida = puedeEditar
             ? '<div style="margin-top:6px;">' +
-                '<button onclick="pd_elegirArchivo(' + num + ')" ' +
-                    'style="background:linear-gradient(90deg,#123C7B,#0B7A43);color:white;border:none;' +
-                    'padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">' +
+                '<button class="btn" onclick="pd_elegirArchivo(' + num + ')" ' +
+                    'style="padding:10px 14px;font-size:13px;">' +
                     '📎 Agregar nueva versión' +
                 '</button>' +
                 '<input type="file" id="pd-file-' + num + '" style="display:none;" ' +
                     'accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" ' +
                     'onchange="pd_archivoElegido(' + num + ',this)">' +
-                pendienteHTML +
               '</div>'
             : '';
 
@@ -515,25 +583,91 @@ function renderizarChecklist() {
               }).join('')
             : '';
 
+        // Mismo textarea (tamaño, placeholder, auto-crecimiento con la altura
+        // del texto) que el bloque "COMENTARIOS EN EL CHECKLIST" que
+        // js/script.js inyecta en contratacion.html/directa-3p.html/etc. —
+        // ahí es un solo campo de una línea que crece solo; acá se le suma
+        // guardar el valor en _comentariosPendientes (esta página sí guarda
+        // comentarios de verdad, contratacion.html solo lo arma para
+        // mandarlo junto con el resto del proceso al crearlo).
         var borradorComentario = _comentariosPendientes[num] || '';
-        var formularioComentario = puedeComentar
-            ? '<textarea id="pd-com-input-' + num + '" rows="2" ' +
-                'placeholder="Escribir un comentario…" ' +
-                'oninput="_comentariosPendientes[' + num + ']=this.value" ' +
-                'style="width:100%;font-size:11px;padding:5px 8px;border:1px solid #CBD5E1;' +
-                'border-radius:7px;resize:vertical;box-sizing:border-box;">' +
-                    escapeHTML(borradorComentario) +
-              '</textarea>'
-            : '';
+
+        // Mientras el borrador no se "confirme" con el botón de envío se ve
+        // el textarea normal; al confirmarlo se muestra como una vista previa
+        // (mismo look que un comentario ya guardado) con botones para editar
+        // o borrar. En ningún caso esto escribe en la base de datos — eso
+        // solo pasa cuando se presiona el botón grande "Guardar" (pd_guardar,
+        // ver más abajo), que sigue leyendo el texto desde _comentariosPendientes.
+        var formularioComentario = '';
+        if (puedeComentar && _comentariosConfirmados[num] && borradorComentario.trim() !== '') {
+            // Mismo estilo visual que un comentario ya guardado (comentariosHTML
+            // arriba), con el nombre real de quien está conectado.
+            var nombreAutorPendiente = (_perfilActual && _perfilActual.nombre) || 'Usuario';
+            formularioComentario =
+                '<div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;' +
+                    'padding:6px 9px;margin-bottom:6px;font-size:11px;">' +
+                    '<div style="font-weight:700;color:#123C7B;">' + escapeHTML(nombreAutorPendiente) + '</div>' +
+                    '<div style="color:#1F2937;margin-top:2px;">' + escapeHTML(borradorComentario) + '</div>' +
+                    '<div style="margin-top:4px;">' +
+                        '<a onclick="pd_editarComentarioPendiente(' + num + ')" ' +
+                            'style="color:#123C7B;font-size:10px;cursor:pointer;margin-right:10px;">✏️ Editar</a>' +
+                        '<a onclick="pd_borrarComentarioPendiente(' + num + ')" ' +
+                            'style="color:#B91C1C;font-size:10px;cursor:pointer;">🗑️ Borrar</a>' +
+                    '</div>' +
+                '</div>';
+        } else if (puedeComentar) {
+            // El botón de envío va dentro del propio recuadro de texto (como
+            // en apps de mensajería), no al lado. El contenedor usa
+            // width:fit-content para que su ancho sea EXACTAMENTE el del
+            // textarea de adentro — si en cambio se le pusiera "44ch" al
+            // contenedor, ese "ch" se calcularía con el tamaño de letra que
+            // hereda (más grande que los 12px del textarea) y el contenedor
+            // quedaría más ancho que el textarea, dejando el botón "right:5px"
+            // pegado a un borde invisible más allá del recuadro visible.
+            formularioComentario =
+                '<div style="position:relative;width:fit-content;max-width:100%;">' +
+                    '<textarea id="pd-com-input-' + num + '" rows="1" ' +
+                        'placeholder="Escribir un comentario para este documento…" autocomplete="off" ' +
+                        'oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\';' +
+                            '_comentariosPendientes[' + num + ']=this.value;" ' +
+                        'style="width:44ch;max-width:100%;font-size:12px;padding:6px 30px 6px 8px;' +
+                        'border:1px solid #CBD5E1;border-radius:8px;resize:none;overflow:hidden;' +
+                        'box-sizing:border-box;display:block;">' +
+                            escapeHTML(borradorComentario) +
+                    '</textarea>' +
+                    '<button type="button" ' +
+                        'onclick="pd_confirmarComentario(' + num + ')" ' +
+                        'style="position:absolute;right:5px;bottom:5px;background:#123C7B;color:white;' +
+                        'border:none;border-radius:50%;width:22px;height:22px;padding:0;font-size:11px;' +
+                        'line-height:22px;text-align:center;cursor:pointer;">➤</button>' +
+                '</div>';
+        }
+
+        // Mismo contenedor (clase, separador punteado, etiqueta en mayúsculas
+        // gris) que .checklist-comentario en contratacion.html. Lo único que
+        // agrega esta página frente a contratacion.html es el historial de
+        // comentarios entre usuarios (comentariosHTML) antes del campo nuevo.
+        var bloqueComentarios =
+            '<div class="checklist-comentario" style="margin-top:10px;border-top:1px dashed #E5E7EB;padding-top:8px;">' +
+                '<div style="font-size:10px;color:#6B7280;font-weight:700;text-transform:uppercase;margin-bottom:4px;">' +
+                    '💬 Comentarios' +
+                '</div>' +
+                comentariosHTML +
+                formularioComentario +
+            '</div>';
 
         filas +=
-            '<tr style="border-bottom:1px solid #E5E7EB;">' +
-                '<td style="padding:8px 10px;text-align:center;font-weight:700;color:#6B7280;font-size:12px;width:36px;">' +
-                    num + (esRestringido ? ' <span title="Solo Jurídica/Admin">🔒</span>' : '') +
+            '<tr>' +
+                '<td style="text-align:center;font-weight:700;color:#6B7280;width:36px;">' +
+                    num +
                 '</td>' +
-                '<td style="padding:8px 10px;font-size:12px;color:#1F2937;">' + label + '</td>' +
-                '<td style="padding:8px 10px;min-width:220px;">' + versionesHTML + controlSubida + '</td>' +
-                '<td style="padding:8px 10px;min-width:220px;max-width:280px;">' + comentariosHTML + formularioComentario + '</td>' +
+                '<td style="color:#1F2937;">' + label + '</td>' +
+                '<td>' +
+                    '<div class="pd-carga-caja">' +
+                        versionesHTML + controlSubida + bloqueComentarios +
+                    '</div>' +
+                '</td>' +
+                '<td style="min-width:260px;max-width:340px;vertical-align:top;">' + pd_celdaAnalisis(num) + '</td>' +
             '</tr>';
     });
 
@@ -545,6 +679,9 @@ function renderizarChecklist() {
             campo.setAttribute('spellcheck', 'true');
         }
     });
+
+    pd_actualizarAvance(itemsVerificados, totalItems);
+    pd_actualizarPanelJuriskills();
 
     var accionesEl = document.getElementById('pd-acciones');
     if (!accionesEl) return;
@@ -588,6 +725,29 @@ function renderizarChecklist() {
     }
 }
 
+// Misma mecánica que cd1p_actualizarAvance()/d3p_actualizarAvance() en
+// js/script.js, adaptada a datos ya cargados (esta página no vive dentro
+// de un formulario de creación, sino que lee _documentosActuales/
+// _archivosPendientes directamente en vez del DOM).
+function pd_actualizarAvance(ok, total) {
+    var fill  = document.getElementById('pd-avance-fill');
+    var pctEl = document.getElementById('pd-avance-pct');
+    var txt   = document.getElementById('pd-avance-texto');
+    if (!fill) return;
+
+    var pct = total > 0 ? Math.round((ok / total) * 100) : 0;
+
+    fill.style.width  = pct + '%';
+    pctEl.textContent = pct + '%';
+    txt.textContent   = ok + ' de ' + total + ' documentos verificados';
+
+    var color = pct === 100 ? 'linear-gradient(90deg,#0B7A43,#059669)'
+              : pct >= 60   ? 'linear-gradient(90deg,#0B7A43,#123C7B)'
+              : pct >= 30   ? 'linear-gradient(90deg,#D97706,#0B7A43)'
+              :               'linear-gradient(90deg,#DC2626,#D97706)';
+    fill.style.background = color;
+}
+
 function pd_elegirArchivo(num) {
     var inp = document.getElementById('pd-file-' + num);
     if (inp) inp.click();
@@ -595,12 +755,19 @@ function pd_elegirArchivo(num) {
 
 function pd_toggleHistorial(num) {
     var c = document.getElementById('pd-historial-' + num);
-    if (c) c.style.display = c.style.display === 'none' ? 'block' : 'none';
+    if (!c) return;
+    var abrir = c.style.display === 'none';
+    c.style.display = abrir ? 'block' : 'none';
+    _historialAbierto[num] = abrir; // se recuerda entre renders (ver renderizarChecklist)
 }
 
 function pd_archivoElegido(num, inputEl) {
     if (!inputEl.files || !inputEl.files[0]) return;
     _archivosPendientes[num] = inputEl.files[0];
+    // Mismo comportamiento que histU_render() en contratacion.html: la caja
+    // de historial se despliega sola en cuanto se elige un archivo, sin que
+    // el usuario tenga que abrirla a mano.
+    _historialAbierto[num] = true;
     renderizarChecklist();
 }
 
@@ -625,6 +792,33 @@ async function pd_descargar(documentoId) {
     } else {
         alert('❌ No se pudo generar el enlace de descarga.');
     }
+}
+
+// Botón "➤" dentro del recuadro de comentario: solo pasa el texto del
+// textarea a _comentariosPendientes y lo marca como "confirmado" para
+// mostrarlo en modo vista previa (editable/borrable). No toca la base de
+// datos — eso sigue pasando únicamente en pd_guardar().
+function pd_confirmarComentario(num) {
+    var campo = document.getElementById('pd-com-input-' + num);
+    var texto = campo ? campo.value.trim() : '';
+    if (texto === '') {
+        alert('⚠️ Escribe un comentario antes de confirmarlo.');
+        return;
+    }
+    _comentariosPendientes[num]  = texto;
+    _comentariosConfirmados[num] = true;
+    renderizarChecklist();
+}
+
+function pd_editarComentarioPendiente(num) {
+    _comentariosConfirmados[num] = false;
+    renderizarChecklist();
+}
+
+function pd_borrarComentarioPendiente(num) {
+    delete _comentariosPendientes[num];
+    delete _comentariosConfirmados[num];
+    renderizarChecklist();
 }
 
 async function pd_guardar() {
@@ -663,10 +857,17 @@ async function pd_guardar() {
         if (comentario) _comentariosActuales.push(comentario);
     }
 
-    _archivosPendientes    = {};
-    _comentariosPendientes = {};
-    _documentosActuales    = await db_cargarDocumentos(_procesoActual.id);
+    _archivosPendientes     = {};
+    _comentariosPendientes  = {};
+    _comentariosConfirmados = {};
+    _documentosActuales     = await db_cargarDocumentos(_procesoActual.id);
     renderizarChecklist();
+
+    // Guardar cambios también cuenta como "actividad" del jurídico
+    // asignado sobre el proceso (ver db_marcarActividadProceso en js/db.js).
+    if (_perfilActual && _procesoActual.responsable_asignado === _perfilActual.id) {
+        db_marcarActividadProceso(_procesoActual.id);
+    }
 
     var toast = document.createElement('div');
     toast.style.cssText =
@@ -701,11 +902,325 @@ async function pd_finalizar() {
     renderizarChecklist();
 }
 
-// Recuadro de referencia JURISKILLS: el motor de análisis todavía no está
-// entrenado ni conectado a un modelo real (ver CONTEXTO_PROYECTO_HSLV.md).
-// Este botón solo informa el estado actual, no ejecuta ningún análisis.
-function reAnalizarTodo() {
-    alert('ℹ️ JURISKILLS todavía no está conectado a un modelo de IA real. ' +
-          'Este panel se deja como referencia para la siguiente fase del proyecto.');
+// ════════════════════════════════════════════════════
+//  Integración con el motor JURISKILLS (js/juriskills-engine.js)
+//  Solo analiza documentos NUEVOS (aún pendientes de guardar, en
+//  _archivosPendientes) — los ya guardados en el expediente no se
+//  reanalizan aquí. Usa las mismas reglas/constantes que contratacion.html
+//  y directa-3p.html (ITEMS_CHECKLIST, _MODO_ANALISIS_CD1P, leerArchivo,
+//  analizarConIA, ejecutarAnalisisLocalReglas...), cargadas globalmente
+//  antes que este archivo — ver _Segundo_Cerebro/Flujo_Analisis_IA_JURISKILLS.md.
+// ════════════════════════════════════════════════════
+
+// La numeración de ítem de JURISKILLS (ITEMS_CHECKLIST, _MODO_ANALISIS_CD1P)
+// solo está confirmada/alineada para CD1P y D3P (ver ITEMS_POR_TIPO_NO_CONTIGUOS_DETALLE
+// arriba). Convocatoria y Subasta reutilizan números 1..15 de su propio
+// checklist reducido, que NO corresponden a los mismos ítems en la tabla de
+// JURISKILLS — ni siquiera contratacion.html/directa-3p.html habilitan esa
+// columna para esos dos tipos hoy. Se deja desactivado aquí también hasta
+// que se confirme el mapeo real con Jurídica.
+function pd_tipoConAnalisisJuriskills(tipo) {
+    return tipo === 'CD1P' || tipo === 'D3P';
+}
+
+function pd_actualizarPanelJuriskills() {
+    var resumenGlobal = document.getElementById('iaResumenGlobal');
+    var contadorDocs  = document.getElementById('iaContadorDocs');
+    var estadoBadge   = document.getElementById('iaEstadoBadge');
+    if (!contadorDocs || typeof estadoDocumentos === 'undefined') return;
+
+    var items = Object.keys(estadoDocumentos).map(function(k) { return estadoDocumentos[k]; });
+    var total = items.length;
+
+    contadorDocs.textContent = total === 0
+        ? '0 documentos'
+        : total + ' documento' + (total !== 1 ? 's' : '') + ' nuevo' + (total !== 1 ? 's' : '') +
+          ' analizado' + (total !== 1 ? 's' : '');
+
+    if (total === 0) {
+        estadoBadge.style.display = 'none';
+        resumenGlobal.textContent = 'Cargue una nueva versión de un documento para que JURISKILLS la analice.';
+        return;
+    }
+
+    var nOk = 0, nAdv = 0, nErr = 0, nAnal = 0;
+    items.forEach(function(v) {
+        if (v.estado === 'ok') nOk++;
+        else if (v.estado === 'advertencia') nAdv++;
+        else if (v.estado === 'correccion' || v.estado === 'error') nErr++;
+        else if (v.estado === 'analizando') nAnal++;
+    });
+
+    estadoBadge.style.display = 'inline-block';
+    if (nAnal > 0) {
+        estadoBadge.className = 'ia-badge badge-analizando';
+        estadoBadge.textContent = '⏳ Analizando…';
+    } else if (nErr > 0) {
+        estadoBadge.className = 'ia-badge badge-error';
+        estadoBadge.textContent = nErr + (nErr !== 1 ? ' correcciones requeridas' : ' corrección requerida');
+    } else if (nAdv > 0) {
+        estadoBadge.className = 'ia-badge badge-warning';
+        estadoBadge.textContent = nAdv + ' advertencia' + (nAdv !== 1 ? 's' : '');
+    } else {
+        estadoBadge.className = 'ia-badge badge-ok';
+        estadoBadge.textContent = '✅ Todo en orden';
+    }
+
+    resumenGlobal.textContent =
+        nOk + ' correcto' + (nOk !== 1 ? 's' : '') + ' · ' +
+        nAdv + ' con advertencia' + (nAdv !== 1 ? 's' : '') + ' · ' +
+        nErr + ' con corrección' + (nErr !== 1 ? 'es' : '');
+}
+
+// Construye la celda "🤖 Análisis JURISKILLS" de un ítem: botón "Analizar"
+// si hay un archivo nuevo sin analizar, resultado compacto si ya se
+// analizó, o un texto neutro si no hay archivo nuevo cargado.
+function pd_celdaAnalisis(num) {
+    if (!pd_tipoConAnalisisJuriskills(_procesoActual.tipo)) {
+        return '<div style="color:#9CA3AF;font-style:italic;font-size:12px;">No disponible para este tipo de proceso.</div>';
+    }
+
+    var pendiente = _archivosPendientes[num];
+    if (!pendiente) {
+        return '<div style="color:#9CA3AF;font-style:italic;font-size:12px;">Cargue un documento nuevo para analizarlo.</div>';
+    }
+
+    var clave = num + '__' + pendiente.name;
+    var entry = (typeof estadoDocumentos !== 'undefined') ? estadoDocumentos[clave] : null;
+
+    if (!entry) {
+        entry = { numItem: num, archivo: pendiente, analisis: null, estado: 'pendiente' };
+    }
+
+    return pd_renderTarjetaAnalisis(entry);
+}
+
+// Tarjeta compacta de la celda "Análisis JURISKILLS": mismo markup que
+// _renderTarjetasJuriskills() en js/script.js (contratacion.html /
+// directa-3p.html) para que las dos páginas se vean idénticas — semáforo +
+// barra de cumplimiento + resumen corto + enlace que abre el modal de
+// detalle completo (pd_juriskillsAbrirModal).
+function pd_renderTarjetaAnalisis(val) {
+    if (val.estado === 'analizando') {
+        return '<div style="display:flex;align-items:center;gap:6px;color:#6366F1;font-size:11px;">' +
+                '<span class="ia-badge badge-analizando">⏳ Analizando</span>' +
+                '<span style="color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ' +
+                    escapeHTML(val.archivo ? val.archivo.name : '') + '</span>' +
+            '</div>' +
+            (val.progreso ? '<div style="margin-top:4px;font-size:10px;color:#6366F1;">' + escapeHTML(val.progreso) + '</div>' : '') +
+            '<div class="ia-loader" style="margin-top:6px;"><div></div><div></div><div></div></div>';
+    }
+
+    // Archivo cargado pero aún no analizado: mismo botón "Analizar" que en
+    // contratacion.html (no se dispara el análisis automático para no gastar
+    // cuota de Groq si se subió el documento equivocado por error).
+    if (val.estado === 'pendiente' || !val.analisis) {
+        return '<div style="margin-bottom:8px;font-size:12px;color:#0B7A43;font-weight:600;">✅ <strong>' +
+                escapeHTML(val.archivo ? val.archivo.name : '') + '</strong></div>' +
+            '<button class="btn" style="padding:10px 14px;font-size:13px;" ' +
+                'onclick="pd_analizarDocumento(' + val.numItem + ')">🔎 Analizar</button>';
+    }
+
+    var a = val.analisis;
+
+    // Documentos de identificación (ítems sin análisis requerido): solo se
+    // muestra el archivo cargado, sin badge ni barra de cumplimiento.
+    if (val.estado === 'sin_analisis' || a.sinAnalisis) {
+        return '<div style="font-size:12px;color:#0B7A43;font-weight:600;">✅ <strong>' +
+                escapeHTML(val.archivo ? val.archivo.name : '') + '</strong></div>' +
+            '<div style="font-size:10.5px;color:#9CA3AF;font-style:italic;margin-top:2px;">Documento de identificación — sin análisis.</div>';
+    }
+
+    var puntaje = a.puntaje != null ? a.puntaje : (a.estado === 'ok' ? 90 : a.estado === 'advertencia' ? 65 : 30);
+    var pColor = puntaje >= 80 ? '#22C55E' : puntaje >= 50 ? '#F59E0B' : '#EF4444';
+    var badgeClase = a.estado === 'ok' ? 'badge-ok' : a.estado === 'advertencia' ? 'badge-warning' : 'badge-error';
+    var badgeTexto = a.estado === 'ok' ? '✅ Correcto' : a.estado === 'advertencia' ? '⚠️ Advertencia' : '🔴 Corrección';
+    var clave = (val.numItem != null ? val.numItem : '') + '__' + (val.archivo ? val.archivo.name : '');
+
+    return '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">' +
+            '<span class="ia-badge ' + badgeClase + '" style="flex-shrink:0;">' + badgeTexto + '</span>' +
+            '<span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ' +
+                escapeHTML(val.archivo ? val.archivo.name : '') + '</span>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">' +
+            '<span style="font-size:10px;font-weight:700;color:#6B7280;white-space:nowrap;">Cumplimiento</span>' +
+            '<div style="flex:1;background:#E5E7EB;border-radius:10px;height:6px;overflow:hidden;">' +
+                '<div style="width:' + puntaje + '%;height:6px;border-radius:10px;background:' + pColor + ';transition:width .5s;"></div>' +
+            '</div>' +
+            '<span style="font-size:11px;font-weight:800;color:' + pColor + ';white-space:nowrap;">' + puntaje + '%</span>' +
+        '</div>' +
+        '<a href="javascript:void(0)" onclick="pd_juriskillsAbrirModal(\'' + clave.replace(/'/g, "\\'") + '\')" ' +
+            'style="font-size:11px;font-weight:700;color:#2563EB;text-decoration:underline;">🔍 Ver análisis completo</a>';
+}
+
+// Modal de detalle completo — mismo markup que _renderContenidoCompletoAnalisis()
+// + juriskillsAbrirModal()/juriskillsCerrarModal() en js/script.js, reutilizando
+// el mismo modal #juriskillsModal (ver proceso-detalle.html).
+function pd_juriskillsAbrirModal(clave) {
+    var val = (typeof estadoDocumentos !== 'undefined') ? estadoDocumentos[clave] : null;
+    if (!val || !val.analisis) return;
+    document.getElementById('juriskillsModalTitulo').textContent =
+        '🤖 Análisis JURISKILLS — ' + (val.archivo ? val.archivo.name : '');
+    document.getElementById('juriskillsModalContenido').innerHTML = pd_renderContenidoCompletoAnalisis(val);
+    document.getElementById('juriskillsModal').style.display = 'flex';
+}
+
+function pd_juriskillsCerrarModal() {
+    document.getElementById('juriskillsModal').style.display = 'none';
+}
+
+function pd_renderContenidoCompletoAnalisis(val) {
+    var a = val.analisis;
+    if (!a) return '<p style="color:#9CA3AF;">Sin análisis disponible.</p>';
+
+    var puntaje = a.puntaje != null ? a.puntaje : (a.estado === 'ok' ? 90 : a.estado === 'advertencia' ? 65 : 30);
+    var pColor = puntaje >= 80 ? '#22C55E' : puntaje >= 50 ? '#F59E0B' : '#EF4444';
+    var badgeClase = a.estado === 'ok' ? 'badge-ok' : a.estado === 'advertencia' ? 'badge-warning' : 'badge-error';
+    var badgeTexto = a.estado === 'ok' ? '✅ Correcto' : a.estado === 'advertencia' ? '⚠️ Advertencia' : '🔴 Corrección';
+
+    var hallazgos = a.hallazgos || [];
+    var hallNorm = hallazgos.filter(function(x) { return x.indexOf('⚠️ Concordancia') !== 0 && x.indexOf('🔴 Inconsistencia') !== 0; });
+    var hallConc = hallazgos.filter(function(x) { return x.indexOf('⚠️ Concordancia') === 0 || x.indexOf('🔴 Inconsistencia') === 0; });
+
+    var advertencias = a.advertencias || [];
+    var advNorm  = advertencias.filter(function(x) { return x.indexOf('✏️') !== 0 && x.indexOf('⚠️ Concordancia') !== 0 && x.indexOf('🔴 Inconsistencia') !== 0; });
+    var advRedac = advertencias.filter(function(x) { return x.indexOf('✏️') === 0; });
+    var advConc  = advertencias.filter(function(x) { return x.indexOf('⚠️ Concordancia') === 0; });
+
+    var hallNormHTML = hallNorm.map(function(x) { return '<li style="margin-bottom:4px;">' + escapeHTML(x) + '</li>'; }).join('');
+    var hallConcHTML = hallConc.map(function(x) { return '<li style="margin-bottom:4px;">' + escapeHTML(x) + '</li>'; }).join('');
+    var advNormHTML = advNorm.map(function(x, i) {
+        return '<li style="margin-bottom:8px;">' +
+            '<span style="display:inline-block;background:#F59E0B;color:white;border-radius:50%;width:16px;height:16px;' +
+                'font-size:9px;font-weight:800;text-align:center;line-height:16px;margin-right:5px;flex-shrink:0;">' + (i + 1) + '</span>' +
+            escapeHTML(x) +
+        '</li>';
+    }).join('');
+    var advRedacHTML = advRedac.map(function(x) {
+        return '<li style="margin-bottom:6px;">' + escapeHTML(x.replace('✏️ Redacción: ', '').replace('✏️ ', '')) + '</li>';
+    }).join('');
+    var advConcHTML = advConc.map(function(x) { return '<li style="margin-bottom:4px;">' + escapeHTML(x) + '</li>'; }).join('');
+
+    var recomendaciones = a.recomendaciones || [];
+    var recomHTML = recomendaciones.map(function(x, i) {
+        var color = '#0B7A43';
+        if (x.indexOf('🔗') === 0) color = '#C2410C';
+        else if (x.indexOf('📄') === 0) color = '#1D4ED8';
+        return '<li style="margin-bottom:10px;padding-left:6px;border-left:3px solid ' + color + '30;">' +
+            '<span style="display:block;font-weight:700;color:' + color + ';font-size:11px;margin-bottom:2px;">Acción ' + (i + 1) + '</span>' +
+            '<span style="font-size:12px;color:#374151;">' + escapeHTML(x) + '</span>' +
+        '</li>';
+    }).join('');
+
+    return '<div>' +
+        '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">' +
+            '<span class="ia-badge ' + badgeClase + '" style="flex-shrink:0;">' + badgeTexto + '</span>' +
+            '<span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ' +
+                escapeHTML(val.archivo ? val.archivo.name : '') + '</span>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">' +
+            '<span style="font-size:10px;font-weight:700;color:#6B7280;white-space:nowrap;">Cumplimiento</span>' +
+            '<div style="flex:1;background:#E5E7EB;border-radius:10px;height:6px;overflow:hidden;">' +
+                '<div style="width:' + puntaje + '%;height:6px;border-radius:10px;background:' + pColor + ';transition:width .5s;"></div>' +
+            '</div>' +
+            '<span style="font-size:11px;font-weight:800;color:' + pColor + ';white-space:nowrap;">' + puntaje + '%</span>' +
+        '</div>' +
+        (a.resumen ? '<p style="font-size:11.5px;color:#374151;font-style:italic;margin:0 0 6px;">' + escapeHTML(a.resumen) + '</p>' : '') +
+        (hallNormHTML ? '<div style="margin-bottom:6px;background:#FEF2F2;border-radius:8px;padding:6px 8px;">' +
+            '<div style="font-size:11px;font-weight:700;color:#DC2626;margin-bottom:4px;">🔴 Incumplimientos normativos:</div>' +
+            '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + hallNormHTML + '</ul></div>' : '') +
+        (hallConcHTML ? '<div style="margin-bottom:6px;background:#FFF1F2;border-radius:8px;padding:6px 8px;border:1px solid #FECDD3;">' +
+            '<div style="font-size:11px;font-weight:700;color:#BE123C;margin-bottom:4px;">🔴 Inconsistencias entre documentos:</div>' +
+            '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + hallConcHTML + '</ul></div>' : '') +
+        (advNormHTML ? '<div style="margin-bottom:6px;background:#FFFBEB;border-radius:8px;padding:6px 8px;">' +
+            '<div style="font-size:11px;font-weight:700;color:#D97706;margin-bottom:4px;">⚠️ Advertencias normativas:</div>' +
+            '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + advNormHTML + '</ul></div>' : '') +
+        (advRedacHTML ? '<div style="margin-bottom:6px;background:#F0F9FF;border-radius:8px;padding:6px 8px;border:1px solid #BAE6FD;">' +
+            '<div style="font-size:11px;font-weight:700;color:#0369A1;margin-bottom:4px;">✏️ Observaciones de redacción:</div>' +
+            '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + advRedacHTML + '</ul></div>' : '') +
+        (advConcHTML ? '<div style="margin-bottom:6px;background:#FFF7ED;border-radius:8px;padding:6px 8px;border:1px solid #FED7AA;">' +
+            '<div style="font-size:11px;font-weight:700;color:#C2410C;margin-bottom:4px;">🔗 Concordancia entre documentos:</div>' +
+            '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + advConcHTML + '</ul></div>' : '') +
+        (recomHTML ? '<div style="margin-bottom:2px;background:#F0FDF4;border-radius:8px;padding:6px 8px;">' +
+            '<div style="font-size:11px;font-weight:700;color:#0B7A43;margin-bottom:4px;">💡 Recomendaciones:</div>' +
+            '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;">' + recomHTML + '</ul></div>' : '') +
+        (a.normativa ? '<div style="font-size:10px;color:#9CA3AF;border-top:1px solid #F1F5F9;padding-top:4px;margin-top:4px;">📌 ' + escapeHTML(a.normativa) + '</div>' : '') +
+        '<div style="margin-top:10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;font-size:10.5px;color:#1E3A8A;line-height:1.5;">' +
+            'ⓘ El análisis es generado por IA/reglas automáticas con base en el contenido real de cada documento cargado y la normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación. <strong>Independientemente del porcentaje o resultado obtenido — incluso al 100% — este documento siempre debe revisarse manualmente antes de continuar el proceso.</strong>' +
+        '</div>' +
+    '</div>';
+}
+
+// Analiza el archivo pendiente de un ítem con el motor JURISKILLS (mismo
+// enrutamiento Groq/local que analizarDocumentoCD1P en js/script.js, pero
+// actualizando la UI propia de esta página en vez de actualizarPanelAgente()).
+async function pd_analizarDocumento(num) {
+    var archivo = _archivosPendientes[num];
+    if (!archivo) return;
+    var clave = num + '__' + archivo.name;
+
+    estadoDocumentos[clave] = { numItem: num, archivo: archivo, analisis: null, estado: 'analizando' };
+    renderizarChecklist();
+
+    try {
+        var contenido = await leerArchivo(archivo, function(msg) {
+            if (estadoDocumentos[clave]) {
+                estadoDocumentos[clave].progreso = msg;
+                pd_actualizarPanelJuriskills();
+            }
+        });
+        var modo = _MODO_ANALISIS_CD1P[num] || 'local';
+        var analisis = modo === 'ninguno'
+            ? _analisisSinRequerir(num)
+            : modo === 'ia'
+                ? await analizarConIA(num, archivo.name, contenido)
+                : ejecutarAnalisisLocalReglas(num, archivo.name, contenido);
+
+        estadoDocumentos[clave] = { numItem: num, archivo: archivo, analisis: analisis, estado: analisis.estado };
+
+        if (num === 7 || num === 8) _aplicarCruceFechas7y8();
+
+    } catch (err) {
+        console.error('Error analizando documento:', err);
+
+        var mensajeError = 'No fue posible procesar el documento con JURISKILLS.';
+        var msg = err.message || '';
+        if (msg.indexOf('too large') !== -1 || msg.indexOf('large') !== -1 || msg.indexOf('413') !== -1) {
+            mensajeError = 'El archivo es demasiado grande. Use archivos de texto o PDF ligero.';
+        } else if (msg) {
+            mensajeError = msg.slice(0, 180);
+        }
+
+        estadoDocumentos[clave] = {
+            numItem: num, archivo: archivo,
+            analisis: {
+                estado: 'error',
+                titulo: (ITEMS_CHECKLIST[num] || {}).nombre || ('Ítem ' + num),
+                hallazgos: [mensajeError], advertencias: [], recomendaciones: [],
+                resumen: 'Error al procesar el archivo.',
+                camposPresentes: [], camposAusentes: []
+            },
+            estado: 'error'
+        };
+    }
+
+    renderizarChecklist();
+}
+
+// Botón "⟳ Actualizar análisis" del panel: reanaliza todos los documentos
+// nuevos (pendientes de guardar) que todavía no se hayan analizado.
+async function reAnalizarTodo() {
+    if (!pd_tipoConAnalisisJuriskills(_procesoActual.tipo)) {
+        alert('ℹ️ El análisis JURISKILLS todavía no está habilitado para este tipo de proceso.');
+        return;
+    }
+    var pendientes = Object.keys(_archivosPendientes);
+    if (pendientes.length === 0) {
+        alert('No hay documentos nuevos cargados para analizar. Use "📎 Agregar nueva versión" en el ítem que quiera analizar.');
+        return;
+    }
+    for (var i = 0; i < pendientes.length; i++) {
+        await pd_analizarDocumento(parseInt(pendientes[i], 10));
+    }
 }
 

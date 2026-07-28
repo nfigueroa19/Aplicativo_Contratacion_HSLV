@@ -6,9 +6,10 @@
 // ── Constantes compartidas por todo el sitio ──
 // Ítems del checklist restringidos a Jurídica/Admin. ÚNICA fuente de verdad
 // (antes había 4 copias repartidas entre script.js y proceso-detalle.js).
-// Pendiente confirmar con Jurídica la lista real para Convocatoria/Subasta,
-// cuyo checklist de 15 ítems no tiene ítems 20-22.
-var ITEMS_RESTRINGIDOS_GLOBAL = [15, 20, 21, 22];
+// Deshabilitado por ahora a pedido del negocio: todas las áreas pueden ver
+// y cargar todos los documentos. Para reactivar la restricción, volver a
+// poner aquí los números de ítem (ej. [15, 20, 21, 22]).
+var ITEMS_RESTRINGIDOS_GLOBAL = [];
 
 // Límite de tamaño por archivo. El plan actual de Supabase rechaza archivos
 // de más de 50 MB — este aviso evita que el usuario vea un error críptico.
@@ -138,24 +139,35 @@ async function db_guardarProceso(datos) {
         var codigo = await db_generarCodigo(datos.tipo, datos.objeto);
 
         // 4. Guardar proceso en Supabase
+        // objeto_duplicado_forzado: solo debe llegar en true cuando un admin
+        // decidió forzar el guardado pese a la advertencia de similitud (ver
+        // verificarObjetoContractual() en script.js). El trigger
+        // trg_bloquear_objeto_duplicado en Supabase vuelve a validar el rol
+        // del usuario antes de aceptarlo — este flag del cliente es solo la
+        // intención, no el permiso real.
         var { data: proceso, error: errorProceso } = await supabaseClient
             .from('procesos')
             .insert({
-                codigo:           codigo,
-                tipo:             datos.tipo,
-                objeto:           datos.objeto        || '',
-                area_solicitante: datos.area          || '',
-                valor:            datos.valor         || '',
-                responsable:      datos.responsable   || '',
-                creado_por:       perfil.id,
-                estado:           'borrador'
+                codigo:                    codigo,
+                tipo:                      datos.tipo,
+                objeto:                    datos.objeto        || '',
+                area_solicitante:          datos.area          || '',
+                valor:                     datos.valor         || '',
+                responsable:               datos.responsable   || '',
+                creado_por:                perfil.id,
+                estado:                    'borrador',
+                objeto_duplicado_forzado:  !!datos.forzarDuplicado
             })
             .select()
             .single();
 
         if (errorProceso) {
             console.error('Error guardando proceso:', errorProceso);
-            alert('❌ Error al guardar el proceso. Intente de nuevo.');
+            // El trigger de Supabase (trg_bloquear_objeto_duplicado) rechaza
+            // objetos contractuales duplicados con un mensaje propio — se
+            // muestra tal cual en vez del genérico para que el usuario sepa
+            // qué pasó, en lugar de un error críptico.
+            alert('❌ ' + (errorProceso.message || 'Error al guardar el proceso. Intente de nuevo.'));
             return null;
         }
 
@@ -258,29 +270,49 @@ async function db_guardarProceso(datos) {
         }
 
         // 6. Sincronizar con HIST_BD local para el dashboard
+        // Se arma vía db_construirEntradaHIST (misma fuente de verdad que
+        // usan db_inicializar y el manejador de Realtime en js/script.js)
+        // para que este proceso recién creado no le falten campos como
+        // `estado` o `responsable_asignado_*` hasta que se recargue la
+        // página — antes se armaba a mano acá y se quedaban `undefined`.
+        // Un proceso nuevo todavía no tiene responsable jurídico asignado,
+        // así que esos campos van vacíos.
         if (typeof HIST_BD !== 'undefined') {
-            var checksOk = datos.checklist
-                ? datos.checklist.filter(function(c){ return c.ok; }).length
-                : 0;
-            var checksTotal = datos.checklist ? datos.checklist.length : 0;
+            var entradaHIST = db_construirEntradaHIST({
+                id:                  procesoId,
+                codigo:              codigo,
+                tipo:                datos.tipo,
+                objeto:              datos.objeto      || '',
+                area_solicitante:    datos.area        || '',
+                valor:               datos.valor       || '',
+                responsable:         datos.responsable || '',
+                responsable_asignado:            '',
+                responsable_asignado_nombre:      '',
+                responsable_asignado_por:         '',
+                responsable_asignado_por_nombre:  '',
+                responsable_asignado_fecha:       '',
+                fecha_creacion:      new Date().toISOString(),
+                estado:              'borrador'
+            }, {});
 
-            HIST_BD.unshift({
-                id:          codigo,
-                tipo:        datos.tipo,
-                objeto:      datos.objeto      || '',
-                area:        datos.area        || '',
-                valor:       datos.valor       || '',
-                responsable: datos.responsable || '',
-                fecha:       new Date().toLocaleDateString('es-CO',
-                                 {day:'2-digit',month:'2-digit',year:'numeric'}),
-                hora:        new Date().toLocaleTimeString('es-CO',
-                                 {hour:'2-digit',minute:'2-digit'}),
-                timestamp:   Date.now(),
-                checksOk:    checksOk,
-                checksTotal: checksTotal,
-                checklist:   datos.checklist   || [],
-                supabase_id: procesoId
-            });
+            // El checklist real ya se conoce por lo que se marcó/subió en
+            // el formulario (datos.checklist) — no hace falta reconstruirlo
+            // a partir de `documentos` (que db_construirEntradaHIST no
+            // tiene disponible acá sin otra consulta).
+            if (datos.checklist && datos.checklist.length > 0) {
+                entradaHIST.checklist = datos.checklist.map(function(item) {
+                    return {
+                        num:     item.num,
+                        label:   item.label,
+                        ok:      !!item.ok,
+                        archivo: (item.archivo && item.archivo.name) || ''
+                    };
+                });
+                entradaHIST.checksOk    = entradaHIST.checklist.filter(function(c){ return c.ok; }).length;
+                entradaHIST.checksTotal = entradaHIST.checklist.length;
+            }
+
+            HIST_BD.unshift(entradaHIST);
         }
 
         // 7. Jurídica NO se notifica al crear el proceso — solo se le
@@ -583,9 +615,18 @@ async function db_asignarResponsable(procesoId, usuarioId) {
         var { error } = await supabaseClient
             .from('procesos')
             .update({
-                responsable_asignado:       usuarioId,
-                responsable_asignado_por:   perfil.id,
-                responsable_asignado_fecha: new Date().toISOString()
+                responsable_asignado:            usuarioId,
+                responsable_asignado_por:        perfil.id,
+                responsable_asignado_fecha:       new Date().toISOString(),
+                // Cada (re)asignación reinicia el seguimiento de "conocimiento":
+                // el jurídico nuevo (o el mismo, reasignado) todavía no ha
+                // abierto el proceso bajo esta asignación. Ver
+                // db_marcarProcesoVisto() y db_cargarSeguimientoConocimiento().
+                responsable_asignado_visto_fecha: null,
+                // Igual que arriba, pero para la marca de "última actividad"
+                // (ver db_marcarActividadProceso()) — no debe arrastrar la
+                // actividad de una asignación anterior.
+                responsable_asignado_ultima_actividad_fecha: null
             })
             .eq('id', procesoId);
 
@@ -733,6 +774,31 @@ async function db_obtenerProcesoPorCodigo(codigo) {
 
 
 // ════════════════════════════════════════════════════
+//  CARGAR DOCUMENTOS ACTIVOS DE TODOS LOS PROCESOS
+//  Una sola consulta (en vez de N) para reconstruir el avance
+//  documental de cada proceso al recargar HIST_BD (ver db_inicializar)
+// ════════════════════════════════════════════════════
+async function db_cargarDocumentosActivos() {
+    try {
+        var { data, error } = await supabaseClient
+            .from('documentos')
+            .select('proceso_id, item_num, nombre_archivo')
+            .eq('activo', true);
+
+        if (error) {
+            console.error('Error cargando documentos activos:', error);
+            return [];
+        }
+        return data || [];
+
+    } catch (err) {
+        console.error('Error en db_cargarDocumentosActivos:', err);
+        return [];
+    }
+}
+
+
+// ════════════════════════════════════════════════════
 //  CARGAR DOCUMENTOS REALES DE UN PROCESO
 //  Incluye versiones anteriores (activo=false) para el historial
 // ════════════════════════════════════════════════════
@@ -798,6 +864,108 @@ async function db_finalizarProceso(procesoId) {
     }
 }
 
+
+// ════════════════════════════════════════════════════
+//  MARCAR QUE EL JURÍDICO ASIGNADO ABRIÓ EL PROCESO
+//  Llamada desde proceso-detalle.js apenas carga la página, solo si
+//  quien la abre es el responsable_asignado. El filtro
+//  .is('responsable_asignado_visto_fecha', null) asegura que solo se
+//  guarde la PRIMERA vez — visitas posteriores no la pisan, para que
+//  refleje el momento real en que tuvo conocimiento del proceso.
+// ════════════════════════════════════════════════════
+async function db_marcarProcesoVisto(procesoId) {
+    try {
+        await supabaseClient
+            .from('procesos')
+            .update({ responsable_asignado_visto_fecha: new Date().toISOString() })
+            .eq('id', procesoId)
+            .is('responsable_asignado_visto_fecha', null);
+    } catch (err) {
+        console.error('Error en db_marcarProcesoVisto:', err);
+    }
+}
+
+// ════════════════════════════════════════════════════
+//  MARCAR "ÚLTIMA ACTIVIDAD" DEL JURÍDICO ASIGNADO
+//  A diferencia de db_marcarProcesoVisto (arriba), esta SIEMPRE pisa la
+//  fecha anterior — es la marca de "última conexión" al proceso, no la
+//  primera apertura. Se llama desde proceso-detalle.js en cada carga de
+//  página y al terminar de guardar cambios (documentos/comentarios).
+// ════════════════════════════════════════════════════
+async function db_marcarActividadProceso(procesoId) {
+    try {
+        await supabaseClient
+            .from('procesos')
+            .update({ responsable_asignado_ultima_actividad_fecha: new Date().toISOString() })
+            .eq('id', procesoId);
+    } catch (err) {
+        console.error('Error en db_marcarActividadProceso:', err);
+    }
+}
+
+// ════════════════════════════════════════════════════
+//  SEGUIMIENTO DE CONOCIMIENTO — solo Admin
+//  Compara cuándo el Admin asignó un jurídico (responsable_asignado_fecha)
+//  contra cuándo ese jurídico abrió el proceso por primera vez
+//  (responsable_asignado_visto_fecha, ver db_marcarProcesoVisto arriba) y
+//  contra la última vez que tuvo actividad en él
+//  (responsable_asignado_ultima_actividad_fecha, ver
+//  db_marcarActividadProceso arriba). Es la fuente de datos del modal
+//  "Seguimiento de Conocimiento" en index.html — reemplaza al antiguo
+//  panel "Docs Verificados".
+// ════════════════════════════════════════════════════
+async function db_cargarSeguimientoConocimiento() {
+    try {
+        var perfil = await db_perfil();
+        if (!perfil || perfil.rol !== 'admin') return [];
+
+        var { data: procesos, error } = await supabaseClient
+            .from('procesos')
+            .select('id, codigo, objeto, tipo, area_solicitante, creado_por, responsable_asignado, responsable_asignado_por, responsable_asignado_fecha, responsable_asignado_visto_fecha, responsable_asignado_ultima_actividad_fecha')
+            .not('responsable_asignado', 'is', null)
+            .order('responsable_asignado_fecha', { ascending: false });
+
+        if (error) {
+            console.error('Error cargando seguimiento de conocimiento:', error);
+            return [];
+        }
+
+        var idsPerfiles = (procesos || []).reduce(function (acc, p) {
+            if (p.creado_por)             acc.push(p.creado_por);
+            if (p.responsable_asignado)    acc.push(p.responsable_asignado);
+            if (p.responsable_asignado_por) acc.push(p.responsable_asignado_por);
+            return acc;
+        }, []).filter(function (id, i, arr) { return arr.indexOf(id) === i; });
+
+        var mapaNombres = {};
+        if (idsPerfiles.length > 0) {
+            var { data: perfiles } = await supabaseClient
+                .from('profiles')
+                .select('id, nombre, email')
+                .in('id', idsPerfiles);
+            (perfiles || []).forEach(function (u) { mapaNombres[u.id] = u.nombre || u.email; });
+        }
+
+        return (procesos || []).map(function (p) {
+            return {
+                id:                  p.id,
+                codigo:              p.codigo,
+                objeto:              p.objeto,
+                tipo:                p.tipo,
+                area:                p.area_solicitante || '',
+                biomedico_nombre:    mapaNombres[p.creado_por]              || '—',
+                juridico_nombre:     mapaNombres[p.responsable_asignado]    || '—',
+                asignado_por_nombre: mapaNombres[p.responsable_asignado_por] || '—',
+                asignado_fecha:      p.responsable_asignado_fecha,
+                visto_fecha:         p.responsable_asignado_visto_fecha,
+                ultima_actividad_fecha: p.responsable_asignado_ultima_actividad_fecha
+            };
+        });
+    } catch (err) {
+        console.error('Error en db_cargarSeguimientoConocimiento:', err);
+        return [];
+    }
+}
 
 // ════════════════════════════════════════════════════
 //  NOTIFICACIONES
@@ -876,6 +1044,59 @@ async function db_marcarTodasLeidas() {
 
 
 // ════════════════════════════════════════════════════
+//  CONSTRUIR UNA ENTRADA DE HIST_BD A PARTIR DE UNA FILA `procesos`
+//  Única fuente de verdad para esta forma de objeto — la usa tanto
+//  db_inicializar() (carga completa) como el manejador de Supabase
+//  Realtime en js/script.js (altas/cambios en vivo, ver sección
+//  "REALTIME"), para no duplicar la lógica en dos lugares.
+//  `docsPorProceso` es opcional — un proceso recién creado no tiene
+//  documentos todavía, así que Realtime la puede omitir.
+// ════════════════════════════════════════════════════
+function db_construirEntradaHIST(p, docsPorProceso) {
+    docsPorProceso = docsPorProceso || {};
+
+    var labels = (typeof CHECKLIST_LABELS_POR_TIPO !== 'undefined' &&
+                  CHECKLIST_LABELS_POR_TIPO[p.tipo]) || [];
+    var itemsNoContiguos = (typeof ITEMS_POR_TIPO_NO_CONTIGUOS !== 'undefined')
+        ? ITEMS_POR_TIPO_NO_CONTIGUOS[p.tipo]
+        : null;
+    var docsProceso = docsPorProceso[p.id] || {};
+    var checklist = labels.map(function(label, i) {
+        var num = itemsNoContiguos ? itemsNoContiguos[i] : (i + 1);
+        return {
+            num:     num,
+            label:   label,
+            ok:      !!docsProceso[num],
+            archivo: docsProceso[num] || ''
+        };
+    });
+
+    return {
+        id:          p.codigo || p.id,
+        tipo:        p.tipo,
+        objeto:      p.objeto           || '',
+        area:        p.area_solicitante || '',
+        valor:       p.valor            || '',
+        responsable: p.responsable      || '',
+        responsable_asignado:           p.responsable_asignado           || '',
+        responsable_asignado_nombre:    p.responsable_asignado_nombre    || '',
+        responsable_asignado_por:       p.responsable_asignado_por       || '',
+        responsable_asignado_por_nombre: p.responsable_asignado_por_nombre || '',
+        responsable_asignado_fecha:     p.responsable_asignado_fecha     || '',
+        fecha:       new Date(p.fecha_creacion).toLocaleDateString('es-CO',
+                         {day:'2-digit',month:'2-digit',year:'numeric'}),
+        hora:        new Date(p.fecha_creacion).toLocaleTimeString('es-CO',
+                         {hour:'2-digit',minute:'2-digit'}),
+        timestamp:   new Date(p.fecha_creacion).getTime(),
+        checksOk:    checklist.filter(function(c){ return c.ok; }).length,
+        checksTotal: labels.length,
+        checklist:   checklist,
+        supabase_id: p.id,
+        estado:      p.estado
+    };
+}
+
+// ════════════════════════════════════════════════════
 //  INICIALIZACIÓN AL CARGAR CUALQUIER PÁGINA
 //  Carga procesos de Supabase → sincroniza con HIST_BD
 // ════════════════════════════════════════════════════
@@ -892,6 +1113,19 @@ async function db_inicializar() {
 
         if (typeof HIST_BD === 'undefined') return;
 
+        // El avance documental (% y checklist) no se guarda en la tabla
+        // `procesos` — se reconstruye a partir de los documentos activos
+        // subidos a cada proceso, cruzados con las etiquetas de checklist
+        // por tipo (CHECKLIST_LABELS_POR_TIPO, definido en script.js).
+        // Antes esto quedaba hardcoded en 0, por lo que "Avance Documental"
+        // siempre mostraba 0% al recargar un proceso ya guardado.
+        var documentosActivos = await db_cargarDocumentosActivos();
+        var docsPorProceso = {};
+        documentosActivos.forEach(function(d) {
+            if (!docsPorProceso[d.proceso_id]) docsPorProceso[d.proceso_id] = {};
+            docsPorProceso[d.proceso_id][d.item_num] = d.nombre_archivo;
+        });
+
         procesosDB.forEach(function(p) {
             // Evitar duplicados
             var yaExiste = HIST_BD.some(function(h) {
@@ -899,29 +1133,7 @@ async function db_inicializar() {
             });
             if (yaExiste) return;
 
-            HIST_BD.push({
-                id:          p.codigo || p.id,
-                tipo:        p.tipo,
-                objeto:      p.objeto           || '',
-                area:        p.area_solicitante || '',
-                valor:       p.valor            || '',
-                responsable: p.responsable      || '',
-                responsable_asignado:           p.responsable_asignado           || '',
-                responsable_asignado_nombre:    p.responsable_asignado_nombre    || '',
-                responsable_asignado_por:       p.responsable_asignado_por       || '',
-                responsable_asignado_por_nombre: p.responsable_asignado_por_nombre || '',
-                responsable_asignado_fecha:     p.responsable_asignado_fecha     || '',
-                fecha:       new Date(p.fecha_creacion).toLocaleDateString('es-CO',
-                                 {day:'2-digit',month:'2-digit',year:'numeric'}),
-                hora:        new Date(p.fecha_creacion).toLocaleTimeString('es-CO',
-                                 {hour:'2-digit',minute:'2-digit'}),
-                timestamp:   new Date(p.fecha_creacion).getTime(),
-                checksOk:    0,
-                checksTotal: 0,
-                checklist:   [],
-                supabase_id: p.id,
-                estado:      p.estado
-            });
+            HIST_BD.push(db_construirEntradaHIST(p, docsPorProceso));
         });
 
         // Ordenar por más reciente primero

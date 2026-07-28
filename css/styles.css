@@ -507,6 +507,7 @@ table td{
 #cd1p-checklist td:nth-child(3){
     display:none;
 }
+
 /* Columna "Documento Requerido": se veía demasiado ancha — se fija un ancho
    explícito (no basta con max-width en table-layout:auto, ver nota arriba)
    para que reduzca a la mitad aprox. y el texto largo (ej. "Certificado
@@ -554,6 +555,55 @@ table td{
    nombres de clase distintos — se limitan ambos al mismo ancho de 44ch. */
 #cd1p-checklist .checklist-historial,
 #cd1p-checklist .historial-universal-inyectado{
+    width:44ch;
+    max-width:44ch;
+    box-sizing:border-box;
+}
+
+/* ===== Checklist de Detalle de Proceso (proceso-detalle.html) =====
+   Mismo criterio que #cd1p-checklist arriba, columna por columna, para que
+   la tabla de documentos del expediente se vea igual en las 3 páginas:
+   - #1 "#": ancho natural, sin salto de línea.
+   - #2 "Documento Requerido": mismo ancho fijo (24ch) que en
+     contratacion.html, para que el texto largo se envuelva en vez de
+     estirar la columna.
+   - #3 "Carga de Documento": SIN ancho fijo en la celda — igual que en
+     contratacion.html, el ancho de la columna sale del contenido interno
+     (ver .pd-carga-caja en js/proceso-detalle.js, topeada a 44ch igual que
+     .subdoc-bloque / los paneles de historial de contratacion.html).
+   - #4 "Análisis JURISKILLS": mismo min/max-width que la celda "ia-item-N"
+     que script.js inyecta en contratacion.html (ver actualizarPanelAgente()
+     en script.js), para que el semáforo/resumen ocupe el mismo espacio. */
+#pd-checklist table{
+    table-layout:auto;
+}
+#pd-checklist th,
+#pd-checklist td{
+    min-width:0;
+    white-space:normal;
+    border:2px solid #94A3B8;
+}
+#pd-checklist th:nth-child(1),
+#pd-checklist td:nth-child(1){
+    width:1%;
+    white-space:nowrap;
+    text-align:center;
+}
+#pd-checklist th:nth-child(2),
+#pd-checklist td:nth-child(2){
+    width:24ch;
+}
+#pd-checklist th:nth-child(4),
+#pd-checklist td:nth-child(4){
+    min-width:260px;
+    max-width:340px;
+    vertical-align:top;
+}
+/* Recuadro de carga (botón + versión vigente + historial + comentarios):
+   mismo ancho (44ch) que .subdoc-bloque en contratacion.html, mismo motivo
+   — sin este tope, el textarea de comentarios (width:100%) estira toda la
+   columna "Carga de Documento". */
+#pd-checklist .pd-carga-caja{
     width:44ch;
     max-width:44ch;
     box-sizing:border-box;
@@ -1624,6 +1674,23 @@ body.sidebar-abierto .content {
   max-width: 1100px;
   width: 96%;
 }
+/* Le da prioridad de espacio a la tabla de procesos dentro de los modales
+   que la contienen (Historial de Procesos, Seguimiento de Procesos): en
+   vez de que el header/toolbar/resumen empujen la tabla a un espacio
+   angosto dentro del scroll general de .modal-content, esta tabla crece
+   (flex:1) y scrollea de forma independiente, con su propio encabezado
+   fijo — así no se ve amontonada sin importar cuántos procesos haya. */
+.modal-tabla-scroll {
+  flex: 1 1 auto;
+  min-height: 240px;
+  max-height: 56vh;
+  overflow-y: auto;
+}
+.modal-tabla-scroll thead tr {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
 #hist-tabla-body tr:hover { background: #F0F7FF; }
 .hist-badge {
   display: inline-block;
@@ -1633,10 +1700,12 @@ body.sidebar-abierto .content {
   font-weight: 700;
   white-space: nowrap;
 }
-.hist-badge-cd1p  { background:#E8FFF0; color:#0B7A43; border:1px solid #86d19d; }
-.hist-badge-d3p   { background:#EFF6FF; color:#123C7B; border:1px solid #BFDBFE; }
-.hist-badge-conv  { background:#DBEAFE; color:#1D4ED8; border:1px solid #93C5FD; }
-.hist-badge-sub   { background:#F5F3FF; color:#7C3AED; border:1px solid #C4B5FD; }
+/* Mismos colores que las tarjetas de "Indicadores de Vigencias
+   Contractuales" en index.html — no cambies uno sin cambiar el otro. */
+.hist-badge-cd1p  { background:#FEF3C7; color:#92400E; border:1px solid #FCD34D; }
+.hist-badge-d3p   { background:#CCFBF1; color:#115E59; border:1px solid #5EEAD4; }
+.hist-badge-conv  { background:#EDE9FE; color:#4C1D95; border:1px solid #C4B5FD; }
+.hist-badge-sub   { background:#EFF6FF; color:#1e3a8a; border:1px solid #93C5FD; }
 .hist-btn-ver {
   background: linear-gradient(90deg,#123C7B,#0B7A43);
   color: white; border: none; padding: 6px 14px;
@@ -1664,6 +1733,28 @@ body.sidebar-abierto .content {
   transition: border-color .2s;
 }
 #hist-filtro-responsable:focus {
+  border-color: #0B7A43; box-shadow: 0 0 0 3px rgba(11,122,67,.12);
+}
+#seg-filtro-estado {
+  padding: 8px 14px; border: 1.5px solid #CBD5E1;
+  border-radius: 10px; font-size: 13px; outline: none;
+}
+#seg-filtro-buscar {
+  padding: 8px 14px; border: 1.5px solid #CBD5E1;
+  border-radius: 10px; font-size: 13px; outline: none; width: 220px;
+}
+#seg-filtro-responsable {
+  padding: 8px 14px; border: 1.5px solid #CBD5E1;
+  border-radius: 10px; font-size: 13px; outline: none; width: 200px;
+  transition: border-color .2s;
+}
+#seg-filtro-fecha {
+  padding: 7px 14px; border: 1.5px solid #CBD5E1;
+  border-radius: 10px; font-size: 13px; outline: none;
+}
+#seg-filtro-responsable:focus,
+#seg-filtro-buscar:focus,
+#seg-filtro-fecha:focus {
   border-color: #0B7A43; box-shadow: 0 0 0 3px rgba(11,122,67,.12);
 }
 .hist-empty-state {
@@ -2531,6 +2622,26 @@ span.rd-ctx {
         padding: 8px 12px 0;
     }
 
+    /* 1b. Mismo scroll horizontal para el checklist de Detalle de Proceso
+           (proceso-detalle.html) — antes le faltaba este bloque y la tabla
+           quedaba recortada en vez de poder deslizarse como en CD1P. */
+    #pd-checklist {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    #pd-checklist table {
+        min-width: 880px;
+    }
+    #pd-checklist::before {
+        content: '⟷ Deslice horizontalmente para ver toda la tabla';
+        position: sticky;
+        left: 0;
+        display: inline-block;
+        font-size: 11px;
+        color: #6B7280;
+        padding: 8px 12px 0;
+    }
+
     /* 2. Panel general de JURISKILLS: el botón "⟳ Actualizar análisis"
           baja a su propia línea con ancho completo, en vez de quedar
           apretado al lado del título */
@@ -2559,6 +2670,14 @@ span.rd-ctx {
     }
     #cd1p-checklist th,
     #cd1p-checklist td {
+        padding: 10px !important;
+        font-size: 12.5px;
+    }
+    #pd-checklist table {
+        min-width: 780px;
+    }
+    #pd-checklist th,
+    #pd-checklist td {
         padding: 10px !important;
         font-size: 12.5px;
     }
@@ -2611,6 +2730,14 @@ span.rd-ctx {
         padding: 8px !important;
         font-size: 12px;
     }
+    #pd-checklist table {
+        min-width: 720px;
+    }
+    #pd-checklist th,
+    #pd-checklist td {
+        padding: 8px !important;
+        font-size: 12px;
+    }
 
     /* Panel JURISKILLS y caja de normativa */
     .agente-ia-box {
@@ -2627,4 +2754,39 @@ span.rd-ctx {
     #cd1p-avance-bar {
         padding: 12px 14px !important;
     }
+}
+/* ═══════════════════════════════════════════════════════
+     MODAL "SEGUIMIENTO DE PROCESOS" — ajustes de filtros y header
+   ═══════════════════════════════════════════════════════ */
+
+/* Ancho mínimo de los filtros de texto para que el placeholder no se
+   corte. En pantallas angostas se resetea a 0 para que se comporten
+   igual que los demás filtros (Estado, Desde), que sí ocupan el 100%
+   de su fila sin sobresalir. */
+#modalSeguimientoConocimiento .seg-filtro-input-buscar {
+    min-width: 280px;
+}
+#modalSeguimientoConocimiento .seg-filtro-input-resp {
+    min-width: 200px;
+}
+@media (max-width: 768px) {
+    #modalSeguimientoConocimiento .seg-filtro-input-buscar,
+    #modalSeguimientoConocimiento .seg-filtro-input-resp {
+        min-width: 0;
+    }
+}
+
+/* El header completo (título + fondo blanco) ya NO queda fijo al
+   hacer scroll dentro del modal — solo el botón "✕" se mantiene
+   visible en la esquina, apoyado en el mismo contenedor con scroll
+   (.modal-content) que ya usa position:sticky para el resto de
+   modales de la app. */
+#modalSeguimientoConocimiento .modal-header {
+    position: static;
+    background: transparent;
+}
+#modalSeguimientoConocimiento .modal-header .close {
+    position: sticky;
+    top: 0;
+    z-index: 11;
 }
