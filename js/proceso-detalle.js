@@ -393,7 +393,7 @@ async function pd_actualizarValor() {
 
     var toast = document.createElement('div');
     toast.style.cssText =
-        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';
@@ -514,7 +514,7 @@ async function pd_asignarResponsable() {
 
     var toast = document.createElement('div');
     toast.style.cssText =
-        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';
@@ -1032,7 +1032,7 @@ async function pd_guardar() {
 
     var toast = document.createElement('div');
     toast.style.cssText =
-        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';

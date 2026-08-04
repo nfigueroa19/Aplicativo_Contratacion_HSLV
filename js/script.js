@@ -492,267 +492,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-/* ═══════════════════════════════════════════════════
-   KPI VIGENCIAS — actualización dinámica desde HIST_BD
-   ═══════════════════════════════════════════════════ */
-function kpi_actualizarVigencias() {
-  if (typeof HIST_BD === 'undefined') return;
-
-  var hoy = new Date();
-  var mes = hoy.toLocaleString('es-CO', { month: 'long' });
-  var anio = hoy.getFullYear();
-  var corte = document.getElementById('kpi_corte');
-  if (corte) corte.textContent = 'Corte: ' + mes.charAt(0).toUpperCase() + mes.slice(1) + ' ' + anio;
-
-  var total = HIST_BD.length;
-  var cd1p  = HIST_BD.filter(function(p){ return p.tipo === 'CD1P'; }).length;
-  var d3p   = HIST_BD.filter(function(p){ return p.tipo === 'D3P';  }).length;
-  var conv  = HIST_BD.filter(function(p){ return p.tipo === 'CONV'; }).length;
-  var sub   = HIST_BD.filter(function(p){ return p.tipo === 'SUB';  }).length;
-
-  // KPI cards
-  var el = function(id){ return document.getElementById(id); };
-  if (el('kpi_vigentes'))      el('kpi_vigentes').textContent      = total;
-  if (el('kpi_proxvencer'))    el('kpi_proxvencer').textContent    = cd1p;
-  if (el('kpi_vencidos'))      el('kpi_vencidos').textContent      = d3p;
-  if (el('kpi_liquidados'))    el('kpi_liquidados').textContent    = conv;
-  if (el('kpi_adicionados'))   el('kpi_adicionados').textContent   = sub;
-
-  // Sub-textos
-  if (el('kpi_vigentes_sub'))    el('kpi_vigentes_sub').textContent    = total + ' proceso' + (total !== 1 ? 's' : '') + ' en historial';
-  if (el('kpi_proxvencer_sub'))  el('kpi_proxvencer_sub').textContent  = cd1p + ' proceso' + (cd1p !== 1 ? 's' : '') + ' · Ver →';
-  if (el('kpi_vencidos_sub'))    el('kpi_vencidos_sub').textContent    = d3p  + ' proceso' + (d3p  !== 1 ? 's' : '') + ' · Ver →';
-  if (el('kpi_liquidados_sub'))  el('kpi_liquidados_sub').textContent  = conv + ' proceso' + (conv !== 1 ? 's' : '') + ' · Ver →';
-  if (el('kpi_adicionados_sub')) el('kpi_adicionados_sub').textContent = sub  + ' proceso' + (sub  !== 1 ? 's' : '') + ' · Ver →';
-
-  // Tabla de procesos recientes (últimos 5)
-  var tbody = document.getElementById('kpi_tabla_recientes');
-  if (!tbody) return;
-
-  // Mismos colores que las tarjetas de "Indicadores de Vigencias
-  // Contractuales" arriba y que .hist-badge-* en css/styles.css — no
-  // cambies uno sin cambiar los otros.
-  var TIPOS = {
-    'CD1P': { label: 'Directa 1P',      color: '#92400E', bg: '#FEF3C7', border: '#FCD34D' },
-    'D3P':  { label: 'Directa 3P',      color: '#115E59', bg: '#CCFBF1', border: '#5EEAD4' },
-    'CONV': { label: 'Convocatoria',    color: '#4C1D95', bg: '#EDE9FE', border: '#C4B5FD' },
-    'SUB':  { label: 'Subasta Inversa', color: '#1e3a8a', bg: '#EFF6FF', border: '#93C5FD' }
-  };
-
-  if (total === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:#9CA3AF;">' +
-      '<div style="font-size:32px;margin-bottom:8px;">📂</div>' +
-      '<div style="font-size:13px;font-weight:600;">Aún no hay procesos guardados.</div>' +
-      '<div style="font-size:12px;margin-top:4px;">Guarda un proceso desde cualquier modal y aparecerá aquí.</div>' +
-      '</td></tr>';
-    return;
-  }
-
-  var recientes = HIST_BD.slice(0, 5);
-  var html = '';
-  recientes.forEach(function(p, i) {
-    var t = TIPOS[p.tipo] || TIPOS['D3P'];
-    var pct = p.checksTotal > 0 ? Math.round((p.checksOk / p.checksTotal) * 100) : 0;
-    var barColor = pct === 100 ? '#0B7A43' : pct >= 60 ? '#2563EB' : pct >= 30 ? '#D97706' : '#DC2626';
-    var bg = i % 2 === 0 ? '#fff' : '#F9FAFB';
-    var objetoCorto = (p.objeto || '—').length > 45 ? (p.objeto.substring(0, 45) + '…') : (p.objeto || '—');
-    html +=
-      '<tr style="background:' + bg + ';border-bottom:1px solid #E5E7EB;">' +
-        '<td style="padding:11px 14px;font-weight:700;color:#123C7B;font-size:12px;white-space:nowrap;">' + p.id + '</td>' +
-        '<td style="padding:11px 14px;">' +
-          '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;' +
-          'background:' + t.bg + ';color:' + t.color + ';border:1px solid ' + t.border + ';">' + t.label + '</span>' +
-        '</td>' +
-        '<td style="padding:11px 14px;color:#374151;max-width:200px;" title="' + (p.objeto||'') + '">' + objetoCorto + '</td>' +
-        '<td style="padding:11px 14px;color:#374151;white-space:nowrap;">' + (p.area || '—') + '</td>' +
-        '<td style="padding:11px 14px;">' +
-          '<div style="display:flex;align-items:center;gap:6px;">' +
-            '<div style="flex:1;height:6px;border-radius:4px;background:#E5E7EB;overflow:hidden;min-width:60px;">' +
-              '<div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:4px;"></div>' +
-            '</div>' +
-            '<span style="font-size:11px;color:#6B7280;font-weight:700;white-space:nowrap;">' + pct + '%</span>' +
-          '</div>' +
-          '<div style="font-size:10px;color:#9CA3AF;margin-top:2px;">' + p.checksOk + '/' + p.checksTotal + ' docs</div>' +
-        '</td>' +
-        '<td style="padding:11px 14px;white-space:nowrap;color:#6B7280;font-size:12px;">' + p.fecha + '</td>' +
-        '<td style="padding:11px 14px;text-align:center;">' +
-          '<button onclick="hist_verDetalle(\'' + p.id + '\')" ' +
-            'style="background:linear-gradient(90deg,#123C7B,#0B7A43);color:white;border:none;' +
-            'padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">👁 Ver</button>' +
-        '</td>' +
-      '</tr>';
-  });
-
-  if (total > 5) {
-    html += '<tr style="background:#F8FAFC;">' +
-      '<td colspan="7" style="padding:10px 14px;text-align:center;">' +
-        '<button onclick="dash_abrirHistorial(\'\')" ' +
-          'style="background:none;border:1px solid #CBD5E1;color:#123C7B;padding:6px 18px;' +
-          'border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">' +
-          '+ ' + (total - 5) + ' proceso' + (total - 5 !== 1 ? 's' : '') + ' más — Ver historial completo' +
-        '</button>' +
-      '</td>' +
-    '</tr>';
-  }
-
-  tbody.innerHTML = html;
-}
-
-// Enganchar kpi_actualizarVigencias a dash_actualizar
-(function() {
-  var _origDash = window.dash_actualizar;
-  window.dash_actualizar = function() {
-    if (typeof _origDash === 'function') _origDash();
-    kpi_actualizarVigencias();
-  };
-  // Ejecutar al cargar
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(kpi_actualizarVigencias, 300);
-  });
-})();
-
-/* ═══════════════════════════════════════════════════
-   EJECUCIÓN CONTRACTUAL — KPIs + tabla desde HIST_BD
-   ═══════════════════════════════════════════════════ */
-function ejec_actualizarEjecucion() {
-  if (typeof HIST_BD === 'undefined') return;
-
-  var anio = new Date().getFullYear();
-  var vigEl = document.getElementById('ejec_vigencia');
-  if (vigEl) vigEl.textContent = 'Vigencia ' + anio;
-
-  var total      = HIST_BD.length;
-  var docsOk     = HIST_BD.reduce(function(a,p){ return a + (p.checksOk||0); }, 0);
-  var docsTotal  = HIST_BD.reduce(function(a,p){ return a + (p.checksTotal||0); }, 0);
-  var pctGlobal  = docsTotal > 0 ? Math.round((docsOk/docsTotal)*100) : 0;
-
-  // ── Por modalidad: promedio de avance documental ──
-  function avgPct(tipo) {
-    var arr = HIST_BD.filter(function(p){ return p.tipo === tipo; });
-    if (!arr.length) return { pct: 0, n: 0 };
-    var sum = arr.reduce(function(a,p){ return a + (p.checksTotal>0 ? Math.round((p.checksOk/p.checksTotal)*100) : 0); }, 0);
-    return { pct: Math.round(sum/arr.length), n: arr.length };
-  }
-  var cd1p = avgPct('CD1P');
-  var d3p  = avgPct('D3P');
-  var convArr = HIST_BD.filter(function(p){ return p.tipo==='CONV'||p.tipo==='SUB'; });
-  var convPct = convArr.length ? Math.round(convArr.reduce(function(a,p){ return a+(p.checksTotal>0?Math.round((p.checksOk/p.checksTotal)*100):0); },0)/convArr.length) : 0;
-
-  var g = function(id){ return document.getElementById(id); };
-
-  // Global
-  if(g('ejec_pct_global')) g('ejec_pct_global').textContent = pctGlobal + '%';
-  if(g('ejec_det_global')) g('ejec_det_global').textContent = docsOk + ' / ' + docsTotal + ' docs';
-  if(g('ejec_bar_global')) g('ejec_bar_global').style.width = pctGlobal + '%';
-  var gc = pctGlobal>=70?'#0B7A43':pctGlobal>=40?'#D97706':'#DC2626';
-  if(g('ejec_bar_global')) g('ejec_bar_global').style.background = 'linear-gradient(90deg,'+gc+','+gc+'aa)';
-  if(g('ejec_pct_global')) g('ejec_pct_global').style.color = gc;
-
-  // CD1P
-  if(g('ejec_pct_cd1p')) g('ejec_pct_cd1p').textContent = cd1p.pct + '%';
-  if(g('ejec_det_cd1p')) g('ejec_det_cd1p').textContent = cd1p.n + ' proceso'+(cd1p.n!==1?'s':'');
-  if(g('ejec_bar_cd1p')) g('ejec_bar_cd1p').style.width = cd1p.pct + '%';
-
-  // D3P
-  if(g('ejec_pct_d3p')) g('ejec_pct_d3p').textContent = d3p.pct + '%';
-  if(g('ejec_det_d3p')) g('ejec_det_d3p').textContent = d3p.n + ' proceso'+(d3p.n!==1?'s':'');
-  if(g('ejec_bar_d3p')) g('ejec_bar_d3p').style.width = d3p.pct + '%';
-  var d3pc = d3p.pct>=70?'#0B7A43':d3p.pct>=40?'#D97706':'#DC2626';
-  if(g('ejec_pct_d3p')) g('ejec_pct_d3p').style.color = d3pc;
-  if(g('ejec_bar_d3p')) g('ejec_bar_d3p').style.background = 'linear-gradient(90deg,'+d3pc+','+d3pc+'aa)';
-  if(g('ejec_alerta_d3p') && d3p.pct>0 && d3p.pct<40) g('ejec_alerta_d3p').innerHTML='<span style="color:#DC2626;font-weight:700;">⚠ Avance crítico · Ver →</span>';
-
-  // CONV + SUB
-  if(g('ejec_pct_conv')) g('ejec_pct_conv').textContent = convPct + '%';
-  if(g('ejec_det_conv')) g('ejec_det_conv').textContent = convArr.length + ' proceso'+(convArr.length!==1?'s':'');
-  if(g('ejec_bar_conv')) g('ejec_bar_conv').style.width = convPct + '%';
-
-  // ── Tabla dinámica ──
-  var tbody = document.getElementById('ejec_tabla_body');
-  if (!tbody) return;
-
-  if (total === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:#9CA3AF;">' +
-      '<div style="font-size:32px;margin-bottom:8px;">📊</div>' +
-      '<div style="font-size:13px;font-weight:600;">Sin procesos registrados aún.</div>' +
-      '<div style="font-size:12px;margin-top:4px;">Guarda un proceso desde cualquier modal y su ejecución aparecerá aquí.</div>' +
-      '</td></tr>';
-    return;
-  }
-
-  // Mismos colores que las tarjetas de "Indicadores de Vigencias
-  // Contractuales" y que .hist-badge-* en css/styles.css — no cambies
-  // uno sin cambiar los otros.
-  var TIPOS = {
-    'CD1P': { label:'Directa 1P',     color:'#92400E', bg:'#FEF3C7', border:'#FCD34D' },
-    'D3P':  { label:'Directa 3P',     color:'#115E59', bg:'#CCFBF1', border:'#5EEAD4' },
-    'CONV': { label:'Convocatoria',   color:'#4C1D95', bg:'#EDE9FE', border:'#C4B5FD' },
-    'SUB':  { label:'Subasta Inv.',   color:'#1e3a8a', bg:'#EFF6FF', border:'#93C5FD' }
-  };
-
-  var html = '';
-  HIST_BD.slice(0,6).forEach(function(p, i) {
-    var t   = TIPOS[p.tipo] || TIPOS['D3P'];
-    var pct = p.checksTotal > 0 ? Math.round((p.checksOk/p.checksTotal)*100) : 0;
-    var barC = pct===100?'#0B7A43':pct>=60?'#2563EB':pct>=30?'#D97706':'#DC2626';
-    var estadoBg, estadoColor, estadoTxt;
-    if(pct===100)      { estadoBg='#DCFCE7'; estadoColor='#166534'; estadoTxt='Completo'; }
-    else if(pct>=60)   { estadoBg='#DBEAFE'; estadoColor='#1D4ED8'; estadoTxt='En curso'; }
-    else if(pct>=30)   { estadoBg='#FEF3C7'; estadoColor='#D97706'; estadoTxt='Pendiente'; }
-    else               { estadoBg='#FEE2E2'; estadoColor='#DC2626'; estadoTxt='Crítico'; }
-    var bg = i%2===0?'#fff':'#F9FAFB';
-    html +=
-      '<tr style="background:'+bg+';border-bottom:1px solid #E5E7EB;">' +
-        '<td style="padding:11px 14px;font-weight:700;color:#123C7B;font-size:12px;white-space:nowrap;">'+p.id+'</td>' +
-        '<td style="padding:11px 14px;">' +
-          '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;' +
-          'background:'+t.bg+';color:'+t.color+';border:1px solid '+t.border+';">'+t.label+'</span>' +
-        '</td>' +
-        '<td style="padding:11px 14px;color:#374151;white-space:nowrap;">'+(p.area||'—')+'</td>' +
-        '<td style="padding:11px 14px;min-width:140px;">' +
-          '<div style="display:flex;align-items:center;gap:7px;">' +
-            '<div style="flex:1;background:#E2E8F0;border-radius:6px;height:8px;overflow:hidden;min-width:70px;">' +
-              '<div style="background:'+barC+';width:'+pct+'%;height:8px;border-radius:6px;transition:width .4s;"></div>' +
-            '</div>' +
-            '<span style="font-size:11px;font-weight:800;color:'+barC+';white-space:nowrap;">'+pct+'%</span>' +
-          '</div>' +
-        '</td>' +
-        '<td style="padding:11px 14px;color:#374151;font-size:12px;white-space:nowrap;">' +
-          p.checksOk+' / '+p.checksTotal+' docs' +
-        '</td>' +
-        '<td style="padding:11px 14px;">' +
-          '<span style="background:'+estadoBg+';color:'+estadoColor+';border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;">'+estadoTxt+'</span>' +
-        '</td>' +
-        '<td style="padding:11px 14px;text-align:center;">' +
-          '<button onclick="hist_verDetalle(\''+p.id+'\')" ' +
-            'style="background:linear-gradient(90deg,#123C7B,#0B7A43);color:white;border:none;' +
-            'padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">👁 Ver</button>' +
-        '</td>' +
-      '</tr>';
-  });
-
-  if (total > 6) {
-    html += '<tr style="background:#F8FAFC;"><td colspan="7" style="padding:10px;text-align:center;">' +
-      '<button onclick="dash_abrirHistorial(\'\')" style="background:none;border:1px solid #CBD5E1;color:#123C7B;' +
-      'padding:6px 18px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">' +
-      '+ '+(total-6)+' proceso'+(total-6!==1?'s':'')+' más — Ver historial completo</button></td></tr>';
-  }
-
-  tbody.innerHTML = html;
-}
-
-// Enganchar a dash_actualizar
-(function(){
-  var _prev = window.dash_actualizar;
-  window.dash_actualizar = function(){
-    if(typeof _prev==='function') _prev();
-    ejec_actualizarEjecucion();
-  };
-  document.addEventListener('DOMContentLoaded', function(){
-    setTimeout(ejec_actualizarEjecucion, 400);
-  });
-})();
-
 /* ═══════════════════════════════════════════════════════════════════
    SEGUIMIENTO DE CONOCIMIENTO JURÍDICO — solo Admin
    Reemplaza al antiguo panel "Docs Verificados". Compara cuándo el
@@ -1048,37 +787,7 @@ function ejec_actualizarEjecucion() {
 //  DASHBOARD DINÁMICO — lee exclusivamente de HIST_BD
 // ══════════════════════════════════════════════════════════════════════
 
-// ── Mapeo de ítems precontractuales (checklist Directa 1P, ítems 1-9) ──
-var ITEMS_PRECONTRACTUAL = [
-  { num:1,  label:'Certificado PAA' },
-  { num:2,  label:'Solicitud CDP' },
-  { num:3,  label:'Certificado CDP' },
-  { num:4,  label:'Solicitud para contratar' },
-  { num:5,  label:'Estudios previos' },
-  { num:6,  label:'Matriz de riesgos' },
-  { num:7,  label:'Propuesta / Cotización' },
-  { num:8,  label:'Estudio de mercado' },
-  { num:9,  label:'Análisis del sector' },
-];
-var ITEMS_CONTRACTUAL = [
-  { num:10, label:'Certificado de existencia' },
-  { num:11, label:'Cédula del contratista' },
-  { num:14, label:'RUT' },
-  { num:15, label:'Antecedentes disciplinarios/fiscales' },
-  { num:20, label:'Certificación seguridad social' },
-  { num:21, label:'Formulario SARLAFT' },
-  { num:22, label:'Acta de evaluación' },
-  { num:23, label:'Informe de supervisión' },
-];
-
 function _val(id) { var e=document.getElementById(id); return e?parseFloat(e.value.replace(/[^0-9.]/g,'')):0; }
-
-function _moneda(v) {
-  if (!v || isNaN(v) || v===0) return '—';
-  if (v >= 1e9)  return '$ '+(v/1e9).toFixed(2)+' B';
-  if (v >= 1e6)  return '$ '+(v/1e6).toFixed(1)+' M';
-  return '$ '+Number(v).toLocaleString('es-CO');
-}
 
 // ── Contar ítems del checklist en un proceso ──
 function _countItems(proceso, nums) {
@@ -1230,42 +939,6 @@ function _alertaCard(item, tipo) {
     '</div>';
 }
 
-// ── Renderizar checklist dinámico ──
-function _renderChecklist(containerEl, itemsDef, hist) {
-  if (!hist || hist.length===0) {
-    containerEl.innerHTML='<div style="color:#9CA3AF;font-size:12px;text-align:center;padding:20px 0;">Sin datos — guarda un proceso para ver el estado.</div>';
-    return;
-  }
-  // Tomar el proceso más reciente con checklist array
-  var reciente = null;
-  for (var i=0;i<hist.length;i++) {
-    if (hist[i].checklist && Array.isArray(hist[i].checklist) && hist[i].checklist.length>0) { reciente=hist[i]; break; }
-  }
-  if (!reciente) {
-    containerEl.innerHTML='<div style="color:#9CA3AF;font-size:12px;text-align:center;padding:20px 0;">Los procesos guardados no contienen detalle de checklist.</div>';
-    return;
-  }
-  // Contar estado global de cada ítem a través de todos los procesos
-  var html='<div style="font-size:10px;color:#6B7280;margin-bottom:6px;">Basado en '+hist.length+' proceso'+(hist.length>1?'s':'')+' — ítem OK si al menos un proceso lo tiene marcado</div>';
-  itemsDef.forEach(function(def) {
-    var totalConItem=0, okCount=0;
-    hist.forEach(function(p) {
-      if (!p.checklist||!Array.isArray(p.checklist)) return;
-      var item=p.checklist.find(function(c){return c.num===def.num;});
-      if (item) { totalConItem++; if(item.ok) okCount++; }
-    });
-    var icon, color, extra='';
-    if (totalConItem===0) { icon='—'; color='#9CA3AF'; extra='<span style="font-size:10px;color:#9CA3AF;">(no aplica en procesos guardados)</span>'; }
-    else if (okCount===totalConItem) { icon='✔'; color='#0B7A43'; }
-    else if (okCount===0) { icon='✖'; color='#DC2626'; extra='<span style="font-size:10px;color:#DC2626;">(pendiente en todos)</span>'; }
-    else { icon='⚠'; color='#D97706'; extra='<span style="font-size:10px;color:#D97706;">('+okCount+'/'+totalConItem+' procesos)</span>'; }
-    html+='<div style="display:flex;align-items:center;gap:8px;font-size:13px;">'+
-      '<span style="color:'+color+';font-size:16px;flex-shrink:0;">'+icon+'</span>'+
-      '<span>'+def.label+'</span> '+extra+'</div>';
-  });
-  containerEl.innerHTML=html;
-}
-
 // ══════════════════════════════════════
 //  ACTUALIZAR TODO EL BLOQUE DINÁMICO
 // ══════════════════════════════════════
@@ -1274,36 +947,7 @@ function _actualizarBloquesDinamicos() {
   var hist = HIST_BD;
   var total = hist.length;
 
-  // ── 1. INDICADORES GENERALES ──
-  var docsOk    = hist.reduce(function(a,p){return a+(p.checksOk||0);},0);
-  var docsTot   = hist.reduce(function(a,p){return a+(p.checksTotal||0);},0);
-  var docsPend  = docsTot - docsOk;
-  var completos = hist.filter(function(p){return p.checksTotal>0 && p.checksOk>=p.checksTotal;}).length;
-  var incompletos = total - completos;
-  var valorSum  = hist.reduce(function(a,p){
-    var n=parseFloat((p.valor||'').toString().replace(/[^0-9.]/g,''));
-    return a+(isNaN(n)?0:n);
-  },0);
-  var resps  = new Set(hist.filter(function(p){return p.responsable&&p.responsable.trim()!=='';}).map(function(p){return p.responsable.trim();}));
-  var areas  = new Set(hist.filter(function(p){return p.area&&p.area.trim()!=='';}).map(function(p){return p.area.trim();}));
-
-  function _set(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; }
-  _set('ind-total',        total);
-  _set('ind-completos',    completos);
-  _set('ind-incompletos',  incompletos);
-  _set('ind-docs-ok',      docsOk);
-  _set('ind-docs-pend',    docsPend);
-  _set('ind-valor-total',  _moneda(valorSum));
-  _set('ind-responsables', resps.size);
-  _set('ind-areas',        areas.size);
-
-  // ── 2. CHECKLISTS ──
-  var preEl  = document.getElementById('checklist-precontractual');
-  var contEl = document.getElementById('checklist-contractual');
-  if (preEl)  _renderChecklist(preEl,  ITEMS_PRECONTRACTUAL, hist);
-  if (contEl) _renderChecklist(contEl, ITEMS_CONTRACTUAL,    hist);
-
-  // ── 3. ALERTAS JURÍDICAS ──
+  // ── ALERTAS JURÍDICAS ──
   var alertas = _generarAlertasDesdeHistorial();
   var grid    = document.getElementById('alertas-grid');
   var badge   = document.getElementById('badge_alertas_total');
@@ -2050,7 +1694,7 @@ function _fmt_formatearValorInput(input) {
 }
 
 // Convierte "$ 15.000.000,50" -> "15000000.50" (formato numérico estándar,
-// el mismo que ya esperan _moneda()/hist_formatMoney() al leer p.valor).
+// el mismo que ya espera hist_formatMoney() al leer p.valor).
 function _fmt_valorARaw(valorFormateado) {
     if (!valorFormateado) return '';
     var limpio = valorFormateado.replace(/\$/g, '').replace(/\s/g, '');
@@ -2337,7 +1981,7 @@ async function guardarProceso() {
     // ── Toast de éxito ────────────────────────────────
     var toast = document.createElement('div');
     toast.style.cssText =
-        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';
@@ -3126,7 +2770,7 @@ async function guardarProcesoHistorial(tipo) {
     // ── Toast ─────────────────────────────────────────
     var toast = document.createElement('div');
     toast.style.cssText =
-        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';
@@ -3401,7 +3045,9 @@ function hist_renderTabla() {
       '<td style="padding:12px 14px;text-align:center;">' +
         '<div style="display:flex;gap:6px;justify-content:center;">' +
           '<button class="hist-btn-ver" onclick="hist_verDetalle(\'' + p.id + '\')">👁 Ver</button>' +
-          '<button class="hist-btn-del" onclick="hist_eliminar(\'' + p.id + '\')">🗑</button>' +
+          (_perfilCache && _perfilCache.rol === 'admin'
+            ? '<button class="hist-btn-del" onclick="hist_eliminar(\'' + p.id + '\')">🗑</button>'
+            : '') +
         '</div>' +
       '</td>' +
     '</tr>';
@@ -3521,16 +3167,35 @@ function hist_verDetalle(id) {
   document.getElementById('hist-detalle-panel').classList.add('open');
 }
 
-function hist_eliminar(id) {
-  // Nota: por diseño del sistema NADA se borra de la base de datos (todo es
-  // trazable). Este botón solo oculta el proceso de la vista actual — al
-  // recargar la página volverá a aparecer. El mensaje lo aclara para no
-  // hacerle creer al usuario que eliminó algo de verdad.
-  if (!confirm('¿Ocultar el proceso ' + id + ' de esta vista?\n\n' +
-               'El proceso NO se elimina del sistema: al recargar la página ' +
-               'volverá a aparecer (nada se borra, todo queda trazable).')) return;
-  HIST_BD = HIST_BD.filter(function(p){ return p.id !== id; });
+async function hist_eliminar(id) {
+  if (!_perfilCache || _perfilCache.rol !== 'admin') {
+    alert('⚠️ Solo un Administrador puede eliminar procesos.');
+    return;
+  }
+
+  var p = HIST_BD.find(function(x){ return x.id === id; });
+  if (!p || !p.supabase_id) return;
+
+  if (!confirm('¿Eliminar definitivamente el proceso ' + id + '?\n\n' +
+               'Esta acción borra el proceso y sus documentos/comentarios ' +
+               'de la base de datos y no se puede deshacer.')) return;
+
+  var ok = await db_eliminarProceso(p.supabase_id);
+  if (!ok) return;
+
+  HIST_BD = HIST_BD.filter(function(x){ return x.id !== id; });
   hist_renderTabla();
+
+  // ── Toast de éxito (mismo estilo que al guardar un proceso) ──
+  var toast = document.createElement('div');
+  toast.style.cssText =
+      'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
+      'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
+      'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
+      'box-shadow:0 8px 24px rgba(0,0,0,.3);';
+  toast.innerHTML = '🗑️ Proceso <strong>' + id + '</strong> eliminado correctamente';
+  document.body.appendChild(toast);
+  setTimeout(function(){ toast.remove(); }, 4000);
 }
 
 // ── Asignar responsable jurídico a un proceso ──

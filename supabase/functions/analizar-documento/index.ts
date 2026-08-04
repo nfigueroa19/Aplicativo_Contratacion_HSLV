@@ -1,3 +1,20 @@
+// ════════════════════════════════════════════════════
+//  supabase/functions/analizar-documento/index.ts
+//  Copia local de referencia de la Edge Function de Supabase "analizar-
+//  documento" (proyecto gaikgihkeysulpvjrhom), pegada aquí el 2026-08-04
+//  para poder consultarla/editarla desde el repo — ver
+//  _Segundo_Cerebro/Flujo_Analisis_IA_JURISKILLS.md.
+//
+//  ⚠️ ESTE ARCHIVO NO SE DESPLIEGA AUTOMÁTICAMENTE. Esta sesión no tiene
+//  Supabase CLI vinculada ni token de acceso, así que cualquier cambio que
+//  se haga aquí debe copiarse manualmente al editor de Edge Functions del
+//  Dashboard de Supabase (o desplegarse con `supabase functions deploy
+//  analizar-documento` si en algún momento se vincula la CLI) para que
+//  surta efecto en producción. Si este archivo diverge de lo realmente
+//  desplegado, este comentario deja de ser cierto — mantenerlo sincronizado
+//  a mano cada vez que se edite el código en el Dashboard.
+// ════════════════════════════════════════════════════
+
 // Función Edge de Supabase: recibe el texto ya extraído de un documento (en el
 // navegador, con mammoth.js/pdf.js) y lo envía a Groq (IA gratuita) para un
 // análisis normativo real. Si esta función falla, el navegador cae solo a un
@@ -72,8 +89,13 @@ Deno.serve(async (req: Request) => {
         'estricto y riguroso de todos los ítems del checklist. Si un criterio obligatorio solo se menciona de ' +
         'forma superficial (una frase genérica, sin desarrollo real ni datos concretos), trátalo como AUSENTE, ' +
         'no como presente. Cualquier requisito obligatorio que falte debe reportarse siempre con estado ' +
-        '"correccion" (nunca rebajarlo a "advertencia"). Ante la duda de si un criterio cumple o no, decide que ' +
-        'NO cumple y explica exactamente por qué en el hallazgo correspondiente.'
+        '"correccion" (nunca rebajarlo a "advertencia") — EXCEPTO cuando ese requisito sea responsabilidad de ' +
+        'OTRO ítem del checklist (ver la lista de otros ítems e instrucción de arriba): en ese caso concreto ' +
+        'sigue sin ser un "correccion" de este ítem, sino a lo sumo una advertencia de revisión que remita al ' +
+        'ítem correspondiente, tal como ya se indicó. La exigencia estricta aplica a los requisitos que sí son ' +
+        'responsabilidad propia de Estudios Previos, no a contenido que pertenece a otro documento del ' +
+        'expediente. Ante la duda de si un criterio propio de este ítem cumple o no, decide que NO cumple y ' +
+        'explica exactamente por qué en el hallazgo correspondiente.'
       : '';
 
     const reglasComunes =

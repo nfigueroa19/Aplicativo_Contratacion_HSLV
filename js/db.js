@@ -922,6 +922,59 @@ async function db_finalizarProceso(procesoId) {
 
 
 // ════════════════════════════════════════════════════
+//  ELIMINAR PROCESO (definitivo)
+//  Solo Admin. Borra primero los registros hijos
+//  (comentarios, notificaciones, documentos) para no
+//  violar las FK contra `procesos`, y al final la fila
+//  del proceso.
+// ════════════════════════════════════════════════════
+async function db_eliminarProceso(procesoId) {
+    try {
+        var perfil = await db_perfil();
+        if (!perfil) return false;
+
+        if (perfil.rol !== 'admin') {
+            alert('⚠️ Solo un Administrador puede eliminar procesos.');
+            return false;
+        }
+
+        await supabaseClient.from('comentarios').delete().eq('proceso_id', procesoId);
+        await supabaseClient.from('notificaciones').delete().eq('proceso_id', procesoId);
+        await supabaseClient.from('documentos').delete().eq('proceso_id', procesoId);
+
+        // .select() fuerza a que Supabase devuelva las filas borradas: sin
+        // esto, si no existe una política RLS de DELETE para `procesos`,
+        // el delete no da error mientras el trigger de arriba, sino que
+        // borra 0 filas en silencio y este código creería que sí funcionó.
+        var { data, error } = await supabaseClient
+            .from('procesos')
+            .delete()
+            .eq('id', procesoId)
+            .select('id');
+
+        if (error) {
+            console.error('Error eliminando proceso:', error);
+            alert('❌ No se pudo eliminar el proceso.');
+            return false;
+        }
+
+        if (!data || data.length === 0) {
+            console.error('db_eliminarProceso: 0 filas borradas — probablemente falta la política RLS de DELETE en `procesos` (ver sql/2026-07-28_permitir_eliminar_procesos_admin.sql).');
+            alert('❌ No se pudo eliminar el proceso: la base de datos no autorizó el borrado (falta permiso).');
+            return false;
+        }
+
+        return true;
+
+    } catch (err) {
+        console.error('Error en db_eliminarProceso:', err);
+        alert('❌ No se pudo eliminar el proceso.');
+        return false;
+    }
+}
+
+
+// ════════════════════════════════════════════════════
 //  MARCAR QUE EL JURÍDICO ASIGNADO ABRIÓ EL PROCESO
 //  Llamada desde proceso-detalle.js apenas carga la página, solo si
 //  quien la abre es el responsable_asignado. El filtro
