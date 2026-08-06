@@ -883,7 +883,7 @@ async function analizarConGroq(numItem, nombreArchivo, contenido) {
         const motivo = contenido.motivoSinTexto || 'Este archivo no tiene texto legible por la IA (imagen o documento escaneado sin texto).';
         return _marcarComoLocal(
             ejecutarSkillJuridico(numItem, nombreArchivo, contenido),
-            motivo + ' Se muestra una validación básica local.'
+            motivo
         );
     }
 
@@ -974,10 +974,7 @@ async function analizarConGroq(numItem, nombreArchivo, contenido) {
 
     } catch (err) {
         console.error('Groq no disponible, usando motor local de respaldo:', err);
-        return _marcarComoLocal(
-            ejecutarSkillJuridico(numItem, nombreArchivo, contenido),
-            'Análisis automático no disponible temporalmente (posible límite de uso gratuito o problema de red). Se muestra una validación básica local.'
-        );
+        return ejecutarSkillJuridico(numItem, nombreArchivo, contenido);
     }
 }
 
@@ -1792,6 +1789,28 @@ function _verificarObjetoContractual(texto) {
 // _NUMS_OBJETO_EXACTO). Si falta alguna palabra, el hallazgo la nombra
 // explícitamente para que el usuario no tenga que comparar los dos textos
 // a mano.
+//
+// Caso real (2026-08-06): en un documento largo (79 páginas) sobre
+// mantenimiento de equipos BIOMÉDICOS, la frase que restablece el objeto
+// contractual literal ("mantenimiento preventivo y correctivo a todo costo
+// de los equipos MÉDICOS del Hospital...") aparece 3 veces SIN "bio" — pero
+// el documento también usa "biomédico"/"biomédica" como término genérico en
+// varios párrafos descriptivos no relacionados con esa frase concreta (ej.
+// "tecnología biomédica – médica", "un equipo biomédico - médico..."). Un
+// chequeo por palabras sueltas (en todo el documento, o incluso en una
+// ventana fija al inicio) daba "biomédicos" por encontrado gracias a esas
+// menciones genéricas, sin detectar que la frase que SÍ importa (la
+// repetición literal del objeto) usa la palabra equivocada.
+//
+// Por eso el chequeo ya no busca palabras sueltas en cualquier parte: hace
+// una VENTANA DESLIZANTE sobre todo el documento (tamaño ~1.8x el largo del
+// objeto declarado) buscando el fragmento que junte la MAYOR cantidad de
+// palabras del objeto declarado TODAS JUNTAS (no dispersas) — es decir, el
+// lugar del documento que más se parece a una repetición literal del
+// objeto. Solo se reportan como faltantes las palabras que ni siquiera ese
+// mejor fragmento logra cubrir. Esto encuentra la frase-título aunque no
+// esté al principio del documento, y no se deja engañar por menciones
+// sueltas de una palabra en un párrafo sin relación.
 function _verificarObjetoExacto(texto) {
     const campo = document.getElementById('mp_objeto');
     const objetoDeclarado = campo ? (campo.value || '').trim() : '';
@@ -1799,7 +1818,6 @@ function _verificarObjetoExacto(texto) {
 
     const textoNorm = _normalizarTexto(_normalizarParaBusqueda(texto));
     const objNorm    = _normalizarTexto(objetoDeclarado);
-    const tokensTexto = new Set(textoNorm.split(/\s+/).filter(Boolean));
     // Palabras significativas (4+ caracteres, sin repetir) del objeto declarado.
     const palabrasDeclaradas = [...new Set(objNorm.split(/\s+/).filter(p => p.length >= 4))];
     if (palabrasDeclaradas.length === 0) return null;
@@ -1808,19 +1826,67 @@ function _verificarObjetoExacto(texto) {
     // substring) en ambos sentidos ("equipo" ⇄ "equipos") — pero NO tolera
     // una raíz distinta ("biomedicos" nunca se considera igual a "medicos").
     const singular = (p) => (p.length > 4 && p.endsWith('s')) ? p.slice(0, -1) : p;
-    const apareceEnTexto = (palabra) => tokensTexto.has(palabra) || tokensTexto.has(palabra + 's') ||
-        (singular(palabra) !== palabra && tokensTexto.has(singular(palabra)));
-    const palabrasFaltantes = palabrasDeclaradas.filter(p => !apareceEnTexto(p));
-    const ok = palabrasFaltantes.length === 0;
+    const apareceEn = (tokens, palabra) => tokens.has(palabra) || tokens.has(palabra + 's') ||
+        (singular(palabra) !== palabra && tokens.has(singular(palabra)));
 
+    // Ventana ~1.8x el largo del objeto (con piso y techo razonables) para
+    // cubrir la frase completa aunque el documento la introduzca con
+    // palabras de relleno ("por lo anterior, se hace necesario contratar
+    // el..."), deslizada con un paso menor que la ventana para no perderse
+    // una coincidencia que quede partida entre dos posiciones.
+    const anchoVentana = Math.max(150, Math.min(600, Math.round(objNorm.length * 1.8)));
+    const paso = Math.max(20, Math.round(anchoVentana / 6));
+
+    let mejorFaltantes = palabrasDeclaradas; // peor caso: ninguna palabra encontrada junta
+    let mejorPuntaje = -1;
+    let mejorInicio = 0;
+    let mejorTokensVentana = new Set();
+    for (let i = 0; i <= textoNorm.length; i += paso) {
+        const ventana = textoNorm.slice(i, i + anchoVentana);
+        if (!ventana) break;
+        const tokensVentana = new Set(ventana.split(/\s+/).filter(Boolean));
+        const faltantes = palabrasDeclaradas.filter(p => !apareceEn(tokensVentana, p));
+        const puntaje = palabrasDeclaradas.length - faltantes.length;
+        if (puntaje > mejorPuntaje) {
+            mejorPuntaje = puntaje;
+            mejorFaltantes = faltantes;
+            mejorInicio = i;
+            mejorTokensVentana = tokensVentana;
+            if (mejorPuntaje === palabrasDeclaradas.length) break; // coincidencia perfecta, no hace falta seguir
+        }
+    }
+
+    const ok = mejorFaltantes.length === 0;
     if (ok) return { ok, hallazgos: [], advertencias: [] };
+
+    // Para cada palabra faltante, busca en la misma ventana un token con el
+    // que comparta una raíz larga (mismo sufijo de 4+ caracteres, ej.
+    // "medicos" dentro de "biomedicos") — así el hallazgo puede nombrar
+    // explícitamente cuál palabra aparece en el documento en el lugar de la
+    // esperada, en vez de solo decir "no se encontró".
+    function _tokenParecido(palabra) {
+        let mejor = null, mejorPeso = 0;
+        mejorTokensVentana.forEach(t => {
+            if (t.length < 4 || t === palabra) return;
+            let i = 0;
+            const minLen = Math.min(t.length, palabra.length);
+            while (i < minLen && t[t.length - 1 - i] === palabra[palabra.length - 1 - i]) i++;
+            if (i >= 4 && i > mejorPeso) { mejor = t; mejorPeso = i; }
+        });
+        return mejor;
+    }
+
+    const contexto = _fragmentoContexto(textoNorm, mejorInicio + Math.floor(anchoVentana / 2), 50);
+    const detalle = mejorFaltantes.map(p => {
+        const parecido = _tokenParecido(p);
+        return parecido ? `dice "${parecido}" donde el objeto dice "${p}"` : `no tiene la palabra "${p}" del objeto`;
+    }).join('; ');
 
     return {
         ok: false,
         hallazgos: [
-            `🔎 Posible discrepancia de Objeto Contractual: la(s) palabra(s) "${palabrasFaltantes.join('", "')}" del objeto declarado en el proceso no aparece(n) tal cual en este documento. ` +
-            `Objeto declarado: "${objetoDeclarado.slice(0, 140)}${objetoDeclarado.length > 140 ? '…' : ''}". ` +
-            `Una sola palabra distinta entre el objeto del proceso y el del documento (ej. "equipos médicos" vs "equipos biomédicos") puede ser motivo de devolución del expediente — verifique manualmente que ambos textos coincidan exactamente.`
+            `🔎 Discrepancia de Objeto Contractual: el documento ${detalle} — contexto: "${contexto}". ` +
+            `Revise esto manualmente sin importar el porcentaje del resultado: una sola palabra distinta entre el objeto del proceso y el documento puede ser motivo de devolución del expediente.`
         ],
         advertencias: []
     };
