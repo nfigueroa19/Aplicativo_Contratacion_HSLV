@@ -74,13 +74,13 @@ async function validarLogin() {
     // Validar que los campos no estén vacíos
     if (!email || !password) {
         msgError.style.display  = 'block';
-        msgError.textContent    = '⚠️ Por favor ingrese su correo y contraseña.';
+        msgError.textContent    = 'Por favor ingrese su correo y contraseña.';
         return;
     }
 
     // Deshabilitar botón mientras verifica
     btn.disabled    = true;
-    btn.textContent = '⏳ Verificando...';
+    btn.textContent = 'Verificando...';
 
     // ── Paso 1: autenticar con Supabase ──
     const { data, error } = await supabaseClient.auth.signInWithPassword({
@@ -90,9 +90,9 @@ async function validarLogin() {
 
     if (error) {
         msgError.style.display  = 'block';
-        msgError.textContent    = '❌ Correo o contraseña incorrectos.';
+        msgError.textContent    = 'Correo o contraseña incorrectos.';
         btn.disabled    = false;
-        btn.textContent = '🔐 Iniciar Sesión';
+        btn.textContent = 'Iniciar Sesión';
         return;
     }
 
@@ -105,10 +105,10 @@ async function validarLogin() {
 
     if (errorPerfil || !perfil) {
         msgError.style.display  = 'block';
-        msgError.textContent    = '❌ No se pudo verificar el acceso. Contacte al administrador.';
+        msgError.textContent    = 'No se pudo verificar el acceso. Contacte al administrador.';
         await supabaseClient.auth.signOut();
         btn.disabled    = false;
-        btn.textContent = '🔐 Iniciar Sesión';
+        btn.textContent = 'Iniciar Sesión';
         return;
     }
 
@@ -116,16 +116,16 @@ async function validarLogin() {
         msgPendiente.style.display = 'block';
         await supabaseClient.auth.signOut();
         btn.disabled    = false;
-        btn.textContent = '🔐 Iniciar Sesión';
+        btn.textContent = 'Iniciar Sesión';
         return;
     }
 
     if (perfil.estado === 'inactivo') {
         msgError.style.display  = 'block';
-        msgError.textContent    = '🚫 Tu cuenta ha sido desactivada. Contacta al administrador.';
+        msgError.textContent    = 'Tu cuenta ha sido desactivada. Contacta al administrador.';
         await supabaseClient.auth.signOut();
         btn.disabled    = false;
-        btn.textContent = '🔐 Iniciar Sesión';
+        btn.textContent = 'Iniciar Sesión';
         return;
     }
 
@@ -138,8 +138,8 @@ async function validarLogin() {
 
     // Estado desconocido → bloquear por seguridad
     msgError.style.display  = 'block';
-    msgError.textContent    = '❌ Estado de cuenta no reconocido. Contacte al administrador.';
+    msgError.textContent    = 'Estado de cuenta no reconocido. Contacte al administrador.';
     await supabaseClient.auth.signOut();
     btn.disabled    = false;
-    btn.textContent = '🔐 Iniciar Sesión';
+    btn.textContent = 'Iniciar Sesión';
 }

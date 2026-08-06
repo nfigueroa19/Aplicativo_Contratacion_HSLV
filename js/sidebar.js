@@ -32,7 +32,7 @@
         { id: 'convocatoria', url: '/convocatoria',           label: 'Convocatoria Pública'               },
         { id: 'subasta',      url: '/subasta',                label: 'Subasta Inversa'                    },
         { id: 'supervision',  url: '/supervision',            label: 'Supervisión'                        },
-        { id: 'historial',    url: '/historial',              label: '📂 Historial de Procesos'           }
+        { id: 'historial',    url: '/historial',              label: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Historial de Procesos' }
     ];
 
     var itemsHTML = items.map(function(item) {
@@ -69,15 +69,10 @@
         itemsHTML +
 
         // Botón cerrar sesión
-        '<div style="margin-top:20px;padding-top:16px;' +
-             'border-top:1px solid rgba(255,255,255,.15);">' +
-            '<button onclick="cerrarSesion()" ' +
-                'style="width:100%;background:rgba(220,38,38,.15);color:#FCA5A5;' +
-                'border:1px solid rgba(220,38,38,.3);padding:14px;border-radius:14px;' +
-                'font-weight:700;font-size:15px;cursor:pointer;transition:.3s;" ' +
-                'onmouseover="this.style.background=\'rgba(220,38,38,.3)\'" ' +
-                'onmouseout="this.style.background=\'rgba(220,38,38,.15)\'">' +
-                '🚪 Cerrar Sesión' +
+        '<div class="sidebar-logout-wrap">' +
+            '<button class="btn-logout" onclick="cerrarSesion()">' +
+                '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+                'Cerrar Sesión' +
             '</button>' +
         '</div>';
 

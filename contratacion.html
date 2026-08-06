@@ -12,14 +12,20 @@
 </head>
 <body>
 
-    <button id="sidebar-toggle" style="display:flex;">☰</button>
+    <button id="sidebar-toggle" style="display:flex;align-items:center;justify-content:center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+    </button>
     <div class="sidebar"></div>
 
     <div class="content">
 
         <!-- TOPBAR -->
         <div class="topbar" style="flex-direction:column;align-items:center;
-                                    text-align:center;gap:6px;">
+                                    text-align:center;gap:10px;">
             <div style="font-size:28px;font-weight:900;color:#046A38;
                         letter-spacing:1px;">
                 ÁGORA <span style="color:#123C7B;">HSLV</span>
@@ -27,14 +33,27 @@
             <div style="width:60px;height:3px;
                         background:linear-gradient(90deg,#046A38,#123C7B);
                         border-radius:2px;"></div>
-            <h1 style="margin:0;font-size:20px;font-weight:800;color:#123C7B;">
-                📋 Contratación Directa 1 Propuesta
+            <h1 style="margin:0;font-size:20px;font-weight:800;color:#123C7B;
+                       display:inline-flex;align-items:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                </svg>
+                Contratación Directa 1 Propuesta
             </h1>
         </div>
 
         <!-- DATOS DEL PROCESO -->
         <div class="section-card" style="margin-bottom:22px;">
-            <h3 style="color:#123C7B;margin-bottom:16px;">📋 Datos del Proceso</h3>
+            <h3 style="color:#123C7B;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                </svg>
+                Datos del Proceso
+            </h3>
             <div class="alert-box"
                  style="margin-bottom:16px;color:#123C7B;font-weight:600;">
                 Registro integral del proceso contractual con checklist
@@ -46,9 +65,14 @@
                 <label>Objeto Contractual</label>
                 <textarea id="mp_objeto" rows="4" placeholder="Ingrese el objeto contractual" autocomplete="off"></textarea>
                 <button type="button" class="btn" id="mp_verificar_btn"
-                    style="margin-top:10px;"
+                    style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;"
                     onclick="verificarObjetoContractual()">
-                    🔍 Verificar objeto contractual
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    Verificar objeto contractual
                 </button>
                 <div id="mp_verificacion_resultado" style="margin-top:10px;"></div>
             </div>
@@ -70,12 +94,16 @@
         </div>
         </div><!-- fin section-card Datos del Proceso -->
 
-        <div id="cd1p-post-verificacion" style="display:none;">
+        <div id="cd1p-post-verificacion" class="hslv-fade-panel" style="display:none;">
 
         <!-- CHECKLIST DOCUMENTAL -->
         <div class="section-card" style="margin-bottom:22px;">
-            <h3 style="color:#123C7B;margin-bottom:8px;">
-                📂 Checklist Documental del Proceso
+            <h3 style="color:#123C7B;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                Checklist Documental del Proceso
             </h3>
             <div class="alert-box" style="margin-bottom:16px;">
                 Cada requisito permite cargar un documento independiente
@@ -89,7 +117,21 @@
 
     <div class="agente-ia-header">
         <div class="agente-ia-info">
-            <div class="agente-ia-icon">🤖</div>
+            <div class="agente-ia-icon">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
+                    <rect x="9" y="9" width="6" height="6"/>
+                    <line x1="9" y1="1" x2="9" y2="4"/>
+                    <line x1="15" y1="1" x2="15" y2="4"/>
+                    <line x1="9" y1="20" x2="9" y2="23"/>
+                    <line x1="15" y1="20" x2="15" y2="23"/>
+                    <line x1="20" y1="9" x2="23" y2="9"/>
+                    <line x1="20" y1="14" x2="23" y2="14"/>
+                    <line x1="1" y1="9" x2="4" y2="9"/>
+                    <line x1="1" y1="14" x2="4" y2="14"/>
+                </svg>
+            </div>
             <div>
                 <div class="agente-ia-title">
                     JURISKILLS IA - Análisis Inteligente de Contratacion
@@ -106,8 +148,15 @@
                 <div id="iaResumenGlobal"></div>
             </div>
         </div>
-        <button class="btn btn-actualizar" onclick="reAnalizarTodo()">
-            ⟳ Actualizar análisis
+        <button class="btn btn-actualizar" onclick="reAnalizarTodo()"
+            style="display:inline-flex;align-items:center;gap:6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Actualizar análisis
         </button>
     </div>
 
@@ -123,8 +172,15 @@
         </ul>
     </div>
 
-    <div class="agente-ia-footer">
-        ⓘ El análisis es generado por IA/reglas automáticas con base en el contenido real de cada documento cargado y la normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación. <strong>Independientemente del porcentaje o resultado obtenido — incluso al 100% — el documento siempre debe revisarse manualmente antes de continuar el proceso.</strong>
+    <div class="agente-ia-footer" style="display:flex;gap:8px;align-items:flex-start;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+             style="flex-shrink:0;margin-top:2px;">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <span>El análisis es generado por IA/reglas automáticas con base en el contenido real de cada documento cargado y la normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación. <strong>Independientemente del porcentaje o resultado obtenido — incluso al 100% — el documento siempre debe revisarse manualmente antes de continuar el proceso.</strong></span>
     </div>
 
 </div>
@@ -137,7 +193,17 @@
                     <th>Documento Requerido</th>
                     <th>Validación</th>
                     <th>Carga de Documento</th>
-                    <th>🤖 Análisis JURISKILLS</th>
+                    <th style="display:flex;align-items:center;gap:5px;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
+                            <rect x="9" y="9" width="6" height="6"/>
+                            <line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/>
+                            <line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/>
+                            <line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/>
+                            <line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>
+                        </svg>
+                        Análisis JURISKILLS
+                    </th>
                 </tr>
             </thead>
 
@@ -149,10 +215,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_1').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -175,10 +240,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_2').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -202,10 +266,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_3').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -229,10 +292,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_4').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -250,7 +312,7 @@
             style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;
             padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;
             display:flex;align-items:center;gap:5px;">
-                🕓 Ver historial <span id="badge_hist_4" style="background:#123C7B;color:white;
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ver historial <span id="badge_hist_4" style="background:#123C7B;color:white;
                 border-radius:10px;padding:1px 7px;font-size:10px;">0</span>
             </button>
             <div id="historial_4" style="display:none;margin-top:8px;max-height:160px;
@@ -266,10 +328,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_5').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -287,7 +348,7 @@
             style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;
             padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;
             display:flex;align-items:center;gap:5px;">
-                🕓 Ver historial <span id="badge_hist_5" style="background:#123C7B;color:white;
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ver historial <span id="badge_hist_5" style="background:#123C7B;color:white;
                 border-radius:10px;padding:1px 7px;font-size:10px;">0</span>
             </button>
             <div id="historial_5" style="display:none;margin-top:8px;max-height:160px;
@@ -303,10 +364,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_6').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -328,10 +388,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_7').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -353,10 +412,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_8').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -380,7 +438,13 @@
         <td>
             <!-- Alerta Normativa -->
             <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:10px 12px;border-radius:8px;margin-bottom:10px;font-size:12.5px;color:#92400E;box-sizing:border-box;max-width:44ch;">
-                <div style="margin-bottom:8px;font-weight:600;">⚠️ Este documento solo aplica para los proveedores o contratistas que <strong>NO</strong> son distribuidores exclusivos</div>
+                <div style="margin-bottom:8px;font-weight:600;display:flex;align-items:flex-start;gap:6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;" aria-hidden="true">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span>Este documento solo aplica para los proveedores o contratistas que <strong>NO</strong> son distribuidores exclusivos</span>
+                </div>
                 <label style="display:block;position:relative;padding-left:24px;cursor:pointer;margin:0 0 6px;font-weight:normal;box-sizing:border-box;">
                     <input type="radio" name="sub_distribuidor" value="no"
                         onmousedown="radioPermitirDeseleccion(this)"
@@ -396,39 +460,43 @@
             </div>
 
             <!-- Contenedor de Opciones -->
-            <div id="sub_opciones_documentos" style="display:none;margin-bottom:10px;box-sizing:border-box;max-width:44ch;">
+            <div id="sub_opciones_documentos" class="hslv-fade-panel" style="display:none;margin-bottom:10px;box-sizing:border-box;max-width:44ch;">
                 <div style="background:#EBF8F5;border-radius:8px;padding:10px;box-sizing:border-box;">
                     <!-- Opción 1: No distribuidor (solo informativo, ya no hay que elegir nada más) -->
                     <div id="sub_opcion_no_distribuidor" style="display:none;">
                         <p style="font-size:12px;font-weight:600;margin:0 0 8px 0;color:#0B7A43;">Documentos a cargar:</p>
                         <div style="padding:7px;background:white;border-radius:6px;border:1px solid #CBD5E1;font-size:12.5px;box-sizing:border-box;">
-                            📋 Estudio de Mercado + 📨 Propuestas
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            Estudio de Mercado +
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>
+                            Propuestas
                         </div>
                     </div>
                     <!-- Opción 2: ES distribuidor (solo informativo, ya no hay que elegir nada más) -->
                     <div id="sub_opcion_distribuidor" style="display:none;">
                         <p style="font-size:12px;font-weight:600;margin:0 0 8px 0;color:#0B7A43;">Documento a cargar:</p>
                         <div style="padding:7px;background:white;border-radius:6px;border:1px solid #CBD5E1;font-size:12.5px;box-sizing:border-box;">
-                            🏢 Carta de Distribuidor o Proveedor Exclusivo
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><line x1="10" y1="6" x2="14" y2="6"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="10" y1="14" x2="14" y2="14"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+                            Carta de Distribuidor o Proveedor Exclusivo
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Botones de Carga -->
-            <div id="sub_botones_carga" style="display:none;margin-bottom:10px;gap:8px;flex-wrap:wrap;max-width:44ch;box-sizing:border-box;">
+            <div id="sub_botones_carga" class="hslv-fade-panel" style="display:none;margin-bottom:10px;gap:8px;flex-wrap:wrap;max-width:44ch;box-sizing:border-box;">
                 <div id="sub_btn_mercado" style="display:none;">
-                    <button class="btn" style="padding:10px 14px;font-size:13px;" onclick="document.getElementById('archivo_9_mercado').click()">📎 Cargar Estudio de Mercado</button>
+                    <button class="btn btn-cargar-doc" onclick="document.getElementById('archivo_9_mercado').click()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Estudio de Mercado</button>
                     <input type="file" id="archivo_9_mercado" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_mercado')">
                     <div id="nombreArchivo_9_mercado" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                 </div>
                 <div id="sub_btn_propuestas" style="display:none;">
-                    <button class="btn" style="padding:10px 14px;font-size:13px;" onclick="document.getElementById('archivo_9_propuestas').click()">📎 Cargar Propuestas de Proveedores</button>
+                    <button class="btn btn-cargar-doc" onclick="document.getElementById('archivo_9_propuestas').click()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Propuestas de Proveedores</button>
                     <input type="file" id="archivo_9_propuestas" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_propuestas')">
                     <div id="nombreArchivo_9_propuestas" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                 </div>
                 <div id="sub_btn_carta" style="display:none;">
-                    <button class="btn" style="padding:10px 14px;font-size:13px;" onclick="document.getElementById('archivo_9_carta').click()">📎 Cargar Carta de Distribuidor</button>
+                    <button class="btn btn-cargar-doc" onclick="document.getElementById('archivo_9_carta').click()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Carta de Distribuidor</button>
                     <input type="file" id="archivo_9_carta" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_carta')">
                     <div id="nombreArchivo_9_carta" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                 </div>
@@ -436,7 +504,7 @@
 
             <!-- Historial -->
             <button onclick="toggleHistorial(9)" style="background:none;border:1px solid #CBD5E1;border-radius:8px;padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:5px;">
-                🕓 Ver historial <span id="badge_hist_9" style="background:#123C7B;color:white;border-radius:10px;padding:1px 7px;font-size:10px;">0</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ver historial <span id="badge_hist_9" style="background:#123C7B;color:white;border-radius:10px;padding:1px 7px;font-size:10px;">0</span>
             </button>
             <div id="historial_9" style="display:none;margin-top:8px;max-height:160px;overflow-y:auto;border:1px solid #E5E7EB;border-radius:10px;font-size:11px;background:#F8FAFC;">
                 <div style="padding:8px 10px;color:#6B7280;font-style:italic;" id="historial_empty_9">Sin cargas registradas aún.</div>
@@ -450,10 +518,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_10').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -475,10 +542,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_11').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -500,10 +566,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_12').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -532,7 +597,11 @@
             <div id="selector_13_wrap" style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;
                         padding:10px 12px;margin-bottom:10px;box-sizing:border-box;">
                 <div style="font-size:11.5px;font-weight:700;color:#1e40af;margin-bottom:8px;">
-                    ⚠️ Este documento solo aplica para hombres menores de 50 años (Ley 48/1993)
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    Este documento solo aplica para hombres menores de 50 años (Ley 48/1993)
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
@@ -541,7 +610,8 @@
                                onmousedown="radioPermitirDeseleccion(this)"
                                onclick="radioClicConDeseleccion(this, evaluarAplica13)"
                                style="accent-color:#0B7A43;width:15px;height:15px;">
-                        ✅ Aplica
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Aplica
                     </label>
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
                                   font-size:12px;font-weight:600;color:#DC2626;">
@@ -549,14 +619,16 @@
                                onmousedown="radioPermitirDeseleccion(this)"
                                onclick="radioClicConDeseleccion(this, evaluarAplica13)"
                                style="accent-color:#DC2626;width:15px;height:15px;">
-                        🚫 No aplica
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        No aplica
                     </label>
                 </div>
 
                 <!-- Justificación si NO aplica -->
-                <div id="justif_13_wrap" style="display:none;margin-top:8px;">
+                <div id="justif_13_wrap" class="hslv-fade-panel" style="display:none;margin-top:8px;">
                     <label style="font-size:11px;font-weight:700;color:#92400E;display:block;margin-bottom:4px;">
-                        📝 Motivo de no aplicabilidad:
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                        Motivo de no aplicabilidad:
                     </label>
                     <select id="justif_13_sel"
                             onchange="actualizarJustif13()"
@@ -580,11 +652,10 @@
             </div>
 
             <!-- ── SECCIÓN DE CARGA (solo visible si aplica) ── -->
-            <div id="carga_13_wrap" style="display:none;">
-                <button class="btn"
-                style="padding:10px 14px;font-size:13px;"
+            <div id="carga_13_wrap" class="hslv-fade-panel" style="display:none;">
+                <button class="btn btn-cargar-doc"
                 onclick="document.getElementById('archivo_13').click()">
-                    📎 Cargar Documento
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
                 </button>
 
                 <input type="file"
@@ -600,9 +671,10 @@
             </div>
 
             <!-- ── ESTADO cuando NO aplica ── -->
-            <div id="noaplica_13_banner" style="display:none;background:#FEF2F2;border:1px solid #FECACA;
+            <div id="noaplica_13_banner" class="hslv-fade-panel" style="display:none;background:#FEF2F2;border:1px solid #FECACA;
                 border-radius:10px;padding:10px 12px;font-size:12px;color:#DC2626;font-weight:600;">
-                🚫 Documento no requerido — <span id="noaplica_13_motivo" style="font-weight:400;color:#374151;"></span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                Documento no requerido — <span id="noaplica_13_motivo" style="font-weight:400;color:#374151;"></span>
             </div>
         </td>
     </tr>
@@ -613,10 +685,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_14').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -645,11 +716,12 @@
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
                                  padding:2px 8px;font-size:10px;">1.1 de 4</span>
-                    🏛️ Antecedentes disciplinarios personales — Procuraduría General
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+                    Antecedentes disciplinarios personales — Procuraduría General
                 </div>
-                <button class="btn" style="padding:9px 14px;font-size:12px;"
+                <button class="btn btn-cargar-doc-sm"
                     onclick="document.getElementById('archivo_15a').click()">
-                    📎 Cargar Antecedentes Disciplinarios Personales
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Antecedentes Disciplinarios Personales
                 </button>
                 <input type="file" id="archivo_15a" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -667,11 +739,12 @@
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
                                  padding:2px 8px;font-size:10px;">1.2 de 4</span>
-                    🏛️ Antecedentes disciplinarios de la empresa — Procuraduría General
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+                    Antecedentes disciplinarios de la empresa — Procuraduría General
                 </div>
-                <button class="btn" style="padding:9px 14px;font-size:12px;"
+                <button class="btn btn-cargar-doc-sm"
                     onclick="document.getElementById('archivo_15b').click()">
-                    📎 Cargar Antecedentes Disciplinarios de la Empresa
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Antecedentes Disciplinarios de la Empresa
                 </button>
                 <input type="file" id="archivo_15b" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -689,11 +762,12 @@
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
                                  padding:2px 8px;font-size:10px;">2 de 4</span>
-                    💰 Antecedentes fiscales — Contraloría General
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    Antecedentes fiscales — Contraloría General
                 </div>
-                <button class="btn" style="padding:9px 14px;font-size:12px;"
+                <button class="btn btn-cargar-doc-sm"
                     onclick="document.getElementById('archivo_15c').click()">
-                    📎 Cargar Antecedentes Fiscales
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Antecedentes Fiscales
                 </button>
                 <input type="file" id="archivo_15c" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -711,11 +785,12 @@
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
                                  padding:2px 8px;font-size:10px;">3 de 4</span>
-                    ⚖️ Antecedentes judiciales — Policía Nacional
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+                    Antecedentes judiciales — Policía Nacional
                 </div>
-                <button class="btn" style="padding:9px 14px;font-size:12px;"
+                <button class="btn btn-cargar-doc-sm"
                     onclick="document.getElementById('archivo_15d').click()">
-                    📎 Cargar Antecedentes Judiciales
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Antecedentes Judiciales
                 </button>
                 <input type="file" id="archivo_15d" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -730,7 +805,7 @@
             <div id="progreso_15" class="subdoc-progreso" style="margin-top:10px;font-size:11px;color:#6B7280;
                 background:#EFF6FF;border-radius:8px;padding:7px 10px;display:flex;
                 align-items:center;gap:8px;">
-                <span>📁 Documentos cargados:</span>
+                <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Documentos cargados:</span>
                 <span id="progreso_15_txt" style="font-weight:700;color:#123C7B;">0 / 4</span>
                 <div style="flex:1;background:#DBEAFE;border-radius:10px;height:6px;overflow:hidden;">
                     <div id="progreso_15_bar" style="background:linear-gradient(90deg,#0B7A43,#123C7B);
@@ -746,10 +821,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_16').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -771,10 +845,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_17').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -796,10 +869,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_18').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -821,10 +893,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_19').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -853,11 +924,12 @@
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
                                  padding:2px 8px;font-size:10px;">1 de 3</span>
-                    🪪 Cédula de ciudadanía del Revisor Fiscal
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6.17 16a3 3 0 0 1 5.66 0"/><line x1="16" y1="10" x2="18" y2="10"/><line x1="16" y1="14" x2="18" y2="14"/></svg>
+                    Cédula de ciudadanía del Revisor Fiscal
                 </div>
-                <button class="btn" style="padding:9px 14px;font-size:12px;"
+                <button class="btn btn-cargar-doc-sm"
                     onclick="document.getElementById('archivo_20a').click()">
-                    📎 Cargar Cédula
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Cédula
                 </button>
                 <input type="file" id="archivo_20a" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -875,11 +947,12 @@
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
                                  padding:2px 8px;font-size:10px;">2 de 3</span>
-                    📋 Certificado de antecedentes del Revisor Fiscal
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                    Certificado de antecedentes del Revisor Fiscal
                 </div>
-                <button class="btn" style="padding:9px 14px;font-size:12px;"
+                <button class="btn btn-cargar-doc-sm"
                     onclick="document.getElementById('archivo_20b').click()">
-                    📎 Cargar Antecedentes
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Antecedentes
                 </button>
                 <input type="file" id="archivo_20b" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -897,11 +970,12 @@
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
                                  padding:2px 8px;font-size:10px;">3 de 3</span>
-                    🏅 Tarjeta profesional del Revisor Fiscal
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                    Tarjeta profesional del Revisor Fiscal
                 </div>
-                <button class="btn" style="padding:9px 14px;font-size:12px;"
+                <button class="btn btn-cargar-doc-sm"
                     onclick="document.getElementById('archivo_20c').click()">
-                    📎 Cargar Tarjeta Profesional
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Tarjeta Profesional
                 </button>
                 <input type="file" id="archivo_20c" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -916,7 +990,7 @@
             <div id="progreso_20" class="subdoc-progreso" style="margin-top:10px;font-size:11px;color:#6B7280;
                 background:#EFF6FF;border-radius:8px;padding:7px 10px;display:flex;
                 align-items:center;gap:8px;">
-                <span>📁 Documentos cargados:</span>
+                <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Documentos cargados:</span>
                 <span id="progreso_20_txt" style="font-weight:700;color:#123C7B;">0 / 3</span>
                 <div style="flex:1;background:#DBEAFE;border-radius:10px;height:6px;overflow:hidden;">
                     <div id="progreso_20_bar" style="background:linear-gradient(90deg,#0B7A43,#123C7B);
@@ -939,11 +1013,12 @@
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
                                  padding:2px 8px;font-size:10px;">1 de 2</span>
-                    📄 Certificación de pago de seguridad social
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Certificación de pago de seguridad social
                 </div>
-                <button class="btn" style="padding:9px 14px;font-size:12px;"
+                <button class="btn btn-cargar-doc-sm"
                     onclick="document.getElementById('archivo_21a').click()">
-                    📎 Cargar Certificación
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Certificación
                 </button>
                 <input type="file" id="archivo_21a" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -961,11 +1036,12 @@
                             display:flex;align-items:center;gap:6px;">
                     <span style="background:#123C7B;color:white;border-radius:6px;
                                  padding:2px 8px;font-size:10px;">2 de 2</span>
-                    📊 Planillas de seguridad social (salud, pensión, ARL)
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    Planillas de seguridad social (salud, pensión, ARL)
                 </div>
-                <button class="btn" style="padding:9px 14px;font-size:12px;"
+                <button class="btn btn-cargar-doc-sm"
                     onclick="document.getElementById('archivo_21b').click()">
-                    📎 Cargar Planillas
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Planillas
                 </button>
                 <input type="file" id="archivo_21b" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -980,7 +1056,7 @@
             <div id="progreso_21" class="subdoc-progreso" style="margin-top:10px;font-size:11px;color:#6B7280;
                 background:#EFF6FF;border-radius:8px;padding:7px 10px;display:flex;
                 align-items:center;gap:8px;">
-                <span>📁 Documentos cargados:</span>
+                <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Documentos cargados:</span>
                 <span id="progreso_21_txt" style="font-weight:700;color:#123C7B;">0 / 2</span>
                 <div style="flex:1;background:#DBEAFE;border-radius:10px;height:6px;overflow:hidden;">
                     <div id="progreso_21_bar" style="background:linear-gradient(90deg,#0B7A43,#123C7B);
@@ -996,10 +1072,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_22').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -1021,10 +1096,9 @@
             <input type="checkbox">
         </td>
         <td>
-            <button class="btn"
-            style="padding:10px 14px;font-size:13px;"
+            <button class="btn btn-cargar-doc"
             onclick="document.getElementById('archivo_23').click()">
-                📎 Cargar Documento
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
             <input type="file"
@@ -1042,7 +1116,7 @@
             style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;
             padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;
             display:flex;align-items:center;gap:5px;">
-                🕓 Ver historial <span id="badge_hist_23" style="background:#123C7B;color:white;
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ver historial <span id="badge_hist_23" style="background:#123C7B;color:white;
                 border-radius:10px;padding:1px 7px;font-size:10px;">0</span>
             </button>
             <div id="historial_23" style="display:none;margin-top:8px;max-height:160px;
@@ -1059,7 +1133,10 @@
 
 <div id="cd1p-avance-bar" style="margin-bottom:14px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:14px;padding:14px 18px;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-    <span style="font-size:12px;font-weight:700;color:#0B7A43;text-transform:uppercase;letter-spacing:.5px;">✅ Avance Documental</span>
+    <span style="font-size:12px;font-weight:700;color:#0B7A43;text-transform:uppercase;letter-spacing:.5px;display:inline-flex;align-items:center;gap:5px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Avance Documental
+    </span>
     <span id="cd1p-avance-pct" style="font-size:18px;font-weight:800;color:#0B7A43;">0%</span>
   </div>
   <div style="height:10px;border-radius:6px;background:#D1FAE5;overflow:hidden;">
@@ -1071,7 +1148,8 @@
     <!-- BOTÓN GUARDAR (solo visible tras verificar el objeto contractual) -->
     <div class="acciones-modal-final" style="justify-content:flex-end;">
         <button class="btn finalizar-btn" onclick="guardarProceso()">
-            💾 Guardar Proceso
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Guardar Proceso
         </button>
     </div>
 
@@ -1082,7 +1160,7 @@
         <button class="btn"
             onclick="window.location.href='/dashboard'"
             style="background:#F3F4F6;color:#374151;border:none;">
-            ← Volver al Dashboard
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Volver al Dashboard
         </button>
     </div>
 

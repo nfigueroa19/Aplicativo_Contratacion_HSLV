@@ -61,29 +61,11 @@ function db_limpiarCache() {
 
 // ════════════════════════════════════════════════════
 //  GENERAR CÓDIGO DE PROCESO
-//  Usa la función SQL que creamos en Supabase
-//  Formato: TIPO-AÑO-NUMERO-PALABRAS-OBJETO
+//  El código es, tal cual, el objeto contractual ingresado
+//  (sin la RPC generar_codigo_proceso ni formato TIPO-AÑO-NUMERO).
 // ════════════════════════════════════════════════════
 async function db_generarCodigo(tipo, objeto) {
-    try {
-        var { data, error } = await supabaseClient
-            .rpc('generar_codigo_proceso', {
-                p_tipo:   tipo,
-                p_objeto: objeto || 'SIN OBJETO'
-            });
-
-        if (error) {
-            // Fallback si la función falla
-            var anio  = new Date().getFullYear();
-            var ts    = Date.now().toString().slice(-4);
-            return tipo + '-' + anio + '-' + ts;
-        }
-
-        return data;
-    } catch (err) {
-        var anio = new Date().getFullYear();
-        return tipo + '-' + anio + '-' + Date.now().toString().slice(-4);
-    }
+    return (objeto || 'SIN OBJETO').trim();
 }
 
 
@@ -156,7 +138,8 @@ async function db_guardarProceso(datos) {
                 responsable:               datos.responsable   || '',
                 creado_por:                perfil.id,
                 estado:                    'borrador',
-                objeto_duplicado_forzado:  !!datos.forzarDuplicado
+                objeto_duplicado_forzado:  !!datos.forzarDuplicado,
+                plazo_estudios_previos_hasta: datos.plazoVigencia || null
             })
             .select()
             .single();
@@ -292,7 +275,8 @@ async function db_guardarProceso(datos) {
                 responsable_asignado_por_nombre:  '',
                 responsable_asignado_fecha:       '',
                 fecha_creacion:      new Date().toISOString(),
-                estado:              'borrador'
+                estado:              'borrador',
+                plazo_estudios_previos_hasta:      datos.plazoVigencia || ''
             }, {});
 
             // El checklist real ya se conoce por lo que se marcó/subió en
@@ -738,6 +722,60 @@ async function db_actualizarValorProceso(procesoId, valor) {
     }
 }
 
+// ════════════════════════════════════════════════════
+//  ACTUALIZAR PLAZO DE VIGENCIA (proceso-detalle.html)
+//  Se llama al reanalizar el ítem 5 (Estudios Previos) de un proceso ya
+//  guardado y detectar/actualizar su fecha de vigencia (ver
+//  _extraerPlazoVigencia en juriskills-engine.js). Mismo criterio de
+//  permiso que db_actualizarValorProceso — duplicado aquí por la misma
+//  razón (db.js no depende de scripts de página específicos).
+// ════════════════════════════════════════════════════
+async function db_actualizarPlazoProceso(procesoId, fechaISO) {
+    try {
+        var perfil = await db_perfil();
+        if (!perfil) return false;
+
+        var { data: proceso, error: errorProceso } = await supabaseClient
+            .from('procesos')
+            .select('estado, creado_por, responsable_asignado')
+            .eq('id', procesoId)
+            .single();
+
+        if (errorProceso || !proceso) {
+            console.error('Error consultando proceso para actualizar plazo:', errorProceso);
+            return false;
+        }
+
+        var puedeEditar =
+            proceso.estado !== 'cerrado' && (
+                perfil.rol === 'admin' ||
+                (perfil.area === 'biomedica' && proceso.creado_por === perfil.id) ||
+                (perfil.area === 'juridica'  && proceso.responsable_asignado === perfil.id)
+            );
+
+        if (!puedeEditar) return false;
+
+        var { error } = await supabaseClient
+            .from('procesos')
+            .update({
+                plazo_estudios_previos_hasta: fechaISO,
+                ultima_actualizacion:         new Date().toISOString()
+            })
+            .eq('id', procesoId);
+
+        if (error) {
+            console.error('Error actualizando plazo del proceso:', error);
+            return false;
+        }
+
+        return true;
+
+    } catch (err) {
+        console.error('Error en db_actualizarPlazoProceso:', err);
+        return false;
+    }
+}
+
 
 // ════════════════════════════════════════════════════
 //  CARGAR PROCESOS DESDE SUPABASE
@@ -916,6 +954,59 @@ async function db_finalizarProceso(procesoId) {
 
     } catch (err) {
         console.error('Error en db_finalizarProceso:', err);
+        return false;
+    }
+}
+
+
+// ════════════════════════════════════════════════════
+//  ELIMINAR PROCESO (definitivo)
+//  Solo Admin. Borra primero los registros hijos
+//  (comentarios, notificaciones, documentos) para no
+//  violar las FK contra `procesos`, y al final la fila
+//  del proceso.
+// ════════════════════════════════════════════════════
+async function db_eliminarProceso(procesoId) {
+    try {
+        var perfil = await db_perfil();
+        if (!perfil) return false;
+
+        if (perfil.rol !== 'admin') {
+            alert('⚠️ Solo un Administrador puede eliminar procesos.');
+            return false;
+        }
+
+        await supabaseClient.from('comentarios').delete().eq('proceso_id', procesoId);
+        await supabaseClient.from('notificaciones').delete().eq('proceso_id', procesoId);
+        await supabaseClient.from('documentos').delete().eq('proceso_id', procesoId);
+
+        // .select() fuerza a que Supabase devuelva las filas borradas: sin
+        // esto, si no existe una política RLS de DELETE para `procesos`,
+        // el delete no da error mientras el trigger de arriba, sino que
+        // borra 0 filas en silencio y este código creería que sí funcionó.
+        var { data, error } = await supabaseClient
+            .from('procesos')
+            .delete()
+            .eq('id', procesoId)
+            .select('id');
+
+        if (error) {
+            console.error('Error eliminando proceso:', error);
+            alert('❌ No se pudo eliminar el proceso.');
+            return false;
+        }
+
+        if (!data || data.length === 0) {
+            console.error('db_eliminarProceso: 0 filas borradas — probablemente falta la política RLS de DELETE en `procesos` (ver sql/2026-07-28_permitir_eliminar_procesos_admin.sql).');
+            alert('❌ No se pudo eliminar el proceso: la base de datos no autorizó el borrado (falta permiso).');
+            return false;
+        }
+
+        return true;
+
+    } catch (err) {
+        console.error('Error en db_eliminarProceso:', err);
+        alert('❌ No se pudo eliminar el proceso.');
         return false;
     }
 }
@@ -1148,7 +1239,8 @@ function db_construirEntradaHIST(p, docsPorProceso) {
         checksTotal: labels.length,
         checklist:   checklist,
         supabase_id: p.id,
-        estado:      p.estado
+        estado:      p.estado,
+        plazo_estudios_previos_hasta: p.plazo_estudios_previos_hasta || ''
     };
 }
 

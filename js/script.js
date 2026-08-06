@@ -20,16 +20,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var sidebar = document.querySelector('.sidebar');
 
+    var ICONO_MENU = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+    var ICONO_CERRAR = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
     function cerrarSidebar() {
         if (sidebar) sidebar.classList.remove('sidebar-open');
         document.body.classList.remove('sidebar-abierto');
-        btn.innerHTML = '☰';
+        btn.innerHTML = ICONO_MENU;
     }
 
     btn.addEventListener('click', function() {
         var abierto = sidebar.classList.toggle('sidebar-open');
         document.body.classList.toggle('sidebar-abierto', abierto);
-        btn.innerHTML = abierto ? '✕' : '☰';
+        btn.innerHTML = abierto ? ICONO_CERRAR : ICONO_MENU;
     });
 
     overlay.addEventListener('click', cerrarSidebar);
@@ -40,6 +43,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// ════════════════════════════════════════════════════
+//  AVISO AL CERRAR/RECARGAR CON DATOS SIN GUARDAR
+//  Solo en las 4 páginas de creación de proceso (Contratación
+//  Directa, 3 Invitaciones, Convocatoria, Subasta). Se activa
+//  apenas el usuario escribe algo o adjunta un archivo, y se
+//  desactiva cuando el proceso se guarda con éxito — ver el
+//  reset de _procesoFormSucio dentro de guardarProceso() y
+//  guardarProcesoHistorial() más abajo. El texto del aviso lo
+//  pone el propio navegador (los navegadores modernos ya no
+//  permiten personalizarlo por seguridad).
+// ════════════════════════════════════════════════════
+var _procesoFormSucio = false;
+
+(function() {
+    var path = window.location.pathname;
+    var esPaginaCreacionProceso =
+        path.includes('contratacion-directa') ||
+        path.includes('directa-3')            ||
+        path.includes('convocatoria')         ||
+        path.includes('subasta');
+
+    if (!esPaginaCreacionProceso) return;
+
+    document.addEventListener('input', function(e) {
+        var t = e.target;
+        if (t.matches && t.matches('input[type="text"], input:not([type]), textarea')) {
+            _procesoFormSucio = true;
+        }
+    }, true);
+
+    document.addEventListener('change', function(e) {
+        var t = e.target;
+        if (t.matches && t.matches('input[type="file"], input[type="checkbox"], select')) {
+            _procesoFormSucio = true;
+        }
+    }, true);
+
+    window.addEventListener('beforeunload', function(e) {
+        if (!_procesoFormSucio) return;
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    });
+})();
 
 // ════════════════════════════════════════════════════
 //  COMENTARIOS EN EL CHECKLIST (al crear un proceso)
@@ -93,7 +141,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         'style="background:none;border:1px solid #CBD5E1;border-radius:8px;' +
                         'padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;' +
                         'display:flex;align-items:center;gap:5px;">' +
-                        '🕓 Ver historial <span id="' + prefijoComentario + 'badge_hist_' + num + '" ' +
+                        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+                        'Ver historial <span id="' + prefijoComentario + 'badge_hist_' + num + '" ' +
                             'style="background:#123C7B;color:white;border-radius:10px;' +
                             'padding:1px 7px;font-size:10px;">0</span>' +
                     '</button>' +
@@ -126,7 +175,9 @@ document.addEventListener('DOMContentLoaded', function() {
         bloque.style.cssText = 'margin-top:10px;border-top:1px dashed #E5E7EB;padding-top:8px;';
         bloque.innerHTML =
             '<div style="font-size:10px;color:#6B7280;font-weight:700;' +
-                'text-transform:uppercase;margin-bottom:4px;">💬 Comentarios</div>' +
+                'text-transform:uppercase;margin-bottom:4px;">' +
+                '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+                'Comentarios</div>' +
             '<div id="' + idPreview + '" style="display:none;"></div>' +
             '<div id="' + idTextarea + '_wrap" style="position:relative;width:fit-content;max-width:100%;">' +
                 '<textarea id="' + idTextarea + '" rows="1" ' +
@@ -139,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'onclick="checklistComentario_confirmar(\'' + idTextarea + '\')" ' +
                     'style="position:absolute;right:5px;bottom:5px;background:#123C7B;color:white;' +
                     'border:none;border-radius:50%;width:22px;height:22px;padding:0;font-size:11px;' +
-                    'line-height:22px;text-align:center;cursor:pointer;">➤</button>' +
+                    'line-height:22px;text-align:center;cursor:pointer;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg></button>' +
             '</div>';
         celdaCarga.appendChild(bloque);
     });
@@ -179,9 +230,9 @@ async function checklistComentario_confirmar(idTextarea) {
             '<div style="color:#1F2937;margin-top:2px;">' + textoEscapado + '</div>' +
             '<div style="margin-top:4px;">' +
                 '<a onclick="checklistComentario_editar(\'' + idTextarea + '\')" ' +
-                    'style="color:#123C7B;font-size:10px;cursor:pointer;margin-right:10px;">✏️ Editar</a>' +
+                    'style="color:#123C7B;font-size:10px;cursor:pointer;margin-right:10px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Editar</a>' +
                 '<a onclick="checklistComentario_borrar(\'' + idTextarea + '\')" ' +
-                    'style="color:#B91C1C;font-size:10px;cursor:pointer;">🗑️ Borrar</a>' +
+                    'style="color:#B91C1C;font-size:10px;cursor:pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Borrar</a>' +
             '</div>' +
         '</div>';
     prev.style.display = '';
@@ -325,12 +376,14 @@ function dash_actualizar() {
     // dos funciones escriban el mismo elemento fue justo el bug que infló
     // el contador de "Contratación Directa" (ver actualizarCardsIndicadores).
 
-    // Barras de progreso proporcionales
+    // Barras decorativas: siempre llenas, funcionan como separador de color
+    // bajo el número (antes eran proporcionales al total, pero se veían
+    // vacías o parciales cuando un tipo tenía pocos procesos).
     document.getElementById('dash-bar-total').style.width = '100%';
-    document.getElementById('dash-bar-cd1p').style.width  = (total > 0 ? Math.round((cd1p/maxVal)*100) : 0) + '%';
-    document.getElementById('dash-bar-d3p').style.width   = (total > 0 ? Math.round((d3p/maxVal)*100)  : 0) + '%';
-    document.getElementById('dash-bar-conv').style.width  = (total > 0 ? Math.round((conv/maxVal)*100) : 0) + '%';
-    document.getElementById('dash-bar-sub').style.width   = (total > 0 ? Math.round((sub/maxVal)*100)  : 0) + '%';
+    document.getElementById('dash-bar-cd1p').style.width  = '100%';
+    document.getElementById('dash-bar-d3p').style.width   = '100%';
+    document.getElementById('dash-bar-conv').style.width  = '100%';
+    document.getElementById('dash-bar-sub').style.width   = '100%';
 
     // Sub-textos informativos
     document.getElementById('dash-sub-total').textContent = total === 0
@@ -492,267 +545,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-/* ═══════════════════════════════════════════════════
-   KPI VIGENCIAS — actualización dinámica desde HIST_BD
-   ═══════════════════════════════════════════════════ */
-function kpi_actualizarVigencias() {
-  if (typeof HIST_BD === 'undefined') return;
-
-  var hoy = new Date();
-  var mes = hoy.toLocaleString('es-CO', { month: 'long' });
-  var anio = hoy.getFullYear();
-  var corte = document.getElementById('kpi_corte');
-  if (corte) corte.textContent = 'Corte: ' + mes.charAt(0).toUpperCase() + mes.slice(1) + ' ' + anio;
-
-  var total = HIST_BD.length;
-  var cd1p  = HIST_BD.filter(function(p){ return p.tipo === 'CD1P'; }).length;
-  var d3p   = HIST_BD.filter(function(p){ return p.tipo === 'D3P';  }).length;
-  var conv  = HIST_BD.filter(function(p){ return p.tipo === 'CONV'; }).length;
-  var sub   = HIST_BD.filter(function(p){ return p.tipo === 'SUB';  }).length;
-
-  // KPI cards
-  var el = function(id){ return document.getElementById(id); };
-  if (el('kpi_vigentes'))      el('kpi_vigentes').textContent      = total;
-  if (el('kpi_proxvencer'))    el('kpi_proxvencer').textContent    = cd1p;
-  if (el('kpi_vencidos'))      el('kpi_vencidos').textContent      = d3p;
-  if (el('kpi_liquidados'))    el('kpi_liquidados').textContent    = conv;
-  if (el('kpi_adicionados'))   el('kpi_adicionados').textContent   = sub;
-
-  // Sub-textos
-  if (el('kpi_vigentes_sub'))    el('kpi_vigentes_sub').textContent    = total + ' proceso' + (total !== 1 ? 's' : '') + ' en historial';
-  if (el('kpi_proxvencer_sub'))  el('kpi_proxvencer_sub').textContent  = cd1p + ' proceso' + (cd1p !== 1 ? 's' : '') + ' · Ver →';
-  if (el('kpi_vencidos_sub'))    el('kpi_vencidos_sub').textContent    = d3p  + ' proceso' + (d3p  !== 1 ? 's' : '') + ' · Ver →';
-  if (el('kpi_liquidados_sub'))  el('kpi_liquidados_sub').textContent  = conv + ' proceso' + (conv !== 1 ? 's' : '') + ' · Ver →';
-  if (el('kpi_adicionados_sub')) el('kpi_adicionados_sub').textContent = sub  + ' proceso' + (sub  !== 1 ? 's' : '') + ' · Ver →';
-
-  // Tabla de procesos recientes (últimos 5)
-  var tbody = document.getElementById('kpi_tabla_recientes');
-  if (!tbody) return;
-
-  // Mismos colores que las tarjetas de "Indicadores de Vigencias
-  // Contractuales" arriba y que .hist-badge-* en css/styles.css — no
-  // cambies uno sin cambiar los otros.
-  var TIPOS = {
-    'CD1P': { label: 'Directa 1P',      color: '#92400E', bg: '#FEF3C7', border: '#FCD34D' },
-    'D3P':  { label: 'Directa 3P',      color: '#115E59', bg: '#CCFBF1', border: '#5EEAD4' },
-    'CONV': { label: 'Convocatoria',    color: '#4C1D95', bg: '#EDE9FE', border: '#C4B5FD' },
-    'SUB':  { label: 'Subasta Inversa', color: '#1e3a8a', bg: '#EFF6FF', border: '#93C5FD' }
-  };
-
-  if (total === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:#9CA3AF;">' +
-      '<div style="font-size:32px;margin-bottom:8px;">📂</div>' +
-      '<div style="font-size:13px;font-weight:600;">Aún no hay procesos guardados.</div>' +
-      '<div style="font-size:12px;margin-top:4px;">Guarda un proceso desde cualquier modal y aparecerá aquí.</div>' +
-      '</td></tr>';
-    return;
-  }
-
-  var recientes = HIST_BD.slice(0, 5);
-  var html = '';
-  recientes.forEach(function(p, i) {
-    var t = TIPOS[p.tipo] || TIPOS['D3P'];
-    var pct = p.checksTotal > 0 ? Math.round((p.checksOk / p.checksTotal) * 100) : 0;
-    var barColor = pct === 100 ? '#0B7A43' : pct >= 60 ? '#2563EB' : pct >= 30 ? '#D97706' : '#DC2626';
-    var bg = i % 2 === 0 ? '#fff' : '#F9FAFB';
-    var objetoCorto = (p.objeto || '—').length > 45 ? (p.objeto.substring(0, 45) + '…') : (p.objeto || '—');
-    html +=
-      '<tr style="background:' + bg + ';border-bottom:1px solid #E5E7EB;">' +
-        '<td style="padding:11px 14px;font-weight:700;color:#123C7B;font-size:12px;white-space:nowrap;">' + p.id + '</td>' +
-        '<td style="padding:11px 14px;">' +
-          '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;' +
-          'background:' + t.bg + ';color:' + t.color + ';border:1px solid ' + t.border + ';">' + t.label + '</span>' +
-        '</td>' +
-        '<td style="padding:11px 14px;color:#374151;max-width:200px;" title="' + (p.objeto||'') + '">' + objetoCorto + '</td>' +
-        '<td style="padding:11px 14px;color:#374151;white-space:nowrap;">' + (p.area || '—') + '</td>' +
-        '<td style="padding:11px 14px;">' +
-          '<div style="display:flex;align-items:center;gap:6px;">' +
-            '<div style="flex:1;height:6px;border-radius:4px;background:#E5E7EB;overflow:hidden;min-width:60px;">' +
-              '<div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:4px;"></div>' +
-            '</div>' +
-            '<span style="font-size:11px;color:#6B7280;font-weight:700;white-space:nowrap;">' + pct + '%</span>' +
-          '</div>' +
-          '<div style="font-size:10px;color:#9CA3AF;margin-top:2px;">' + p.checksOk + '/' + p.checksTotal + ' docs</div>' +
-        '</td>' +
-        '<td style="padding:11px 14px;white-space:nowrap;color:#6B7280;font-size:12px;">' + p.fecha + '</td>' +
-        '<td style="padding:11px 14px;text-align:center;">' +
-          '<button onclick="hist_verDetalle(\'' + p.id + '\')" ' +
-            'style="background:linear-gradient(90deg,#123C7B,#0B7A43);color:white;border:none;' +
-            'padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">👁 Ver</button>' +
-        '</td>' +
-      '</tr>';
-  });
-
-  if (total > 5) {
-    html += '<tr style="background:#F8FAFC;">' +
-      '<td colspan="7" style="padding:10px 14px;text-align:center;">' +
-        '<button onclick="dash_abrirHistorial(\'\')" ' +
-          'style="background:none;border:1px solid #CBD5E1;color:#123C7B;padding:6px 18px;' +
-          'border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">' +
-          '+ ' + (total - 5) + ' proceso' + (total - 5 !== 1 ? 's' : '') + ' más — Ver historial completo' +
-        '</button>' +
-      '</td>' +
-    '</tr>';
-  }
-
-  tbody.innerHTML = html;
-}
-
-// Enganchar kpi_actualizarVigencias a dash_actualizar
-(function() {
-  var _origDash = window.dash_actualizar;
-  window.dash_actualizar = function() {
-    if (typeof _origDash === 'function') _origDash();
-    kpi_actualizarVigencias();
-  };
-  // Ejecutar al cargar
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(kpi_actualizarVigencias, 300);
-  });
-})();
-
-/* ═══════════════════════════════════════════════════
-   EJECUCIÓN CONTRACTUAL — KPIs + tabla desde HIST_BD
-   ═══════════════════════════════════════════════════ */
-function ejec_actualizarEjecucion() {
-  if (typeof HIST_BD === 'undefined') return;
-
-  var anio = new Date().getFullYear();
-  var vigEl = document.getElementById('ejec_vigencia');
-  if (vigEl) vigEl.textContent = 'Vigencia ' + anio;
-
-  var total      = HIST_BD.length;
-  var docsOk     = HIST_BD.reduce(function(a,p){ return a + (p.checksOk||0); }, 0);
-  var docsTotal  = HIST_BD.reduce(function(a,p){ return a + (p.checksTotal||0); }, 0);
-  var pctGlobal  = docsTotal > 0 ? Math.round((docsOk/docsTotal)*100) : 0;
-
-  // ── Por modalidad: promedio de avance documental ──
-  function avgPct(tipo) {
-    var arr = HIST_BD.filter(function(p){ return p.tipo === tipo; });
-    if (!arr.length) return { pct: 0, n: 0 };
-    var sum = arr.reduce(function(a,p){ return a + (p.checksTotal>0 ? Math.round((p.checksOk/p.checksTotal)*100) : 0); }, 0);
-    return { pct: Math.round(sum/arr.length), n: arr.length };
-  }
-  var cd1p = avgPct('CD1P');
-  var d3p  = avgPct('D3P');
-  var convArr = HIST_BD.filter(function(p){ return p.tipo==='CONV'||p.tipo==='SUB'; });
-  var convPct = convArr.length ? Math.round(convArr.reduce(function(a,p){ return a+(p.checksTotal>0?Math.round((p.checksOk/p.checksTotal)*100):0); },0)/convArr.length) : 0;
-
-  var g = function(id){ return document.getElementById(id); };
-
-  // Global
-  if(g('ejec_pct_global')) g('ejec_pct_global').textContent = pctGlobal + '%';
-  if(g('ejec_det_global')) g('ejec_det_global').textContent = docsOk + ' / ' + docsTotal + ' docs';
-  if(g('ejec_bar_global')) g('ejec_bar_global').style.width = pctGlobal + '%';
-  var gc = pctGlobal>=70?'#0B7A43':pctGlobal>=40?'#D97706':'#DC2626';
-  if(g('ejec_bar_global')) g('ejec_bar_global').style.background = 'linear-gradient(90deg,'+gc+','+gc+'aa)';
-  if(g('ejec_pct_global')) g('ejec_pct_global').style.color = gc;
-
-  // CD1P
-  if(g('ejec_pct_cd1p')) g('ejec_pct_cd1p').textContent = cd1p.pct + '%';
-  if(g('ejec_det_cd1p')) g('ejec_det_cd1p').textContent = cd1p.n + ' proceso'+(cd1p.n!==1?'s':'');
-  if(g('ejec_bar_cd1p')) g('ejec_bar_cd1p').style.width = cd1p.pct + '%';
-
-  // D3P
-  if(g('ejec_pct_d3p')) g('ejec_pct_d3p').textContent = d3p.pct + '%';
-  if(g('ejec_det_d3p')) g('ejec_det_d3p').textContent = d3p.n + ' proceso'+(d3p.n!==1?'s':'');
-  if(g('ejec_bar_d3p')) g('ejec_bar_d3p').style.width = d3p.pct + '%';
-  var d3pc = d3p.pct>=70?'#0B7A43':d3p.pct>=40?'#D97706':'#DC2626';
-  if(g('ejec_pct_d3p')) g('ejec_pct_d3p').style.color = d3pc;
-  if(g('ejec_bar_d3p')) g('ejec_bar_d3p').style.background = 'linear-gradient(90deg,'+d3pc+','+d3pc+'aa)';
-  if(g('ejec_alerta_d3p') && d3p.pct>0 && d3p.pct<40) g('ejec_alerta_d3p').innerHTML='<span style="color:#DC2626;font-weight:700;">⚠ Avance crítico · Ver →</span>';
-
-  // CONV + SUB
-  if(g('ejec_pct_conv')) g('ejec_pct_conv').textContent = convPct + '%';
-  if(g('ejec_det_conv')) g('ejec_det_conv').textContent = convArr.length + ' proceso'+(convArr.length!==1?'s':'');
-  if(g('ejec_bar_conv')) g('ejec_bar_conv').style.width = convPct + '%';
-
-  // ── Tabla dinámica ──
-  var tbody = document.getElementById('ejec_tabla_body');
-  if (!tbody) return;
-
-  if (total === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:#9CA3AF;">' +
-      '<div style="font-size:32px;margin-bottom:8px;">📊</div>' +
-      '<div style="font-size:13px;font-weight:600;">Sin procesos registrados aún.</div>' +
-      '<div style="font-size:12px;margin-top:4px;">Guarda un proceso desde cualquier modal y su ejecución aparecerá aquí.</div>' +
-      '</td></tr>';
-    return;
-  }
-
-  // Mismos colores que las tarjetas de "Indicadores de Vigencias
-  // Contractuales" y que .hist-badge-* en css/styles.css — no cambies
-  // uno sin cambiar los otros.
-  var TIPOS = {
-    'CD1P': { label:'Directa 1P',     color:'#92400E', bg:'#FEF3C7', border:'#FCD34D' },
-    'D3P':  { label:'Directa 3P',     color:'#115E59', bg:'#CCFBF1', border:'#5EEAD4' },
-    'CONV': { label:'Convocatoria',   color:'#4C1D95', bg:'#EDE9FE', border:'#C4B5FD' },
-    'SUB':  { label:'Subasta Inv.',   color:'#1e3a8a', bg:'#EFF6FF', border:'#93C5FD' }
-  };
-
-  var html = '';
-  HIST_BD.slice(0,6).forEach(function(p, i) {
-    var t   = TIPOS[p.tipo] || TIPOS['D3P'];
-    var pct = p.checksTotal > 0 ? Math.round((p.checksOk/p.checksTotal)*100) : 0;
-    var barC = pct===100?'#0B7A43':pct>=60?'#2563EB':pct>=30?'#D97706':'#DC2626';
-    var estadoBg, estadoColor, estadoTxt;
-    if(pct===100)      { estadoBg='#DCFCE7'; estadoColor='#166534'; estadoTxt='Completo'; }
-    else if(pct>=60)   { estadoBg='#DBEAFE'; estadoColor='#1D4ED8'; estadoTxt='En curso'; }
-    else if(pct>=30)   { estadoBg='#FEF3C7'; estadoColor='#D97706'; estadoTxt='Pendiente'; }
-    else               { estadoBg='#FEE2E2'; estadoColor='#DC2626'; estadoTxt='Crítico'; }
-    var bg = i%2===0?'#fff':'#F9FAFB';
-    html +=
-      '<tr style="background:'+bg+';border-bottom:1px solid #E5E7EB;">' +
-        '<td style="padding:11px 14px;font-weight:700;color:#123C7B;font-size:12px;white-space:nowrap;">'+p.id+'</td>' +
-        '<td style="padding:11px 14px;">' +
-          '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;' +
-          'background:'+t.bg+';color:'+t.color+';border:1px solid '+t.border+';">'+t.label+'</span>' +
-        '</td>' +
-        '<td style="padding:11px 14px;color:#374151;white-space:nowrap;">'+(p.area||'—')+'</td>' +
-        '<td style="padding:11px 14px;min-width:140px;">' +
-          '<div style="display:flex;align-items:center;gap:7px;">' +
-            '<div style="flex:1;background:#E2E8F0;border-radius:6px;height:8px;overflow:hidden;min-width:70px;">' +
-              '<div style="background:'+barC+';width:'+pct+'%;height:8px;border-radius:6px;transition:width .4s;"></div>' +
-            '</div>' +
-            '<span style="font-size:11px;font-weight:800;color:'+barC+';white-space:nowrap;">'+pct+'%</span>' +
-          '</div>' +
-        '</td>' +
-        '<td style="padding:11px 14px;color:#374151;font-size:12px;white-space:nowrap;">' +
-          p.checksOk+' / '+p.checksTotal+' docs' +
-        '</td>' +
-        '<td style="padding:11px 14px;">' +
-          '<span style="background:'+estadoBg+';color:'+estadoColor+';border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;">'+estadoTxt+'</span>' +
-        '</td>' +
-        '<td style="padding:11px 14px;text-align:center;">' +
-          '<button onclick="hist_verDetalle(\''+p.id+'\')" ' +
-            'style="background:linear-gradient(90deg,#123C7B,#0B7A43);color:white;border:none;' +
-            'padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">👁 Ver</button>' +
-        '</td>' +
-      '</tr>';
-  });
-
-  if (total > 6) {
-    html += '<tr style="background:#F8FAFC;"><td colspan="7" style="padding:10px;text-align:center;">' +
-      '<button onclick="dash_abrirHistorial(\'\')" style="background:none;border:1px solid #CBD5E1;color:#123C7B;' +
-      'padding:6px 18px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">' +
-      '+ '+(total-6)+' proceso'+(total-6!==1?'s':'')+' más — Ver historial completo</button></td></tr>';
-  }
-
-  tbody.innerHTML = html;
-}
-
-// Enganchar a dash_actualizar
-(function(){
-  var _prev = window.dash_actualizar;
-  window.dash_actualizar = function(){
-    if(typeof _prev==='function') _prev();
-    ejec_actualizarEjecucion();
-  };
-  document.addEventListener('DOMContentLoaded', function(){
-    setTimeout(ejec_actualizarEjecucion, 400);
-  });
-})();
-
 /* ═══════════════════════════════════════════════════════════════════
    SEGUIMIENTO DE CONOCIMIENTO JURÍDICO — solo Admin
    Reemplaza al antiguo panel "Docs Verificados". Compara cuándo el
@@ -842,10 +634,10 @@ function ejec_actualizarEjecucion() {
     var cardSub = document.getElementById('dash-sub-docs');
     if (cardNum) cardNum.textContent = pendientesGeneral;
     if (cardBar) cardBar.style.width = (totalGeneral > 0 ? Math.round((pendientesGeneral / totalGeneral) * 100) : 0) + '%';
-    if (cardSub) cardSub.textContent = totalGeneral === 0
+    if (cardSub) cardSub.innerHTML = totalGeneral === 0
       ? 'Sin asignaciones aún'
       : pendientesGeneral === 0
-        ? '✅ Todos los asignados (' + totalGeneral + ') fueron vistos'
+        ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Todos los asignados (' + totalGeneral + ') fueron vistos'
         : pendientesGeneral + ' de ' + totalGeneral + ' procesos asignados sin revisar';
 
     var totalEl = document.getElementById('seg-total');
@@ -870,7 +662,7 @@ function ejec_actualizarEjecucion() {
 
     if (ordenada.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:#9CA3AF;">' +
-        '<div style="font-size:32px;margin-bottom:8px;">🕵️</div>' +
+        '<div style="margin-bottom:8px;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>' +
         '<div style="font-size:13px;font-weight:600;">' +
           (totalGeneral === 0
             ? 'Aún no hay procesos asignados a un jurídico.'
@@ -885,12 +677,12 @@ function ejec_actualizarEjecucion() {
       var bg = i % 2 === 0 ? '#fff' : '#F9FAFB';
       var estadoHTML;
       if (p.visto_fecha) {
-        estadoHTML = '<span style="background:#DCFCE7;color:#166534;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap;">✅ Visto</span>';
+        estadoHTML = '<span style="background:#DCFCE7;color:#166534;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Visto</span>';
       } else {
         var dias = _seg_diasDesde(p.asignado_fecha);
         var critico = dias >= 2;
         estadoHTML = '<span style="background:' + (critico ? '#FEE2E2' : '#FEF3C7') + ';color:' + (critico ? '#991B1B' : '#92400E') + ';border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap;">' +
-          '⏳ Pendiente' + (dias > 0 ? ' · ' + dias + 'd' : '') + '</span>';
+          '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Pendiente' + (dias > 0 ? ' · ' + dias + 'd' : '') + '</span>';
       }
       html +=
         '<tr style="background:' + bg + ';border-bottom:1px solid #E5E7EB;">' +
@@ -1048,37 +840,7 @@ function ejec_actualizarEjecucion() {
 //  DASHBOARD DINÁMICO — lee exclusivamente de HIST_BD
 // ══════════════════════════════════════════════════════════════════════
 
-// ── Mapeo de ítems precontractuales (checklist Directa 1P, ítems 1-9) ──
-var ITEMS_PRECONTRACTUAL = [
-  { num:1,  label:'Certificado PAA' },
-  { num:2,  label:'Solicitud CDP' },
-  { num:3,  label:'Certificado CDP' },
-  { num:4,  label:'Solicitud para contratar' },
-  { num:5,  label:'Estudios previos' },
-  { num:6,  label:'Matriz de riesgos' },
-  { num:7,  label:'Propuesta / Cotización' },
-  { num:8,  label:'Estudio de mercado' },
-  { num:9,  label:'Análisis del sector' },
-];
-var ITEMS_CONTRACTUAL = [
-  { num:10, label:'Certificado de existencia' },
-  { num:11, label:'Cédula del contratista' },
-  { num:14, label:'RUT' },
-  { num:15, label:'Antecedentes disciplinarios/fiscales' },
-  { num:20, label:'Certificación seguridad social' },
-  { num:21, label:'Formulario SARLAFT' },
-  { num:22, label:'Acta de evaluación' },
-  { num:23, label:'Informe de supervisión' },
-];
-
 function _val(id) { var e=document.getElementById(id); return e?parseFloat(e.value.replace(/[^0-9.]/g,'')):0; }
-
-function _moneda(v) {
-  if (!v || isNaN(v) || v===0) return '—';
-  if (v >= 1e9)  return '$ '+(v/1e9).toFixed(2)+' B';
-  if (v >= 1e6)  return '$ '+(v/1e6).toFixed(1)+' M';
-  return '$ '+Number(v).toLocaleString('es-CO');
-}
 
 // ── Contar ítems del checklist en un proceso ──
 function _countItems(proceso, nums) {
@@ -1093,125 +855,54 @@ function _countItems(proceso, nums) {
 }
 
 // ══════════════════════════════════════
-//  GENERADOR DE ALERTAS DESDE HIST_BD
+//  ALERTAS DE PLAZO — vigencia de Estudios Previos
+//  Reemplaza las alertas heurísticas anteriores (expedientes incompletos,
+//  carga por área, etc.) por alertas de una sola cosa concreta: la fecha
+//  hasta la cual es vigente el plazo declarado en el documento de Estudios
+//  Previos (ítem 5), extraída automáticamente por
+//  _extraerPlazoVigencia() en js/juriskills-engine.js y guardada en
+//  procesos.plazo_estudios_previos_hasta (ver js/db.js). Si esa columna no
+//  se pudo detectar/llenar para un proceso, simplemente no genera alerta —
+//  no hay verificación manual en esta primera versión, así que la fecha
+//  siempre debe confirmarse contra el documento real.
 // ══════════════════════════════════════
-function _generarAlertasDesdeHistorial() {
-  var criticas=[], moderadas=[], informativas=[];
-  if (typeof HIST_BD === 'undefined' || HIST_BD.length===0) return {criticas:criticas,moderadas:moderadas,informativas:informativas};
+var _PLAZO_ALERTA_DIAS = 15;
 
-  var total       = HIST_BD.length;
-  var docsOkSum   = HIST_BD.reduce(function(a,p){ return a+(p.checksOk||0); },0);
-  var docsTotSum  = HIST_BD.reduce(function(a,p){ return a+(p.checksTotal||0); },0);
-  var pctGlobal   = docsTotSum>0 ? Math.round((docsOkSum/docsTotSum)*100) : 100;
+function _generarAlertasPlazos() {
+  var vencidos=[], porVencer=[];
+  if (typeof HIST_BD === 'undefined' || HIST_BD.length===0) return {vencidos:vencidos, porVencer:porVencer};
 
-  // ── CRÍTICAS ──
-  // Procesos con cumplimiento < 40%
-  var criticosList = HIST_BD.filter(function(p){
-    return p.checksTotal>0 && (p.checksOk/p.checksTotal)<0.4;
+  var hoy = new Date();
+  hoy.setHours(0,0,0,0);
+
+  HIST_BD.forEach(function(p){
+    if (!p.plazo_estudios_previos_hasta) return;
+    var fechaLimite = new Date(p.plazo_estudios_previos_hasta + 'T00:00:00');
+    if (isNaN(fechaLimite.getTime())) return;
+
+    var dias = Math.round((fechaLimite - hoy) / 86400000);
+    var fechaTexto = fechaLimite.toLocaleDateString('es-CO', {day:'2-digit', month:'long', year:'numeric'});
+    var objetoCorto = (p.objeto || '').slice(0,70) + ((p.objeto||'').length>70 ? '…' : '');
+
+    var item = {
+      titulo: p.id + ' — Plazo ' + (dias<0 ? 'vencido' : 'por vencer'),
+      detalle: objetoCorto + '. Vigente hasta el ' + fechaTexto + ' (' +
+        (dias<0 ? 'venció hace '+Math.abs(dias)+' día'+(Math.abs(dias)!==1?'s':'') : 'vence en '+dias+' día'+(dias!==1?'s':'')) +
+        '). Fecha detectada automáticamente del documento de Estudios Previos — verifique contra el documento real.',
+      accion: function(){ dash_abrirHistorial(p.tipo); }
+    };
+
+    if (dias < 0) vencidos.push({ item:item, dias:dias });
+    else if (dias <= _PLAZO_ALERTA_DIAS) porVencer.push({ item:item, dias:dias });
   });
-  if (criticosList.length>0) {
-    var ids = criticosList.slice(0,3).map(function(p){ return p.id; }).join(', ');
-    criticas.push({
-      titulo: criticosList.length+' proceso'+(criticosList.length>1?'s':'')+' con expediente crítico (<40%)',
-      detalle: 'Procesos: '+ids+(criticosList.length>3?' y otros…':'')+'. Documentos mínimos obligatorios incompletos. Riesgo de nulidad. Art. 9 Ley 80/1993.',
-      accion: function(){ dash_abrirHistorial(''); }
-    });
-  }
 
-  // Procesos sin responsable asignado
-  var sinResp = HIST_BD.filter(function(p){ return !p.responsable || p.responsable.trim()==='' || p.responsable==='(sin área)'; });
-  if (sinResp.length>0) {
-    criticas.push({
-      titulo: sinResp.length+' proceso'+(sinResp.length>1?'s':'')+' sin responsable asignado',
-      detalle: 'Los procesos sin supervisor o responsable identificado no cumplen el requisito de supervisión contractual. Art. 83 Ley 1474/2011.',
-      accion: function(){ dash_abrirHistorial(''); }
-    });
-  }
+  vencidos.sort(function(a,b){ return a.dias - b.dias; });
+  porVencer.sort(function(a,b){ return a.dias - b.dias; });
 
-  // Procesos con cero documentos
-  var sinDocs = HIST_BD.filter(function(p){ return (p.checksOk||0)===0 && (p.checksTotal||0)===0; });
-  if (sinDocs.length>0) {
-    criticas.push({
-      titulo: sinDocs.length+' proceso'+(sinDocs.length>1?'s':'')+' sin ningún documento cargado',
-      detalle: 'Expediente vacío. Debe conformarse el expediente contractual completo conforme Acuerdo 015/2024 HSLV.',
-      accion: function(){ dash_abrirHistorial(''); }
-    });
-  }
-
-  // ── MODERADAS ──
-  // Procesos con cumplimiento 40–70%
-  var medioProcesos = HIST_BD.filter(function(p){
-    var pct = p.checksTotal>0 ? p.checksOk/p.checksTotal : 1;
-    return pct>=0.4 && pct<0.7;
-  });
-  if (medioProcesos.length>0) {
-    moderadas.push({
-      titulo: medioProcesos.length+' proceso'+(medioProcesos.length>1?'s':'')+' con expediente incompleto (40–70%)',
-      detalle: 'Requieren completar documentos habilitantes antes de continuar la etapa contractual. Res. 0456/2024 HSLV.',
-      accion: function(){ dash_abrirHistorial(''); }
-    });
-  }
-
-  // Áreas con más de 2 procesos abiertos
-  var porArea = {};
-  HIST_BD.forEach(function(p){ porArea[p.area]=(porArea[p.area]||0)+1; });
-  var areasConCarga = Object.entries(porArea).filter(function(e){ return e[1]>2; });
-  if (areasConCarga.length>0) {
-    var listaAreas = areasConCarga.map(function(e){ return e[0]+' (×'+e[1]+')'; }).join(', ');
-    moderadas.push({
-      titulo: areasConCarga.length+' área'+(areasConCarga.length>1?'s':'')+' con carga de procesos elevada',
-      detalle: 'Áreas con más de 2 procesos simultáneos: '+listaAreas+'. Verificar capacidad de supervisión y seguimiento.',
-      accion: function(){ dash_abrirHistorial(''); }
-    });
-  }
-
-  // Procesos D3P sin valor registrado
-  var d3pSinValor = HIST_BD.filter(function(p){ return (p.tipo==='D3P'||p.tipo==='CONV'||p.tipo==='SUB') && (!p.valor||p.valor.trim()===''); });
-  if (d3pSinValor.length>0) {
-    moderadas.push({
-      titulo: d3pSinValor.length+' proceso'+(d3pSinValor.length>1?'s':'')+' sin valor contractual registrado',
-      detalle: 'El valor estimado es obligatorio en los formularios de contratación. Art. 12 num.7 Res. 0456/2024.',
-      accion: function(){ dash_abrirHistorial(''); }
-    });
-  }
-
-  // ── INFORMATIVAS ──
-  // Distribución de modalidades
-  var porTipo = {CD1P:0,D3P:0,CONV:0,SUB:0};
-  HIST_BD.forEach(function(p){ if(porTipo[p.tipo]!==undefined) porTipo[p.tipo]++; });
-  var masUsada = Object.entries(porTipo).sort(function(a,b){return b[1]-a[1];})[0];
-  if (masUsada && masUsada[1]>0) {
-    var nombres = {CD1P:'Contratación Directa 1P',D3P:'Directa 3 Invitaciones',CONV:'Convocatoria Pública',SUB:'Subasta Inversa'};
-    informativas.push({
-      titulo: 'Modalidad más utilizada: '+nombres[masUsada[0]],
-      detalle: masUsada[1]+' de '+total+' procesos ('+Math.round(masUsada[1]/total*100)+'%). Verifique que la selección de modalidad corresponde a los topes y naturaleza del objeto. Art. 2 Ley 1150/2007.',
-      accion: function(){ dash_abrirHistorial(masUsada[0]); }
-    });
-  }
-
-  // Cumplimiento global de expedientes
-  if (total>0) {
-    var colorCump = pctGlobal>=80?'verde':pctGlobal>=60?'amarillo':'rojo';
-    informativas.push({
-      titulo: 'Cumplimiento documental global: '+pctGlobal+'%',
-      detalle: docsOkSum+' de '+docsTotSum+' documentos verificados en todos los procesos. Estado: '+(pctGlobal>=80?'Satisfactorio':pctGlobal>=60?'Por mejorar':'Deficiente')+'. Acuerdo 015/2024 HSLV.',
-      accion: function(){ dash_abrirHistorial(''); }
-    });
-  }
-
-  // Responsables con más de 1 proceso
-  var porResp = {};
-  HIST_BD.forEach(function(p){ if(p.responsable) porResp[p.responsable]=(porResp[p.responsable]||0)+1; });
-  var respConCarga = Object.entries(porResp).filter(function(e){ return e[1]>1; });
-  if (respConCarga.length>0) {
-    informativas.push({
-      titulo: respConCarga.length+' responsable'+(respConCarga.length>1?'s':'')+' con múltiples procesos',
-      detalle: respConCarga.slice(0,3).map(function(e){ return e[0]+' ('+e[1]+' proc.)'; }).join(', ')+(respConCarga.length>3?' y otros.':'.'),
-      accion: function(){ dash_abrirHistorial(''); }
-    });
-  }
-
-  return { criticas:criticas, moderadas:moderadas, informativas:informativas };
+  return {
+    vencidos:  vencidos.map(function(v){ return v.item; }),
+    porVencer: porVencer.map(function(v){ return v.item; })
+  };
 }
 
 // ── Renderizar una tarjeta de alerta ──
@@ -1230,42 +921,6 @@ function _alertaCard(item, tipo) {
     '</div>';
 }
 
-// ── Renderizar checklist dinámico ──
-function _renderChecklist(containerEl, itemsDef, hist) {
-  if (!hist || hist.length===0) {
-    containerEl.innerHTML='<div style="color:#9CA3AF;font-size:12px;text-align:center;padding:20px 0;">Sin datos — guarda un proceso para ver el estado.</div>';
-    return;
-  }
-  // Tomar el proceso más reciente con checklist array
-  var reciente = null;
-  for (var i=0;i<hist.length;i++) {
-    if (hist[i].checklist && Array.isArray(hist[i].checklist) && hist[i].checklist.length>0) { reciente=hist[i]; break; }
-  }
-  if (!reciente) {
-    containerEl.innerHTML='<div style="color:#9CA3AF;font-size:12px;text-align:center;padding:20px 0;">Los procesos guardados no contienen detalle de checklist.</div>';
-    return;
-  }
-  // Contar estado global de cada ítem a través de todos los procesos
-  var html='<div style="font-size:10px;color:#6B7280;margin-bottom:6px;">Basado en '+hist.length+' proceso'+(hist.length>1?'s':'')+' — ítem OK si al menos un proceso lo tiene marcado</div>';
-  itemsDef.forEach(function(def) {
-    var totalConItem=0, okCount=0;
-    hist.forEach(function(p) {
-      if (!p.checklist||!Array.isArray(p.checklist)) return;
-      var item=p.checklist.find(function(c){return c.num===def.num;});
-      if (item) { totalConItem++; if(item.ok) okCount++; }
-    });
-    var icon, color, extra='';
-    if (totalConItem===0) { icon='—'; color='#9CA3AF'; extra='<span style="font-size:10px;color:#9CA3AF;">(no aplica en procesos guardados)</span>'; }
-    else if (okCount===totalConItem) { icon='✔'; color='#0B7A43'; }
-    else if (okCount===0) { icon='✖'; color='#DC2626'; extra='<span style="font-size:10px;color:#DC2626;">(pendiente en todos)</span>'; }
-    else { icon='⚠'; color='#D97706'; extra='<span style="font-size:10px;color:#D97706;">('+okCount+'/'+totalConItem+' procesos)</span>'; }
-    html+='<div style="display:flex;align-items:center;gap:8px;font-size:13px;">'+
-      '<span style="color:'+color+';font-size:16px;flex-shrink:0;">'+icon+'</span>'+
-      '<span>'+def.label+'</span> '+extra+'</div>';
-  });
-  containerEl.innerHTML=html;
-}
-
 // ══════════════════════════════════════
 //  ACTUALIZAR TODO EL BLOQUE DINÁMICO
 // ══════════════════════════════════════
@@ -1274,60 +929,27 @@ function _actualizarBloquesDinamicos() {
   var hist = HIST_BD;
   var total = hist.length;
 
-  // ── 1. INDICADORES GENERALES ──
-  var docsOk    = hist.reduce(function(a,p){return a+(p.checksOk||0);},0);
-  var docsTot   = hist.reduce(function(a,p){return a+(p.checksTotal||0);},0);
-  var docsPend  = docsTot - docsOk;
-  var completos = hist.filter(function(p){return p.checksTotal>0 && p.checksOk>=p.checksTotal;}).length;
-  var incompletos = total - completos;
-  var valorSum  = hist.reduce(function(a,p){
-    var n=parseFloat((p.valor||'').toString().replace(/[^0-9.]/g,''));
-    return a+(isNaN(n)?0:n);
-  },0);
-  var resps  = new Set(hist.filter(function(p){return p.responsable&&p.responsable.trim()!=='';}).map(function(p){return p.responsable.trim();}));
-  var areas  = new Set(hist.filter(function(p){return p.area&&p.area.trim()!=='';}).map(function(p){return p.area.trim();}));
-
-  function _set(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; }
-  _set('ind-total',        total);
-  _set('ind-completos',    completos);
-  _set('ind-incompletos',  incompletos);
-  _set('ind-docs-ok',      docsOk);
-  _set('ind-docs-pend',    docsPend);
-  _set('ind-valor-total',  _moneda(valorSum));
-  _set('ind-responsables', resps.size);
-  _set('ind-areas',        areas.size);
-
-  // ── 2. CHECKLISTS ──
-  var preEl  = document.getElementById('checklist-precontractual');
-  var contEl = document.getElementById('checklist-contractual');
-  if (preEl)  _renderChecklist(preEl,  ITEMS_PRECONTRACTUAL, hist);
-  if (contEl) _renderChecklist(contEl, ITEMS_CONTRACTUAL,    hist);
-
-  // ── 3. ALERTAS JURÍDICAS ──
-  var alertas = _generarAlertasDesdeHistorial();
+  // ── ALERTAS JURÍDICAS (plazos de Estudios Previos) ──
+  var alertas = _generarAlertasPlazos();
   var grid    = document.getElementById('alertas-grid');
   var badge   = document.getElementById('badge_alertas_total');
-  var totalAl = alertas.criticas.length + alertas.moderadas.length + alertas.informativas.length;
+  var totalAl = alertas.vencidos.length + alertas.porVencer.length;
 
   if (grid) {
     if (totalAl===0) {
       grid.innerHTML='<div style="text-align:center;color:#0B7A43;padding:30px;grid-column:1/-1;">'+
-        '<div style="font-size:36px;margin-bottom:8px;">✅</div>'+
-        '<p style="font-size:13px;font-weight:700;">Sin alertas jurídicas activas. Los '+total+' proceso'+(total!==1?'s':'')+' guardados no presentan incidencias detectadas.</p>'+
+        '<div style="margin-bottom:8px;"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>'+
+        '<p style="font-size:13px;font-weight:700;">Sin plazos por vencer ni vencidos entre los '+total+' proceso'+(total!==1?'s':'')+' guardados.</p>'+
         '</div>';
     } else {
       var htmlGrid='';
-      if (alertas.criticas.length>0) {
-        htmlGrid+='<div><div style="font-size:11.5px;font-weight:800;color:#DC2626;margin-bottom:10px;">🔴 CRÍTICAS — Acción inmediata</div>'+
-          '<div style="display:flex;flex-direction:column;gap:8px;">'+alertas.criticas.map(function(a){return _alertaCard(a,'critica');}).join('')+'</div></div>';
+      if (alertas.vencidos.length>0) {
+        htmlGrid+='<div><div style="font-size:11.5px;font-weight:800;color:#DC2626;margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>VENCIDOS</div>'+
+          '<div style="display:flex;flex-direction:column;gap:8px;">'+alertas.vencidos.map(function(a){return _alertaCard(a,'critica');}).join('')+'</div></div>';
       }
-      if (alertas.moderadas.length>0) {
-        htmlGrid+='<div><div style="font-size:11.5px;font-weight:800;color:#D97706;margin-bottom:10px;">🟡 MODERADAS — Gestionar pronto</div>'+
-          '<div style="display:flex;flex-direction:column;gap:8px;">'+alertas.moderadas.map(function(a){return _alertaCard(a,'moderada');}).join('')+'</div></div>';
-      }
-      if (alertas.informativas.length>0) {
-        htmlGrid+='<div><div style="font-size:11.5px;font-weight:800;color:#2563EB;margin-bottom:10px;">🔵 INFORMATIVAS — Seguimiento</div>'+
-          '<div style="display:flex;flex-direction:column;gap:8px;">'+alertas.informativas.map(function(a){return _alertaCard(a,'informativa');}).join('')+'</div></div>';
+      if (alertas.porVencer.length>0) {
+        htmlGrid+='<div><div style="font-size:11.5px;font-weight:800;color:#D97706;margin-bottom:10px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>PRÓXIMOS A VENCER (≤'+_PLAZO_ALERTA_DIAS+' días)</div>'+
+          '<div style="display:flex;flex-direction:column;gap:8px;">'+alertas.porVencer.map(function(a){return _alertaCard(a,'moderada');}).join('')+'</div></div>';
       }
       grid.innerHTML=htmlGrid;
     }
@@ -1336,15 +958,12 @@ function _actualizarBloquesDinamicos() {
   if (badge) {
     if (totalAl===0) {
       badge.textContent='Sin alertas'; badge.style.background='#10B981';
-    } else if (alertas.criticas.length>0) {
-      badge.textContent=alertas.criticas.length+' crítica'+(alertas.criticas.length>1?'s':'');
+    } else if (alertas.vencidos.length>0) {
+      badge.textContent=alertas.vencidos.length+' vencido'+(alertas.vencidos.length>1?'s':'');
       badge.style.background='#DC2626';
-    } else if (alertas.moderadas.length>0) {
-      badge.textContent=alertas.moderadas.length+' moderada'+(alertas.moderadas.length>1?'s':'');
-      badge.style.background='#D97706';
     } else {
-      badge.textContent=alertas.informativas.length+' informativa'+(alertas.informativas.length>1?'s':'');
-      badge.style.background='#3B82F6';
+      badge.textContent=alertas.porVencer.length+' por vencer';
+      badge.style.background='#D97706';
     }
     badge.style.color='white';
   }
@@ -1367,12 +986,12 @@ function _actualizarBloquesDinamicos() {
       var a1 = document.getElementById('d3p_arch_1');
       if (a1) a1.addEventListener('change', function() {
         var lbl = document.getElementById('d3p_arch_1_modal');
-        if (lbl && this.files[0]) lbl.textContent = '📄 ' + this.files[0].name;
+        if (lbl && this.files[0]) lbl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(this.files[0].name);
       });
       var a2 = document.getElementById('d3p_arch_2');
       if (a2) a2.addEventListener('change', function() {
         var lbl = document.getElementById('d3p_arch_2_modal');
-        if (lbl && this.files[0]) lbl.textContent = '📄 ' + this.files[0].name;
+        if (lbl && this.files[0]) lbl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(this.files[0].name);
       });
     });
 
@@ -1483,7 +1102,7 @@ function buildChecklist(mod) {
           <button onclick="document.getElementById('${fileId}').click()"
             style="background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;border:none;
             padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
-            📎 Cargar
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar
           </button>
           <input type="file" id="${fileId}" style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -1498,7 +1117,7 @@ function tabFileLoaded(input, checkId, nameId, mod) {
   if (!input.files || !input.files[0]) return;
   const f = input.files[0];
   const size = f.size < 1048576 ? (f.size/1024).toFixed(1)+' KB' : (f.size/1048576).toFixed(2)+' MB';
-  document.getElementById(nameId).innerHTML = '📄 <strong style="color:#1F2937;">' + f.name + '</strong> <span style="font-size:10px;color:#6B7280;">('+size+')</span>';
+  document.getElementById(nameId).innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><strong style="color:#1F2937;">' + f.name + '</strong> <span style="font-size:10px;color:#6B7280;">('+size+')</span>';
   const chk = document.getElementById(checkId);
   if (chk) { chk.checked = true; }
   const rowNum = checkId.split('_chk_')[1];
@@ -1552,14 +1171,18 @@ function lexconAnalizar(mod) {
   });
   const pct = items.length ? Math.round((cargados / items.length) * 100) : 0;
 
-  resultado.innerHTML = '<div style="text-align:center;padding:20px;"><div style="font-size:36px;">⏳</div><p style="color:#6B7280;font-size:14px;margin-top:8px;">Analizando expediente...</p></div>';
+  resultado.innerHTML = '<div style="text-align:center;padding:20px;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p style="color:#6B7280;font-size:14px;margin-top:8px;">Analizando expediente...</p></div>';
 
   setTimeout(() => {
     const criticos = faltantes.filter(f => f.num <= 5);
     const otros = faltantes.filter(f => f.num > 5);
     const estadoColor = pct >= 80 ? '#166534' : pct >= 50 ? '#92400E' : '#991B1B';
     const estadoBg = pct >= 80 ? '#DCFCE7' : pct >= 50 ? '#FEF3C7' : '#FEE2E2';
-    const estadoIcon = pct >= 80 ? '✅' : pct >= 50 ? '⚠️' : '🔴';
+    const estadoIcon = pct >= 80
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+      : pct >= 50
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
 
     let html = `
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
@@ -1569,7 +1192,7 @@ function lexconAnalizar(mod) {
         <span style="color:#6B7280;font-size:13px;">${cargados} de ${items.length} ítems verificados</span>
       </div>
       <div style="background:#F8FAFC;border-radius:12px;padding:16px;margin-bottom:16px;">
-        <div style="font-weight:800;color:#0B7A43;margin-bottom:10px;font-size:15px;">🤖 Análisis JURISKILLS IA — Contratación HSLV</div>
+        <div style="font-weight:800;color:#0B7A43;margin-bottom:10px;font-size:15px;display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>Análisis JURISKILLS IA — Contratación HSLV</div>
         <p style="color:#374151;font-size:13px;line-height:1.7;">
           ${pct >= 80
             ? 'El expediente contractual presenta un nivel de completitud <strong>ACEPTABLE</strong>. Se recomienda completar los ítems pendientes antes de la firma del contrato.'
@@ -1580,7 +1203,7 @@ function lexconAnalizar(mod) {
       </div>`;
 
     if (criticos.length > 0) {
-      html += `<div style="margin-bottom:14px;"><div style="font-weight:800;color:#DC2626;margin-bottom:8px;font-size:13px;">🔴 Documentos Críticos Faltantes</div>`;
+      html += `<div style="margin-bottom:14px;"><div style="font-weight:800;color:#DC2626;margin-bottom:8px;font-size:13px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Documentos Críticos Faltantes</div>`;
       criticos.forEach(f => {
         html += `<div style="background:#FEF2F2;border:1px solid #FECACA;border-left:4px solid #DC2626;border-radius:10px;padding:10px 13px;margin-bottom:8px;">
           <strong style="color:#991B1B;font-size:13px;">Ítem ${f.num}: ${f.doc}</strong>
@@ -1590,7 +1213,7 @@ function lexconAnalizar(mod) {
     }
 
     if (otros.length > 0) {
-      html += `<div style="margin-bottom:14px;"><div style="font-weight:800;color:#D97706;margin-bottom:8px;font-size:13px;">🟡 Documentos Pendientes</div>`;
+      html += `<div style="margin-bottom:14px;"><div style="font-weight:800;color:#D97706;margin-bottom:8px;font-size:13px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Documentos Pendientes</div>`;
       otros.slice(0,5).forEach(f => {
         html += `<div style="background:#FFFBEB;border:1px solid #FDE68A;border-left:4px solid #D97706;border-radius:10px;padding:10px 13px;margin-bottom:8px;">
           <strong style="color:#92400E;font-size:13px;">Ítem ${f.num}: ${f.doc}</strong>
@@ -1602,7 +1225,7 @@ function lexconAnalizar(mod) {
 
     if (faltantes.length === 0) {
       html += `<div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:12px;padding:16px;text-align:center;">
-        <div style="font-size:28px;margin-bottom:6px;">🎉</div>
+        <div style="margin-bottom:6px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
         <strong style="color:#166534;font-size:15px;">¡Expediente Completo!</strong>
         <p style="color:#374151;font-size:13px;margin-top:6px;">Todos los documentos han sido cargados y verificados. El expediente está listo para continuar.</p>
       </div>`;
@@ -1643,10 +1266,10 @@ function guardarObservacion(mod) {
             <strong style="color:${c};font-size:14px;">${e.id || 'Sin N°'} — ${e.estado}</strong>
             <span style="font-size:11px;color:#9CA3AF;">${e.ts}</span>
           </div>
-          ${e.resp ? '<p style="font-size:12px;color:#6B7280;margin-bottom:6px;">👤 Responsable: '+e.resp+'</p>' : ''}
-          ${e.general ? '<p style="font-size:13px;color:#374151;margin-bottom:6px;">📝 '+e.general+'</p>' : ''}
-          ${e.alertas ? '<p style="font-size:12px;color:#D97706;margin-bottom:4px;">⚠️ Alerta: '+e.alertas+'</p>' : ''}
-          ${e.acciones ? '<p style="font-size:12px;color:#0B7A43;">✅ Acción: '+e.acciones+'</p>' : ''}
+          ${e.resp ? '<p style="font-size:12px;color:#6B7280;margin-bottom:6px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Responsable: '+e.resp+'</p>' : ''}
+          ${e.general ? '<p style="font-size:13px;color:#374151;margin-bottom:6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>'+e.general+'</p>' : ''}
+          ${e.alertas ? '<p style="font-size:12px;color:#D97706;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Alerta: '+e.alertas+'</p>' : ''}
+          ${e.acciones ? '<p style="font-size:12px;color:#0B7A43;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Acción: '+e.acciones+'</p>' : ''}
         </div>`;
     });
   }
@@ -2050,7 +1673,7 @@ function _fmt_formatearValorInput(input) {
 }
 
 // Convierte "$ 15.000.000,50" -> "15000000.50" (formato numérico estándar,
-// el mismo que ya esperan _moneda()/hist_formatMoney() al leer p.valor).
+// el mismo que ya espera hist_formatMoney() al leer p.valor).
 function _fmt_valorARaw(valorFormateado) {
     if (!valorFormateado) return '';
     var limpio = valorFormateado.replace(/\$/g, '').replace(/\s/g, '');
@@ -2084,11 +1707,12 @@ async function verificarObjetoContractual() {
     }
 
     var btn = document.getElementById('mp_verificar_btn');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Verificando...'; }
+    var _btnVerificarIcono = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+    if (btn) { btn.disabled = true; btn.textContent = 'Verificando...'; }
 
     var resultado = await db_verificarObjetoSimilar(objeto);
 
-    if (btn) { btn.disabled = false; btn.textContent = '🔍 Verificar objeto contractual'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = _btnVerificarIcono + 'Verificar objeto contractual'; }
     if (!resultadoEl) return;
     // Una nueva verificación siempre debe mostrarse, aunque la anterior
     // haya quedado oculta por _cd1pToggleForzarDuplicado().
@@ -2098,7 +1722,7 @@ async function verificarObjetoContractual() {
         resultadoEl.innerHTML =
             '<div style="background:#FEF2F2;border-left:4px solid #DC2626;' +
             'padding:10px 12px;border-radius:8px;color:#DC2626;font-size:13px;">' +
-            '❌ No se pudo verificar en este momento. Intente nuevamente.</div>';
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>No se pudo verificar en este momento. Intente nuevamente.</div>';
         _cd1pObjetoVerificado = false;
         _cd1pForzarDuplicado  = false;
         _cd1pOcultarCamposPostVerificacion();
@@ -2111,7 +1735,7 @@ async function verificarObjetoContractual() {
             .toLocaleDateString('es-CO', {day:'2-digit', month:'2-digit', year:'numeric'});
         var pct    = Math.round((resultado.coincidencia.similitud || 0) * 100);
 
-        var msg = '⚠️ Ya existe un objeto contractual muy similar (' + pct + '% de coincidencia), ' +
+        var msg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Ya existe un objeto contractual muy similar (' + pct + '% de coincidencia), ' +
                   'registrado el ' + fecha + ' con el código <strong>' + resultado.coincidencia.codigo + '</strong>.';
 
         _cd1pObjetoVerificado = false;
@@ -2132,7 +1756,7 @@ async function verificarObjetoContractual() {
                 '<input type="checkbox" id="mp_forzar_duplicado" ' +
                 'style="width:auto;flex-shrink:0;" ' +
                 'onchange="_cd1pToggleForzarDuplicado(this)"> ' +
-                '🔓 Forzar creación de todas formas</label>' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Forzar creación de todas formas</label>' +
                 '</div>';
         } else {
             msg += ' Por favor comuníquese con un administrador para continuar.';
@@ -2146,7 +1770,7 @@ async function verificarObjetoContractual() {
     resultadoEl.innerHTML =
         '<div style="background:#ECFDF5;border-left:4px solid #0B7A43;' +
         'padding:10px 12px;border-radius:8px;color:#0B7A43;font-size:13px;">' +
-        '✅ No se encontraron objetos similares este año. Puede continuar.</div>';
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>No se encontraron objetos similares este año. Puede continuar.</div>';
 
     _cd1pObjetoVerificado = true;
     _cd1pForzarDuplicado  = false;
@@ -2187,7 +1811,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (resultadoEl) {
             resultadoEl.style.display = '';
             resultadoEl.innerHTML =
-                '<div style="font-size:12px;color:#92400E;">✏️ Modificó el objeto — ' +
+                '<div style="font-size:12px;color:#92400E;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Modificó el objeto — ' +
                 'verifique nuevamente antes de continuar.</div>';
         }
     });
@@ -2228,7 +1852,7 @@ async function guardarProceso() {
     );
     if (btnGuardar) {
         btnGuardar.disabled    = true;
-        btnGuardar.textContent = '⏳ Guardando...';
+        btnGuardar.textContent = 'Guardando...';
     }
 
     // ── Recopilar datos del formulario ─────────────────
@@ -2314,16 +1938,20 @@ async function guardarProceso() {
         valor:           valor.trim(),
         responsable:     responsable.trim(),
         checklist:       checklist,
-        forzarDuplicado: _cd1pForzarDuplicado
+        forzarDuplicado: _cd1pForzarDuplicado,
+        plazoVigencia:   _plazoVigenciaParaGuardar()
     });
 
     // ── Restaurar botón ───────────────────────────────
     if (btnGuardar) {
         btnGuardar.disabled    = false;
-        btnGuardar.textContent = '💾 Guardar Proceso';
+        btnGuardar.innerHTML   = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar Proceso';
     }
 
     if (!resultado) return;
+
+    // Proceso guardado con éxito: ya no hay nada que se pierda al cerrar.
+    _procesoFormSucio = false;
 
     // ── Limpiar formulario ────────────────────────────
     limpiarFormularioProceso();
@@ -2337,11 +1965,11 @@ async function guardarProceso() {
     // ── Toast de éxito ────────────────────────────────
     var toast = document.createElement('div');
     toast.style.cssText =
-        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';
-    toast.innerHTML = '✅ Proceso <strong>' + resultado.codigo +
+    toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Proceso <strong>' + resultado.codigo +
                       '</strong> guardado correctamente';
     document.body.appendChild(toast);
     setTimeout(function(){ toast.remove(); }, 4000);
@@ -2522,7 +2150,7 @@ function renderizarBDProcesos() {
 
     if (lista.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:#9ca3af;">
-            <div style="font-size:32px;margin-bottom:8px;">📭</div>
+            <div style="margin-bottom:8px;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
             <p>${BD_PROCESOS.length === 0 ? 'Aún no se han guardado procesos.' : 'Sin resultados para la búsqueda.'}</p>
         </td></tr>`;
         return;
@@ -2532,7 +2160,10 @@ function renderizarBDProcesos() {
         const pct     = p.docsTotal > 0 ? Math.min(100, Math.round((p.checkOk / 23) * 100)) : 0;
         const pctCol  = pct >= 80 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444';
         const estadoBg = pct >= 80 ? '#dcfce7;color:#166534' : pct >= 50 ? '#fef3c7;color:#92400e' : '#fee2e2;color:#991b1b';
-        const estadoLbl = pct >= 80 ? '✅ Completo' : pct >= 50 ? '⚠️ Parcial' : '🔴 Incompleto';
+        const iconCheck = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+        const iconWarn  = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+        const iconAlert = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+        const estadoLbl = pct >= 80 ? iconCheck + 'Completo' : pct >= 50 ? iconWarn + 'Parcial' : iconAlert + 'Incompleto';
 
         return `<tr style="transition:background .15s;" onmouseover="this.style.background='#f8faff'" onmouseout="this.style.background=''">
           <td style="font-weight:700;color:#123C7B;white-space:nowrap;">${p.id}</td>
@@ -2542,10 +2173,10 @@ function renderizarBDProcesos() {
           </td>
           <td style="white-space:nowrap;font-size:13px;">${p.area}</td>
           <td style="white-space:nowrap;font-size:12px;">
-            ${p.responsable ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#EFF6FF;color:#123C7B;border:1px solid #BFDBFE;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;">👤 ' + p.responsable + '</span>' : '<span style="color:#9CA3AF;font-style:italic;font-size:11px;">Sin asignar</span>'}
+            ${p.responsable ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#EFF6FF;color:#123C7B;border:1px solid #BFDBFE;border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + p.responsable + '</span>' : '<span style="color:#9CA3AF;font-style:italic;font-size:11px;">Sin asignar</span>'}
           </td>
           <td style="white-space:nowrap;font-size:12px;color:#6b7280;">
-            📅 ${p.fecha}<br>🕐 ${p.hora}
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${p.fecha}<br><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${p.hora}
           </td>
           <td>
             <div style="display:flex;align-items:center;gap:6px;">
@@ -2565,13 +2196,13 @@ function renderizarBDProcesos() {
               style="background:#EFF6FF;color:#123C7B;border:1px solid #BFDBFE;
                      border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;
                      cursor:pointer;white-space:nowrap;">
-              🔍 Ver
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Ver
             </button>
             <button onclick="eliminarProceso('${p.id}')"
               style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;
                      border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;
                      cursor:pointer;margin-left:4px;">
-              🗑
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
             </button>
           </td>
         </tr>`;
@@ -2583,7 +2214,7 @@ function verDetalleProceso(id) {
     if (!p) return;
 
     const docsHtml = p.documentos.length > 0
-        ? p.documentos.map(d => `<li style="margin-bottom:3px;">📄 Ítem ${d.item}: <strong>${d.nombre}</strong> (${d.tamano})</li>`).join('')
+        ? p.documentos.map(d => `<li style="margin-bottom:3px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Ítem ${d.item}: <strong>${d.nombre}</strong> (${d.tamano})</li>`).join('')
         : '<li style="color:#9ca3af;">Sin documentos cargados</li>';
 
     const pct    = Math.min(100, Math.round((p.checkOk / 23) * 100));
@@ -2615,7 +2246,7 @@ function verDetalleProceso(id) {
         <p style="margin:0;color:#1f2937;font-size:13px;">${p.area}</p>
       </div>
       <div style="background:#EFF6FF;border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid #BFDBFE;">
-        <div style="font-size:11px;font-weight:700;color:#123C7B;margin-bottom:4px;">👤 RESPONSABLE DEL PROCESO</div>
+        <div style="font-size:11px;font-weight:700;color:#123C7B;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>RESPONSABLE DEL PROCESO</div>
         <p style="margin:0;color:#123C7B;font-size:14px;font-weight:700;">${p.responsable || '<span style="color:#9CA3AF;font-style:italic;font-weight:400;">Sin asignar</span>'}</p>
       </div>
       <div style="background:#F8FAFC;border-radius:12px;padding:14px;margin-bottom:14px;">
@@ -2688,7 +2319,7 @@ if (_arch1) {
     _arch1.addEventListener('change', function() {
         const nombre = this.files[0] ? this.files[0].name : '';
         const lbl = document.getElementById('nombreArchivo_1_modal');
-        if (lbl) lbl.textContent = nombre ? '📄 ' + nombre : '';
+        if (lbl) lbl.innerHTML = nombre ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(nombre) : '';
     });
 }
 
@@ -2735,10 +2366,10 @@ function d3p_mostrarArchivo(input, labelId, miniLabelId) {
   if (!input.files || !input.files[0]) return;
   var nombre = input.files[0].name;
   var el = document.getElementById(labelId);
-  if (el) el.innerHTML = '📄 <strong>' + nombre + '</strong>';
+  if (el) el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><strong>' + escaparHTML(nombre) + '</strong>';
   if (miniLabelId) {
     var ml = document.getElementById(miniLabelId);
-    if (ml) ml.textContent = '📄 ' + nombre;
+    if (ml) ml.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(nombre);
   }
 }
 
@@ -2747,12 +2378,12 @@ document.addEventListener('DOMContentLoaded', function() {
   var a1 = document.getElementById('d3p_arch_1');
   if (a1) a1.addEventListener('change', function() {
     var lbl = document.getElementById('d3p_arch_1_lbl');
-    if (lbl && this.files[0]) lbl.textContent = '📄 ' + this.files[0].name;
+    if (lbl && this.files[0]) lbl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(this.files[0].name);
   });
   var a2 = document.getElementById('d3p_arch_2');
   if (a2) a2.addEventListener('change', function() {
     var lbl = document.getElementById('d3p_arch_2_lbl');
-    if (lbl && this.files[0]) lbl.textContent = '📄 ' + this.files[0].name;
+    if (lbl && this.files[0]) lbl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(this.files[0].name);
   });
 
   // ===== FIX FORZADO: restaurar display correcto en tabla del modal 3P =====
@@ -2818,7 +2449,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (nombre || area) {
       preview.style.display = 'flex';
       document.getElementById('sup_preview_nombre').textContent = nombre || '(sin nombre)';
-      document.getElementById('sup_preview_area').textContent = area ? '🏢 ' + area : '';
+      document.getElementById('sup_preview_area').innerHTML = area ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="1"/><line x1="9" y1="6" x2="9" y2="6.01"/><line x1="15" y1="6" x2="15" y2="6.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/></svg>' + escaparHTML(area) : '';
     } else {
       preview.style.display = 'none';
     }
@@ -3018,7 +2649,7 @@ async function guardarProcesoHistorial(tipo) {
     );
     if (btnGuardar) {
         btnGuardar.disabled    = true;
-        btnGuardar.textContent = '⏳ Guardando...';
+        btnGuardar.textContent = 'Guardando...';
     }
 
     // ── Recopilar checklist según módulo ──────────────
@@ -3084,16 +2715,20 @@ async function guardarProcesoHistorial(tipo) {
         valor:           valor,
         responsable:     responsable,
         checklist:       checklist,
-        forzarDuplicado: _cd1pForzarDuplicado
+        forzarDuplicado: _cd1pForzarDuplicado,
+        plazoVigencia:   _plazoVigenciaParaGuardar()
     });
 
     // ── Restaurar botón ───────────────────────────────
     if (btnGuardar) {
         btnGuardar.disabled    = false;
-        btnGuardar.textContent = '💾 Guardar Proceso';
+        btnGuardar.innerHTML   = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar Proceso';
     }
 
     if (!resultado) return;
+
+    // Proceso guardado con éxito: ya no hay nada que se pierda al cerrar.
+    _procesoFormSucio = false;
 
     // Re-exigir verificación del objeto contractual para el próximo proceso
     // (D3P comparte mp_verificar_btn con CD1P; CONV/SUB no lo tienen).
@@ -3126,11 +2761,11 @@ async function guardarProcesoHistorial(tipo) {
     // ── Toast ─────────────────────────────────────────
     var toast = document.createElement('div');
     toast.style.cssText =
-        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';
-    toast.innerHTML = '✅ Proceso <strong>' + resultado.codigo +
+    toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Proceso <strong>' + resultado.codigo +
                       '</strong> guardado correctamente';
     document.body.appendChild(toast);
     setTimeout(function(){ toast.remove(); }, 4000);
@@ -3367,7 +3002,7 @@ function hist_renderTabla() {
                            'border-radius:7px;padding:6px 10px;font-size:13px;' +
                            'cursor:pointer;flex-shrink:0;transition:background .2s;" ' +
                     'onmouseover="this.style.background=\'#0B7A43\'" ' +
-                    'onmouseout="this.style.background=\'#123C7B\'">✔</button>' +
+                    'onmouseout="this.style.background=\'#123C7B\'"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg></button>' +
             '</div>' +
         '</div>';
 
@@ -3379,7 +3014,7 @@ function hist_renderTabla() {
                 ? '<span style="display:inline-flex;align-items:center;gap:4px;' +
                   'background:#EFF6FF;color:#123C7B;border:1px solid #BFDBFE;' +
                   'border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;">' +
-                  '👤 ' + escaparHTML(p.responsable_asignado_nombre) + '</span>'
+                  '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + escaparHTML(p.responsable_asignado_nombre) + '</span>'
                 : '<span style="color:#9CA3AF;font-style:italic;font-size:11px;">' +
                   'Sin asignar</span>') +
         '</div>';
@@ -3400,8 +3035,10 @@ function hist_renderTabla() {
       '<td style="padding:12px 14px;white-space:nowrap;color:#6B7280;font-size:12px;">' + p.fecha + '<br><span style="font-size:11px;">' + p.hora + '</span></td>' +
       '<td style="padding:12px 14px;text-align:center;">' +
         '<div style="display:flex;gap:6px;justify-content:center;">' +
-          '<button class="hist-btn-ver" onclick="hist_verDetalle(\'' + p.id + '\')">👁 Ver</button>' +
-          '<button class="hist-btn-del" onclick="hist_eliminar(\'' + p.id + '\')">🗑</button>' +
+          '<button class="hist-btn-ver" onclick="hist_verDetalle(\'' + p.id + '\')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-2px;margin-right:3px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>Ver</button>' +
+          (_perfilCache && _perfilCache.rol === 'admin'
+            ? '<button class="hist-btn-del" onclick="hist_eliminar(\'' + p.id + '\')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
+            : '') +
         '</div>' +
       '</td>' +
     '</tr>';
@@ -3426,13 +3063,13 @@ function hist_verDetalle(id) {
       var archivoGuardado = item.archivo || '';
       var rowBg = item.ok ? '#F0FDF4' : '#FFF';
       var estadoIcon = item.ok
-        ? '<span style="color:#0B7A43;font-weight:700;font-size:13px;">✅</span>'
-        : '<span style="color:#D1D5DB;font-size:13px;">⬜</span>';
+        ? '<span style="color:#0B7A43;font-weight:700;font-size:13px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-2px;"><polyline points="20 6 9 17 4 12"/></svg></span>'
+        : '<span style="color:#D1D5DB;font-size:13px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;vertical-align:-2px;"><rect x="4" y="4" width="16" height="16" rx="3"/></svg></span>';
 
       var archCell =
         '<div id="hist-arch-nom-' + id + '-' + item.num + '" style="font-size:11px;' +
           (archivoGuardado ? 'color:#0B7A43;font-weight:600;' : 'color:#9CA3AF;font-style:italic;') + '">' +
-          (archivoGuardado ? '📄 ' + escaparHTML(archivoGuardado) : 'Sin archivo') +
+          (archivoGuardado ? '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-1px;margin-right:2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>' + escaparHTML(archivoGuardado) : 'Sin archivo') +
         '</div>';
 
       // Se muestra la posición secuencial (idxItem+1), no item.num — para
@@ -3450,13 +3087,13 @@ function hist_verDetalle(id) {
     });
     checklistHTML =
       '<div style="margin-top:16px;">' +
-        '<div style="font-size:11px;color:#123C7B;font-weight:700;text-transform:uppercase;margin-bottom:8px;">📋 Documentos del Expediente</div>' +
+        '<div style="font-size:11px;color:#123C7B;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Documentos del Expediente</div>' +
         '<div style="background:#EFF6FF;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#374151;border:1px solid #BFDBFE;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">' +
-          '<span>💡 Para cargar o reemplazar documentos, entre al detalle del proceso.</span>' +
+          '<span>Para cargar o reemplazar documentos, entre al detalle del proceso.</span>' +
           '<a href="/proceso/' + encodeURIComponent(id) + '" ' +
             'style="background:linear-gradient(90deg,#123C7B,#0B7A43);color:white;text-decoration:none;' +
-            'padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;max-width:100%;box-sizing:border-box;overflow-wrap:break-word;text-align:center;">' +
-            '📂 Ir al proceso ' + escaparHTML(id) +
+            'padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;max-width:100%;box-sizing:border-box;overflow-wrap:break-word;text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:5px;">' +
+            '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 7a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9L12 8h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>Ir al proceso ' + escaparHTML(id) +
           '</a>' +
         '</div>' +
         '<div style="border-radius:12px;border:1px solid #E5E7EB;overflow:hidden;max-height:380px;overflow-y:auto;">' +
@@ -3479,7 +3116,7 @@ function hist_verDetalle(id) {
       '</div>';
   }
 
-  document.getElementById('hist-det-titulo').textContent = '📋 ' + p.id;
+  document.getElementById('hist-det-titulo').textContent = p.id;
   document.getElementById('hist-det-body').innerHTML =
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">' +
       '<div style="background:#F8FAFC;border-radius:12px;padding:14px;border:1px solid #E5E7EB;">' +
@@ -3495,11 +3132,11 @@ function hist_verDetalle(id) {
         '<div style="font-weight:600;color:#374151;">' + (p.area ? escaparHTML(p.area) : '—') + '</div>' +
       '</div>' +
       '<div style="background:#EFF6FF;border-radius:12px;padding:14px;border:1px solid #BFDBFE;">' +
-        '<div style="font-size:11px;color:#123C7B;font-weight:700;text-transform:uppercase;margin-bottom:4px;">👤 Responsable del Proceso</div>' +
+        '<div style="font-size:11px;color:#123C7B;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Responsable del Proceso</div>' +
         '<div style="font-weight:700;color:#123C7B;font-size:14px;">' + (p.responsable ? escaparHTML(p.responsable) : '<span style="color:#9CA3AF;font-style:italic;font-weight:400;">Sin asignar</span>') + '</div>' +
       '</div>' +
       '<div style="background:#F0FDF4;border-radius:12px;padding:14px;border:1px solid #BBF7D0;grid-column:span 2;">' +
-        '<div style="font-size:11px;color:#0B7A43;font-weight:700;text-transform:uppercase;margin-bottom:6px;">✅ Avance Documental</div>' +
+        '<div style="font-size:11px;color:#0B7A43;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Avance Documental</div>' +
         '<div style="display:flex;align-items:center;gap:10px;">' +
           '<div style="flex:1;height:8px;border-radius:6px;background:#D1FAE5;overflow:hidden;">' +
             '<div id="hist-det-barra-' + id + '" style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#0B7A43,#123C7B);border-radius:6px;transition:width .4s;"></div>' +
@@ -3521,16 +3158,35 @@ function hist_verDetalle(id) {
   document.getElementById('hist-detalle-panel').classList.add('open');
 }
 
-function hist_eliminar(id) {
-  // Nota: por diseño del sistema NADA se borra de la base de datos (todo es
-  // trazable). Este botón solo oculta el proceso de la vista actual — al
-  // recargar la página volverá a aparecer. El mensaje lo aclara para no
-  // hacerle creer al usuario que eliminó algo de verdad.
-  if (!confirm('¿Ocultar el proceso ' + id + ' de esta vista?\n\n' +
-               'El proceso NO se elimina del sistema: al recargar la página ' +
-               'volverá a aparecer (nada se borra, todo queda trazable).')) return;
-  HIST_BD = HIST_BD.filter(function(p){ return p.id !== id; });
+async function hist_eliminar(id) {
+  if (!_perfilCache || _perfilCache.rol !== 'admin') {
+    alert('⚠️ Solo un Administrador puede eliminar procesos.');
+    return;
+  }
+
+  var p = HIST_BD.find(function(x){ return x.id === id; });
+  if (!p || !p.supabase_id) return;
+
+  if (!confirm('¿Eliminar definitivamente el proceso ' + id + '?\n\n' +
+               'Esta acción borra el proceso y sus documentos/comentarios ' +
+               'de la base de datos y no se puede deshacer.')) return;
+
+  var ok = await db_eliminarProceso(p.supabase_id);
+  if (!ok) return;
+
+  HIST_BD = HIST_BD.filter(function(x){ return x.id !== id; });
   hist_renderTabla();
+
+  // ── Toast de éxito (mismo estilo que al guardar un proceso) ──
+  var toast = document.createElement('div');
+  toast.style.cssText =
+      'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
+      'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
+      'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
+      'box-shadow:0 8px 24px rgba(0,0,0,.3);';
+  toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Proceso <strong>' + id + '</strong> eliminado correctamente';
+  document.body.appendChild(toast);
+  setTimeout(function(){ toast.remove(); }, 4000);
 }
 
 // ── Asignar responsable jurídico a un proceso ──
@@ -3552,9 +3208,10 @@ async function hist_asignarResponsable(procesoId, supabaseId) {
 
     // Feedback visual
     var btnEl = document.getElementById('resp_btn_' + procesoId);
+    var svgCheck = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>';
     if (btnEl) {
         btnEl.disabled    = true;
-        btnEl.textContent = '⏳';
+        btnEl.textContent = '...';
     }
 
     // Si el proceso está en Supabase, guardar allí
@@ -3563,7 +3220,7 @@ async function hist_asignarResponsable(procesoId, supabaseId) {
         if (!ok) {
             if (btnEl) {
                 btnEl.disabled    = false;
-                btnEl.textContent = '✔';
+                btnEl.innerHTML   = svgCheck;
             }
             return;
         }
@@ -3584,10 +3241,10 @@ async function hist_asignarResponsable(procesoId, supabaseId) {
     // Feedback de éxito en el botón
     if (btnEl) {
         btnEl.disabled    = false;
-        btnEl.textContent = '✅';
+        btnEl.innerHTML   = svgCheck;
         btnEl.style.background = '#0B7A43';
         setTimeout(function() {
-            btnEl.textContent      = '✔';
+            btnEl.innerHTML        = svgCheck;
             btnEl.style.background = '#123C7B';
         }, 2000);
     }
@@ -3740,7 +3397,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.innerHTML =
             '<div class="modal-content" style="max-width:640px;max-height:85vh;overflow-y:auto;">' +
               '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
-                '<h2 id="juriskillsModalTitulo" style="margin:0;font-size:16px;color:#123C7B;">🤖 Análisis JURISKILLS</h2>' +
+                '<h2 id="juriskillsModalTitulo" style="margin:0;font-size:16px;color:#123C7B;display:flex;align-items:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg><span id="juriskillsModalTituloTexto">Análisis JURISKILLS</span></h2>' +
                 '<button type="button" onclick="juriskillsCerrarModal()" style="border:none;background:none;font-size:22px;line-height:1;cursor:pointer;color:#6B7280;">&times;</button>' +
               '</div>' +
               '<div id="juriskillsModalContenido"></div>' +
@@ -3753,7 +3410,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function juriskillsAbrirModal(clave) {
     const val = estadoDocumentos[clave];
     if (!val || !val.analisis) return;
-    document.getElementById('juriskillsModalTitulo').textContent = '🤖 Análisis JURISKILLS — ' + (val.archivo?.name || '');
+    document.getElementById('juriskillsModalTituloTexto').textContent = 'Análisis JURISKILLS — ' + (val.archivo?.name || '');
     document.getElementById('juriskillsModalContenido').innerHTML = _renderContenidoCompletoAnalisis(val);
     document.getElementById('juriskillsModal').style.display = 'flex';
 }
@@ -3820,6 +3477,15 @@ async function analizarDocumentoCD1P(clave) {
             ? await analizarConIA(numItem, archivo.name, contenido)
             : ejecutarAnalisisLocalReglas(numItem, archivo.name, contenido);
 
+        // Ítem 5 = Estudios Previos: además del análisis normal, intentar
+        // extraer localmente la fecha de vigencia declarada en su sección
+        // "PLAZO" (ver _extraerPlazoVigencia en juriskills-engine.js). Se
+        // guarda junto al proceso al hacer "Guardar Proceso" para alimentar
+        // las alertas de vencimiento del dashboard.
+        if (numItem === 5 && contenido.tipo === 'texto' && contenido.data) {
+            analisis.plazoVigenciaDetectado = _extraerPlazoVigencia(contenido.data);
+        }
+
         estadoDocumentos[clave] = { numItem, archivo, analisis, estado: analisis.estado };
         actualizarPanelAgente();
         if (typeof cd1p_actualizarAvance === 'function') cd1p_actualizarAvance();
@@ -3853,6 +3519,21 @@ async function analizarDocumentoCD1P(clave) {
     }
 }
 
+// Busca en estadoDocumentos si el ítem 5 (Estudios Previos) ya fue
+// analizado y se le detectó una fecha de vigencia de plazo (ver
+// _extraerPlazoVigencia en juriskills-engine.js) — usado al guardar el
+// proceso (CD1P/D3P) para persistirla en `procesos.plazo_estudios_previos_hasta`.
+function _plazoVigenciaParaGuardar() {
+    if (typeof estadoDocumentos === 'undefined') return null;
+    for (var k in estadoDocumentos) {
+        var v = estadoDocumentos[k];
+        if (v && v.numItem === 5 && v.analisis && v.analisis.plazoVigenciaDetectado) {
+            return v.analisis.plazoVigenciaDetectado.fecha;
+        }
+    }
+    return null;
+}
+
 // Función llamada cuando se selecciona un archivo en la tabla del checklist.
 // Ya NO analiza automático: solo registra el archivo como "pendiente" (o
 // "sin análisis" para los ítems que no lo requieren) — el análisis real
@@ -3872,7 +3553,7 @@ async function mostrarArchivo(input, elementoId) {
     // ── Marcar el checkbox automáticamente al cargar el archivo ──
     cd1p_marcarCheckboxPorItem(sufijo);
 
-    if (divNombre) divNombre.innerHTML = `✅ <strong>${archivo.name}</strong>`;
+    if (divNombre) divNombre.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' + `<strong>${archivo.name}</strong>`;
 
     const modo = _modoAnalisisPorSufijo(sufijo);
     if (modo === 'ninguno') {
@@ -3940,7 +3621,8 @@ function _histU_asegurarContenedor(prefijo, num, inputEl) {
             'style="background:none;border:1px solid #CBD5E1;border-radius:8px;' +
             'padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;' +
             'display:flex;align-items:center;gap:5px;">' +
-            '🕓 Ver historial <span id="' + prefijo + 'badge_hist_' + num + '" ' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+            'Ver historial <span id="' + prefijo + 'badge_hist_' + num + '" ' +
                 'style="background:#123C7B;color:white;border-radius:10px;padding:1px 7px;font-size:10px;">0</span>' +
         '</button>' +
         '<div id="' + prefijo + 'historial_' + num + '" ' +
@@ -4024,15 +3706,21 @@ function histU_render(prefijo, num) {
         div.innerHTML =
             '<div class="hist-num ' + (esPrimera ? 'hist-num-v1' : 'hist-num-vN') + '">' + e.version + '</div>' +
             '<div class="hist-info">' +
-                '<div class="hist-nombre">📄 ' + e.nombre +
+                '<div class="hist-nombre"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + e.nombre +
                     (esPrimera ? '<span class="hist-tag-v1">v1 · Inicial</span>' : '<span class="hist-tag-vN">v' + e.version + '</span>') +
-                    (idx === 0 ? '<span class="hist-tag-last">⬆ Actual</span>' : '') +
+                    (idx === 0 ? '<span class="hist-tag-last"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Actual</span>' : '') +
                     ' <button onclick="histU_quitarVersion(\'' + prefijo + '\',' + num + ',' + e.id + ')" ' +
                         'title="Quitar esta versión" style="background:none;border:1px solid #DC2626;color:#DC2626;' +
-                        'border-radius:6px;padding:1px 7px;font-size:10.5px;cursor:pointer;font-weight:600;margin-left:6px;">🗑️ Quitar</button>' +
+                        'border-radius:6px;padding:1px 7px;font-size:10.5px;cursor:pointer;font-weight:600;margin-left:6px;display:inline-flex;align-items:center;gap:2px;">' +
+                        '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+                        'Quitar</button>' +
                 '</div>' +
-                (e.extra ? '<div class="hist-meta">ℹ️ ' + e.extra + '</div>' : '') +
-                '<div class="hist-meta">📅 ' + e.fecha + ' &nbsp;·&nbsp; 🕐 ' + e.hora + ' &nbsp;·&nbsp; 💾 ' + e.tamano + '</div>' +
+                (e.extra ? '<div class="hist-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' + e.extra + '</div>' : '') +
+                '<div class="hist-meta">' +
+                    '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + e.fecha +
+                    ' &nbsp;·&nbsp; <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + e.hora +
+                    ' &nbsp;·&nbsp; <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>' + e.tamano +
+                '</div>' +
             '</div>';
         c.appendChild(div);
     });
@@ -4087,7 +3775,7 @@ function _histU_quitarEntradaPorIndice(prefijo, num, idx) {
             var dt = new DataTransfer();
             dt.items.add(anterior.archivo);
             entrada.origenInput.files = dt.files;
-            if (divNombre) divNombre.innerHTML = '✅ <strong>' + anterior.nombre + '</strong>';
+            if (divNombre) divNombre.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>' + anterior.nombre + '</strong>';
         } else {
             if (entrada.origenInput) entrada.origenInput.value = '';
             if (divNombre) divNombre.innerHTML = 'Sin archivo cargado';
@@ -4214,7 +3902,7 @@ function actualizarPanelAgente() {
         estadoBadge.style.display = 'inline-block';
         if (nAnal > 0) {
             estadoBadge.className = 'ia-badge badge-analizando';
-            estadoBadge.textContent = '⏳ Analizando…';
+            estadoBadge.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Analizando…';
         } else if (nErr > 0) {
             estadoBadge.className = 'ia-badge badge-error';
             estadoBadge.textContent = `${nErr} ${nErr !== 1 ? 'correcciones requeridas' : 'corrección requerida'}`;
@@ -4226,7 +3914,7 @@ function actualizarPanelAgente() {
             estadoBadge.textContent = `${nPend} pendiente${nPend !== 1 ? 's' : ''} de analizar`;
         } else {
             estadoBadge.className = 'ia-badge badge-ok';
-            estadoBadge.textContent = '✅ Todo en orden';
+            estadoBadge.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Todo en orden';
         }
     }
 
@@ -4259,8 +3947,8 @@ function _renderTarjetasJuriskills(docs) {
         if (val.estado === 'analizando') {
             html += `<div style="padding:6px 0;${idxDoc>0?'border-top:1px solid #F1F5F9;':''}">
               <div style="display:flex;align-items:center;gap:6px;color:#6366F1;font-size:11px;">
-                <span class="ia-badge badge-analizando">⏳ Analizando</span>
-                <span style="color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${val.archivo?.name || ''}</span>
+                <span class="ia-badge badge-analizando"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Analizando</span>
+                <span style="color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${val.archivo?.name || ''}</span>
               </div>
               ${val.progreso ? `<div style="margin-top:4px;font-size:10px;color:#6366F1;">${val.progreso}</div>` : ''}
               <div class="ia-loader" style="margin-top:6px;"><div></div><div></div><div></div></div>
@@ -4274,9 +3962,9 @@ function _renderTarjetasJuriskills(docs) {
         if (val.estado === 'pendiente') {
             const clavePend = (val.numItem ?? '') + '__' + (val.archivo?.name || '');
             html += `<div style="padding:8px 0;${idxDoc>0?'border-top:1px solid #F1F5F9;':''}">
-              <div style="margin-bottom:8px;font-size:12px;color:#0B7A43;font-weight:600;">✅ <strong>${val.archivo?.name || ''}</strong></div>
-              <button class="btn" style="padding:10px 14px;font-size:13px;"
-                onclick="analizarDocumentoCD1P('${clavePend.replace(/'/g,"\\'")}')">🔎 Analizar</button>
+              <div style="margin-bottom:8px;font-size:12px;color:#0B7A43;font-weight:600;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>${val.archivo?.name || ''}</strong></div>
+              <button class="btn" style="padding:10px 14px;font-size:13px;display:inline-flex;align-items:center;gap:5px;"
+                onclick="analizarDocumentoCD1P('${clavePend.replace(/'/g,"\\'")}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Analizar</button>
             </div>`;
             return;
         }
@@ -4288,7 +3976,7 @@ function _renderTarjetasJuriskills(docs) {
         // muestra el archivo cargado sin badge ni barra de cumplimiento.
         if (val.estado === 'sin_analisis' || a.sinAnalisis) {
             html += `<div style="padding:8px 0;${idxDoc>0?'border-top:1px solid #F1F5F9;':''}">
-              <div style="font-size:12px;color:#0B7A43;font-weight:600;">✅ <strong>${val.archivo?.name || ''}</strong></div>
+              <div style="font-size:12px;color:#0B7A43;font-weight:600;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>${val.archivo?.name || ''}</strong></div>
               <div style="font-size:10.5px;color:#9CA3AF;font-style:italic;margin-top:2px;">Documento de identificación — sin análisis.</div>
             </div>`;
             return;
@@ -4297,13 +3985,13 @@ function _renderTarjetasJuriskills(docs) {
         const puntaje = a.puntaje ?? (a.estado==='ok'?90:a.estado==='advertencia'?65:30);
         const pColor  = puntaje>=80?'#22C55E':puntaje>=50?'#F59E0B':'#EF4444';
         const badgeClass = a.estado==='ok'?'badge-ok':a.estado==='advertencia'?'badge-warning':'badge-error';
-        const badgeLabel = a.estado==='ok'?'✅ Correcto':a.estado==='advertencia'?'⚠️ Advertencia':'🔴 Corrección';
+        const badgeLabel = a.estado==='ok'?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Correcto':a.estado==='advertencia'?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Advertencia':'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Corrección';
         const clave = (val.numItem ?? '') + '__' + (val.archivo?.name || '');
 
         html += `<div style="padding:8px 0;${idxDoc>0?'border-top:1px solid #F1F5F9;':''}">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
             <span class="ia-badge ${badgeClass}" style="flex-shrink:0;">${badgeLabel}</span>
-            <span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${val.archivo?.name||''}</span>
+            <span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${val.archivo?.name||''}</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
             <span style="font-size:10px;font-weight:700;color:#6B7280;white-space:nowrap;">Cumplimiento</span>
@@ -4312,7 +4000,7 @@ function _renderTarjetasJuriskills(docs) {
             </div>
             <span style="font-size:11px;font-weight:800;color:${pColor};white-space:nowrap;">${puntaje}%</span>
           </div>
-          <a href="javascript:void(0)" onclick="juriskillsAbrirModal('${clave.replace(/'/g,"\\'")}')" style="font-size:11px;font-weight:700;color:#2563EB;text-decoration:underline;">🔍 Ver análisis completo</a>
+          <a href="javascript:void(0)" onclick="juriskillsAbrirModal('${clave.replace(/'/g,"\\'")}')" style="font-size:11px;font-weight:700;color:#2563EB;text-decoration:underline;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Ver análisis completo</a>
         </div>`;
     });
 
@@ -4330,7 +4018,7 @@ function _renderContenidoCompletoAnalisis(val) {
         const puntaje = a.puntaje ?? (a.estado==='ok'?90:a.estado==='advertencia'?65:30);
         const pColor  = puntaje>=80?'#22C55E':puntaje>=50?'#F59E0B':'#EF4444';
         const badgeClass = a.estado==='ok'?'badge-ok':a.estado==='advertencia'?'badge-warning':'badge-error';
-        const badgeLabel = a.estado==='ok'?'✅ Correcto':a.estado==='advertencia'?'⚠️ Advertencia':'🔴 Corrección';
+        const badgeLabel = a.estado==='ok'?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Correcto':a.estado==='advertencia'?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Advertencia':'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Corrección';
 
         // Separar hallazgos: normativos vs concordancia
         const hallNorm  = (a.hallazgos||[]).filter(x => !x.startsWith('⚠️ Concordancia') && !x.startsWith('🔴 Inconsistencia'));
@@ -4388,7 +4076,7 @@ function _renderContenidoCompletoAnalisis(val) {
           <!-- nombre archivo + badge -->
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
             <span class="ia-badge ${badgeClass}" style="flex-shrink:0;">${badgeLabel}</span>
-            <span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${val.archivo?.name||''}</span>
+            <span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${val.archivo?.name||''}</span>
           </div>
           <!-- barra cumplimiento -->
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
@@ -4402,30 +4090,30 @@ function _renderContenidoCompletoAnalisis(val) {
           ${a.resumen?`<p style="font-size:11.5px;color:#374151;font-style:italic;margin:0 0 6px;">${a.resumen}</p>`:''}
           <!-- hallazgos normativos -->
           ${hallNormHTML?`<div style="margin-bottom:6px;background:#FEF2F2;border-radius:8px;padding:6px 8px;">
-            <div style="font-size:11px;font-weight:700;color:#DC2626;margin-bottom:4px;">🔴 Incumplimientos normativos:</div>
+            <div style="font-size:11px;font-weight:700;color:#DC2626;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Incumplimientos normativos:</div>
             <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">${hallNormHTML}</ul></div>`:''}
           <!-- hallazgos concordancia crítica -->
           ${hallConcHTML?`<div style="margin-bottom:6px;background:#FFF1F2;border-radius:8px;padding:6px 8px;border:1px solid #FECDD3;">
-            <div style="font-size:11px;font-weight:700;color:#BE123C;margin-bottom:4px;">🔴 Inconsistencias entre documentos:</div>
+            <div style="font-size:11px;font-weight:700;color:#BE123C;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Inconsistencias entre documentos:</div>
             <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">${hallConcHTML}</ul></div>`:''}
           <!-- advertencias normativas -->
           ${advNormHTML?`<div style="margin-bottom:6px;background:#FFFBEB;border-radius:8px;padding:6px 8px;">
-            <div style="font-size:11px;font-weight:700;color:#D97706;margin-bottom:4px;">⚠️ Advertencias normativas:</div>
+            <div style="font-size:11px;font-weight:700;color:#D97706;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Advertencias normativas:</div>
             <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">${advNormHTML}</ul></div>`:''}
           <!-- observaciones de redacción -->
           ${advRedacHTML?`<div style="margin-bottom:6px;background:#F0F9FF;border-radius:8px;padding:6px 8px;border:1px solid #BAE6FD;">
-            <div style="font-size:11px;font-weight:700;color:#0369A1;margin-bottom:4px;">✏️ Observaciones de redacción:</div>
+            <div style="font-size:11px;font-weight:700;color:#0369A1;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Observaciones de redacción:</div>
             <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">${advRedacHTML}</ul></div>`:''}
           <!-- concordancia entre documentos -->
           ${advConcHTML?`<div style="margin-bottom:6px;background:#FFF7ED;border-radius:8px;padding:6px 8px;border:1px solid #FED7AA;">
-            <div style="font-size:11px;font-weight:700;color:#C2410C;margin-bottom:4px;">🔗 Concordancia entre documentos:</div>
+            <div style="font-size:11px;font-weight:700;color:#C2410C;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Concordancia entre documentos:</div>
             <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">${advConcHTML}</ul></div>`:''}
           <!-- recomendaciones -->
           ${recomHTML?`<div style="margin-bottom:2px;background:#F0FDF4;border-radius:8px;padding:6px 8px;">
-            <div style="font-size:11px;font-weight:700;color:#0B7A43;margin-bottom:4px;">💡 Recomendaciones:</div>
+            <div style="font-size:11px;font-weight:700;color:#0B7A43;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>Recomendaciones:</div>
             <ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;">${recomHTML}</ul></div>`:''}
           <!-- normativa -->
-          ${a.normativa?`<div style="font-size:10px;color:#9CA3AF;border-top:1px solid #F1F5F9;padding-top:4px;margin-top:4px;">📌 ${a.normativa}</div>`:''}
+          ${a.normativa?`<div style="font-size:10px;color:#9CA3AF;border-top:1px solid #F1F5F9;padding-top:4px;margin-top:4px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>${a.normativa}</div>`:''}
           <!-- aviso fijo: la IA no reemplaza el criterio jurídico -->
           <div style="margin-top:10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;font-size:10.5px;color:#1E3A8A;line-height:1.5;">
             ⓘ El análisis es generado por IA/reglas automáticas con base en el contenido real de cada documento cargado y la normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación. <strong>Independientemente del porcentaje o resultado obtenido — incluso al 100% — este documento siempre debe revisarse manualmente antes de continuar el proceso.</strong>
@@ -4442,7 +4130,7 @@ function _renderContenidoCompletoAnalisis(val) {
 // nunca pidió analizar.
 async function reAnalizarTodo() {
     const btn = document.querySelector('.btn-actualizar');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Analizando…'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Analizando…'; }
 
     const estadosReanalizables = ['ok', 'advertencia', 'correccion', 'error'];
     const clavesAReanalizar = Object.entries(estadoDocumentos)
@@ -4483,7 +4171,7 @@ async function reAnalizarTodo() {
 
     await Promise.all(promesas);
     if (tocoItem7u8) _aplicarCruceFechas7y8();
-    if (btn) { btn.disabled = false; btn.textContent = '⟳ Actualizar análisis'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Actualizar análisis'; }
 }
 
 function openModal(modalId){
@@ -4660,7 +4348,7 @@ async function mostrarArchivoSub(input, divId, checkId, todosIds) {
     const numItem = parseInt(checkId.replace('check_', ''));
     const sufijo  = divId.replace('nombreArchivo_', ''); // ej. '15a', '20b', '21a'
 
-    div.innerHTML = `✅ <strong>${archivo.name}</strong>`;
+    div.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>${archivo.name}</strong>`;
 
     if (_SUBDOC_SIN_ANALISIS.indexOf(sufijo) !== -1) {
         _lexconRegistrar(numItem, archivo, _analisisSinRequerir(numItem), 'sin_analisis');
@@ -4737,7 +4425,7 @@ function evaluarAplica13(radio) {
 
         // Badge en la celda del nombre
         badge.innerHTML = '<span style="background:#DCFCE7;color:#166534;border:1px solid #86EFAC;'
-            + 'border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">✅ Aplica</span>';
+            + 'border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Aplica</span>';
         badge.style.display = 'block';
 
         // Marcar checkbox automáticamente: contar el avance apenas se responde
@@ -4760,7 +4448,7 @@ function evaluarAplica13(radio) {
         banner.style.display = 'none'; // Se mostrará cuando elija motivo
 
         badge.innerHTML = '<span style="background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;'
-            + 'border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;">🚫 No aplica</span>';
+            + 'border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="19.07" x2="19.07" y2="4.93"/></svg>No aplica</span>';
         badge.style.display = 'block';
 
         // Marcar checkbox como no requerido (checked + estilo tachado como N/A)
@@ -4787,7 +4475,7 @@ function actualizarJustif13() {
     if (esOtro && otro)   textoFinal = otro.value.trim() || '';
 
     if (textoFinal) {
-        prev.textContent  = '📋 Justificación registrada: ' + textoFinal;
+        prev.innerHTML  = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Justificación registrada: ' + escaparHTML(textoFinal);
         banner.style.display = 'block';
         if (motivo) motivo.textContent = textoFinal;
     } else {
@@ -4879,9 +4567,9 @@ function compararVersiones(analisisAnterior, analisisActual, numItem) {
 
     // Tendencia del puntaje
     const deltaP  = (analisisActual.puntaje || 0) - (analisisAnterior.puntaje || 0);
-    let tendencia = '→ Sin cambio';
-    if (deltaP > 0)  tendencia = `↑ Mejora de ${deltaP} puntos`;
-    if (deltaP < 0)  tendencia = `↓ Retroceso de ${Math.abs(deltaP)} puntos`;
+    let tendencia = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>Sin cambio';
+    if (deltaP > 0)  tendencia = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Mejora de ${deltaP} puntos`;
+    if (deltaP < 0)  tendencia = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>Retroceso de ${Math.abs(deltaP)} puntos`;
 
     return {
         correccionesResueltas,
@@ -4919,10 +4607,14 @@ function renderizarHistorial(numItem) {
         const esUltima  = idx === 0;
         const esPrimera = entrada.version === 1;
 
+        const _svgCheck  = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+        const _svgAlerta = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+        const _svgReloj  = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+        const _svgArchivo = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
         const estadoIcono = {
-            ok: '✅', advertencia: '⚠️', correccion: '🔴',
-            error: '⚠️', analizando: '⏳'
-        }[entrada.estado] || '📄';
+            ok: _svgCheck, advertencia: _svgAlerta, correccion: _svgAlerta,
+            error: _svgAlerta, analizando: _svgReloj
+        }[entrada.estado] || _svgArchivo;
 
         const div = document.createElement('div');
         div.className = 'hist-entrada';
@@ -4932,10 +4624,12 @@ function renderizarHistorial(numItem) {
                 <div class="hist-nombre">
                     ${estadoIcono} ${entrada.nombre}
                     ${esPrimera ? '<span class="hist-tag-v1">v1 · Inicial</span>' : `<span class="hist-tag-vN">v${entrada.version}</span>`}
-                    ${esUltima ? '<span class="hist-tag-last">⬆ Actual</span>' : ''}
+                    ${esUltima ? '<span class="hist-tag-last"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Actual</span>' : ''}
                 </div>
                 <div class="hist-meta">
-                    📅 ${entrada.fecha} &nbsp;·&nbsp; 🕐 ${entrada.hora} &nbsp;·&nbsp; 💾 ${entrada.tamano}
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${entrada.fecha}
+                    &nbsp;·&nbsp; ${_svgReloj.replace('12" height="12"','10" height="10"').replace('vertical-align:-2px','vertical-align:-1px;margin-right:2px')}${entrada.hora}
+                    &nbsp;·&nbsp; <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>${entrada.tamano}
                 </div>
             </div>`;
         contenedor.appendChild(div);
@@ -4958,8 +4652,8 @@ window.cd3p_cargar = function(input, num) {
   var tam = archivo.size < 1024*1024
     ? (archivo.size/1024).toFixed(1)+' KB'
     : (archivo.size/1024/1024).toFixed(2)+' MB';
-  if (nombre) nombre.innerHTML = '📄 <strong style="color:#1F2937;">' + archivo.name + '</strong> <span style="font-size:10px;color:#6B7280;">(' + tam + ')</span>';
-  if (estado) { estado.textContent='✅ Cargado'; estado.style.background='#DCFCE7'; estado.style.color='#166534'; }
+  if (nombre) nombre.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><strong style="color:#1F2937;">' + archivo.name + '</strong> <span style="font-size:10px;color:#6B7280;">(' + tam + ')</span>';
+  if (estado) { estado.innerHTML='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Cargado'; estado.style.background='#DCFCE7'; estado.style.color='#166534'; }
   if (row)    { row.style.background='#F0FDF4'; row.style.borderColor='#86EFAC'; }
   cd3p_actualizarProgreso();
 };
@@ -5017,11 +4711,11 @@ function d3p_renderHistorial(numItem) {
     div.innerHTML =
       '<div class="hist-num '+(isPrimera?'hist-num-v1':'hist-num-vN')+'">'+e.version+'</div>'+
       '<div class="hist-info">'+
-        '<div class="hist-nombre">📄 '+e.nombre+
+        '<div class="hist-nombre"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'+e.nombre+
           (isPrimera?'<span class="hist-tag-v1">v1 · Inicial</span>':'<span class="hist-tag-vN">v'+e.version+'</span>')+
-          (idx===0?'<span class="hist-tag-last">⬆ Actual</span>':'')+
+          (idx===0?'<span class="hist-tag-last"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:1px;" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Actual</span>':'')+
         '</div>'+
-        '<div class="hist-meta">📅 '+e.fecha+' · 🕐 '+e.hora+' · 💾 '+e.tamano+'</div>'+
+        '<div class="hist-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+e.fecha+' · <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'+e.hora+' · <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>'+e.tamano+'</div>'+
       '</div>';
     c.appendChild(div);
   });
@@ -5110,7 +4804,7 @@ function exportarBDProcesos() {
 
     var wrap = document.createElement('div');
     wrap.id = 'hslvD3PChecklistFallback';
-    wrap.innerHTML = '<div class="hslv-d3p-fallback-note">✅ Checklist documental habilitado en modo de visualización reforzada. Puede validar cada requisito y cargar su soporte individual.</div>' +
+    wrap.innerHTML = '<div class="hslv-d3p-fallback-note"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Checklist documental habilitado en modo de visualización reforzada. Puede validar cada requisito y cargar su soporte individual.</div>' +
       '<table><thead><tr><th style="width:70px;">#</th><th>Documento Requerido</th><th style="width:130px;">Validación</th><th style="width:330px;">Carga de Documento</th></tr></thead><tbody>' +
       HSLV_D3P_DOCS.map(function(doc, idx){
         var n = idx + 1;
@@ -5119,7 +4813,7 @@ function exportarBDProcesos() {
           '<td>' + doc + '</td>' +
           '<td><input type="checkbox" id="hslv_d3p_chk_' + n + '" onchange="window.hslvUpdateD3PProgress && window.hslvUpdateD3PProgress()"></td>' +
           '<td>' +
-            '<button type="button" class="btn" onclick="document.getElementById(\'hslv_d3p_arch_' + n + '\').click()">📎 Cargar Documento</button>' +
+            '<button type="button" class="btn" onclick="document.getElementById(\'hslv_d3p_arch_' + n + '\').click()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>' +
             '<input type="file" id="hslv_d3p_arch_' + n + '" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="window.hslvD3PFallbackFile(this,' + n + ')">' +
             '<div id="hslv_d3p_nom_' + n + '" class="hslv-file-name">Sin archivo cargado</div>' +
           '</td>' +
@@ -5139,7 +4833,7 @@ function exportarBDProcesos() {
   window.hslvD3PFallbackFile = function(input, n){
     var lbl = document.getElementById('hslv_d3p_nom_' + n);
     if(lbl){
-      lbl.innerHTML = input.files && input.files[0] ? '📄 <strong style="color:#1F2937;">' + input.files[0].name + '</strong>' : 'Sin archivo cargado';
+      lbl.innerHTML = input.files && input.files[0] ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><strong style="color:#1F2937;">' + input.files[0].name + '</strong>' : 'Sin archivo cargado';
     }
     var chk = document.getElementById('hslv_d3p_chk_' + n);
     if(chk) chk.checked = !!(input.files && input.files[0]);
@@ -5253,7 +4947,7 @@ function _mostrarToast(nombre) {
   var n = document.getElementById('mod-redirect-notice');
   if (!n) return;
   n.style.display = 'flex';
-  n.innerHTML = '🔀 &nbsp;<span>Cambiando a <strong>' + nombre + '</strong></span>';
+  n.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;" aria-hidden="true"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>&nbsp;<span>Cambiando a <strong>' + nombre + '</strong></span>';
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(function(){ n.style.display = 'none'; }, 2800);
 }
@@ -5274,7 +4968,7 @@ function _mostrarToast(nombre) {
   <div class="agente-ia-box" id="d3p_lexcon_box" style="margin-top:22px;">
     <div class="agente-ia-header">
       <div class="agente-ia-info">
-        <div class="agente-ia-icon">🤖</div>
+        <div class="agente-ia-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg></div>
         <div>
           <div class="agente-ia-title">JURISKILLS IA - Análisis Inteligente de Contratacion <span class="beta-tag">BETA</span></div>
           <div class="agente-ia-text">Carga documentos en el checklist y JURISKILLS los analiza con base en el <strong>Acuerdo 015/2024</strong> y la <strong>Resolución 0456/2024</strong> del HSLV, Ley 80/1993 y Decreto 1082/2015. Ahora también revisa <strong>redacción</strong> (campos vacíos, fechas incorrectas) y <strong>concordancia</strong> entre documentos (objeto, NIT, CDP).</div>
@@ -5287,7 +4981,7 @@ function _mostrarToast(nombre) {
     </div>
     <div id="d3p_iaResultadosContenedor">
       <div style="text-align:center;padding:30px;color:#9CA3AF;">
-        <div style="font-size:40px;margin-bottom:10px;">📂</div>
+        <div style="margin-bottom:10px;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
         <p>Carga documentos en el checklist para que JURISKILLS los analice automáticamente.</p>
       </div>
     </div>
@@ -5329,13 +5023,13 @@ function _mostrarToast(nombre) {
 function conv_mostrarArchivo(input, labelId) {
   if (!input.files || !input.files[0]) return;
   var el = document.getElementById(labelId);
-  if (el) el.innerHTML = '✅ <strong style="color:#1F2937;">' + input.files[0].name + '</strong>';
+  if (el) el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong style="color:#1F2937;">' + input.files[0].name + '</strong>';
   histU_registrar(input, labelId);
 }
 function sub_mostrarArchivo(input, labelId) {
   if (!input.files || !input.files[0]) return;
   var el = document.getElementById(labelId);
-  if (el) el.innerHTML = '✅ <strong style="color:#1F2937;">' + input.files[0].name + '</strong>';
+  if (el) el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong style="color:#1F2937;">' + input.files[0].name + '</strong>';
   histU_registrar(input, labelId);
 }
 

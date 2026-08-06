@@ -12,7 +12,13 @@
 </head>
 <body>
 
-    <button id="sidebar-toggle" style="display:flex;">☰</button>
+    <button id="sidebar-toggle" style="display:flex;align-items:center;justify-content:center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+    </button>
     <div class="sidebar"></div>
 
     <div class="content">
@@ -27,15 +33,17 @@
             <div style="width:60px;height:3px;
                         background:linear-gradient(90deg,#046A38,#123C7B);
                         border-radius:2px;"></div>
-            <h1 style="margin:0;font-size:20px;font-weight:800;color:#123C7B;">
-                ⚡ Subasta Inversa
+            <h1 style="margin:0;font-size:20px;font-weight:800;color:#123C7B;display:inline-flex;align-items:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+                Subasta Inversa
             </h1>
         </div>
 
         <!-- DATOS DEL PROCESO -->
         <div class="section-card" style="margin-bottom:22px;">
-            <h3 style="color:#123C7B;margin-bottom:16px;">
-                📋 Datos del Proceso
+            <h3 style="color:#123C7B;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                Datos del Proceso
             </h3>
 
             <div class="alert-box"
@@ -70,8 +78,9 @@
 
         <!-- CHECKLIST DOCUMENTAL -->
         <div class="section-card" style="margin-bottom:22px;">
-            <h3 style="color:#123C7B;margin-bottom:8px;">
-                📂 Checklist Documental del Proceso
+            <h3 style="color:#123C7B;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Checklist Documental del Proceso
             </h3>
             <div class="alert-box" style="margin-bottom:16px;">
                 Cada requisito permite cargar un documento independiente
@@ -94,7 +103,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_1').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_1" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_1')">
@@ -108,7 +117,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_2').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_2" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_2')">
@@ -121,7 +130,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_3').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_3" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_3')">
@@ -134,7 +143,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_4').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_4" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_4')">
@@ -147,7 +156,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_5').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_5" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_5')">
@@ -161,7 +170,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_6').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_6" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_6')">
@@ -174,7 +183,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_7').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_7" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_7')">
@@ -188,7 +197,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_8').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_8" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_8')">
@@ -202,7 +211,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_9').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_9" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_9')">
@@ -216,7 +225,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_10').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_10" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_10')">
@@ -230,7 +239,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_11').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_11" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_11')">
@@ -244,7 +253,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_12').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_12" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_12')">
@@ -259,7 +268,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_13').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_13" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_13')">
@@ -273,7 +282,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_14').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_14" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_14')">
@@ -286,7 +295,7 @@
                         <td>
                             <button class="btn" style="padding:10px 14px;font-size:13px;"
                                 onclick="document.getElementById('sub_arch_15').click()">
-                                📎 Cargar Documento</button>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="sub_arch_15" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                 onchange="sub_mostrarArchivo(this,'sub_nom_15')">
@@ -302,7 +311,20 @@
         <div class="agente-ia-box" style="margin-bottom:22px;">
             <div class="agente-ia-header">
                 <div class="agente-ia-info">
-                    <div class="agente-ia-icon">🤖</div>
+                    <div class="agente-ia-icon">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
+                            <rect x="9" y="9" width="6" height="6"/>
+                            <line x1="9" y1="1" x2="9" y2="4"/>
+                            <line x1="15" y1="1" x2="15" y2="4"/>
+                            <line x1="9" y1="20" x2="9" y2="23"/>
+                            <line x1="15" y1="20" x2="15" y2="23"/>
+                            <line x1="20" y1="9" x2="23" y2="9"/>
+                            <line x1="20" y1="14" x2="23" y2="14"/>
+                            <line x1="1" y1="9" x2="4" y2="9"/>
+                            <line x1="1" y1="14" x2="4" y2="14"/>
+                        </svg>
+                    </div>
                     <div>
                         <div class="agente-ia-title">
                             JURISKILLS IA - Análisis Inteligente de Contratación
@@ -320,7 +342,7 @@
             </div>
             <div id="sub_iaResultadosContenedor">
                 <div style="text-align:center;padding:30px;color:#9CA3AF;">
-                    <div style="font-size:40px;margin-bottom:10px;">📂</div>
+                    <div style="margin-bottom:10px;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
                     <p>Carga documentos en el checklist para que JURISKILLS
                        los analice automáticamente.</p>
                 </div>
@@ -369,11 +391,12 @@
             <button class="btn"
                 onclick="window.location.href='/dashboard'"
                 style="background:#F3F4F6;color:#374151;border:none;">
-                ← Volver al Dashboard
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Volver al Dashboard
             </button>
             <button class="btn finalizar-btn"
                 onclick="guardarProcesoHistorial('sub')">
-                💾 Guardar Proceso
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Guardar Proceso
             </button>
         </div>
 

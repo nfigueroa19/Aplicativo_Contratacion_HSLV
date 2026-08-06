@@ -34,8 +34,8 @@ const ITEMS_CHECKLIST = {
   1:  { nombre: "Certificado PAA", criterios: "Verifica inclusión del proceso en el Plan Anual de Adquisiciones vigente, código UNSPSC, valor estimado coherente con el contrato, firma del responsable. Aplica Decreto 1082/2015 art 2.2.1.1.1.3.1." },
   2:  { nombre: "Solicitud de Certificado de Disponibilidad Presupuestal", criterios: "Verifica que contenga: área solicitante, objeto, valor estimado, justificación de la necesidad, rubro presupuestal, firma del jefe de área. Aplica Manual Interno de Contratación HSLV, Decreto 1082/2015 art 2.2.1.1.1.3." },
   3:  { nombre: "Certificado de Disponibilidad Presupuestal (CDP)", criterios: "Verifica número CDP, fecha de expedición (no puede ser posterior a la firma del contrato), valor, rubro presupuestal correcto, vigencia, firma del jefe de presupuesto. Aplica Ley 38/1989, Decreto 111/1996." },
-  4:  { nombre: "Solicitud para contratar", criterios: "Verifica que la justificación de la necesidad esté alineada con el PAA y el Plan de Desarrollo. Debe incluir: objeto, modalidad de selección propuesta, valor estimado, área requirente, firma. Aplica Decreto 1082/2015 art 2.2.1.1.1.6." },
-  5:  { nombre: "Estudios previos", criterios: "Verifica: descripción de la necesidad, forma de satisfacer la necesidad, fundamento legal, modalidad de selección y justificación, objeto del contrato, especificaciones técnicas, plazo y lugar de ejecución, estimación del valor, forma de pago, obligaciones del contratista y del contratante, riesgo previsible, garantías, análisis del sector, estudio de mercado con mínimo 2 cotizaciones. Aplica Decreto 1082/2015 art 2.2.1.1.1.6.1 y Art. 20.2 Acuerdo 015/2024." },
+  4:  { nombre: "Solicitud para contratar", criterios: "Verifica que la justificación de la necesidad esté alineada con el PAA y el Plan de Desarrollo. Debe incluir: objeto, modalidad de selección propuesta, valor estimado, área requirente, firma. Aplica Decreto 1082/2015 art 2.2.1.1.1.6. Nota para el análisis: el Certificado PAA y el Certificado de Disponibilidad Presupuestal (CDP) son documentos SEPARADOS del expediente (ítems 1 y 3 del checklist, respectivamente) — si este documento no repite ese detalle explícitamente, NO lo reporte como un hallazgo de incumplimiento; repórtelo como una advertencia de revisión, indicando en qué otro ítem del expediente debe verificarse." },
+  5:  { nombre: "Estudios previos", criterios: "Verifica: descripción de la necesidad, forma de satisfacer la necesidad, fundamento legal, modalidad de selección y justificación, objeto del contrato, especificaciones técnicas, plazo y lugar de ejecución, estimación del valor, forma de pago, obligaciones del contratista y del contratante, riesgo previsible, garantías, análisis del sector, estudio de mercado con mínimo 2 cotizaciones. Aplica Decreto 1082/2015 art 2.2.1.1.1.6.1 y Art. 20.2 Acuerdo 015/2024. Nota para el análisis: el estudio de mercado con las cotizaciones y la matriz de riesgo son documentos SEPARADOS del expediente (ítems 9 y 6 del checklist, respectivamente) — si este documento de Estudios Previos no contiene el detalle completo de esas cotizaciones o de esa matriz, NO lo reporte como un hallazgo de incumplimiento; repórtelo como una advertencia de revisión, indicando en qué otro ítem del expediente debe verificarse." },
   6:  { nombre: "Matriz de riesgo", criterios: "Verifica: identificación de riesgos, probabilidad, impacto, mitigación por cada riesgo previsible. Aplica Decreto 1082/2015 art 2.2.1.1.1.6.3." },
   7:  { nombre: "Anexo IO Presentación de la Propuesta", criterios: "Verifica: formato de presentación de propuesta debidamente diligenciado, datos del proponente, objeto, valor ofertado, plazo, firma del representante legal. Aplica Ley 80/1993 y pliego de condiciones." },
   8:  { nombre: "Propuesta", criterios: "Verifica: oferta económica firmada, propuesta técnica, documentos habilitantes (cámara de comercio, RUT, estados financieros), vigencia de la oferta. Aplica Ley 80/1993 art 25." },
@@ -53,7 +53,7 @@ const ITEMS_CHECKLIST = {
   20: { nombre: "Revisor fiscal (cédula, antecedentes, tarjeta profesional)", criterios: "Verifica: cédula del revisor, tarjeta profesional activa en la Junta Central de Contadores, certificado de antecedentes disciplinarios (Procuraduría y Junta Central de Contadores). Aplica Ley 43/1990." },
   21: { nombre: "Certificación y planillas de seguridad social", criterios: "Verifica: pago de aportes a salud, pensión y ARL del contratista o empleados según corresponda, planillas del mes anterior, coherencia de valores con el contrato. Aplica Ley 100/1993, Decreto 1273/2018." },
   22: { nombre: "Formulario único de conocimiento SARLAFT", criterios: "Verifica: formulario SARLAFT debidamente diligenciado, datos completos del contratista, declaración de origen de fondos, firma del representante legal, fecha reciente. Aplica normativa UIAF y SIPLAFT institucional." },
-  23: { nombre: "Acta de evaluación", criterios: "Verifica: criterios objetivos de selección, calificación de todos los oferentes, firmas del comité evaluador (jurídico, técnico, financiero), publicación del acta para observaciones. Aplica Decreto 1082/2015." }
+  23: { nombre: "Acta de evaluación", criterios: "Verifica: criterios objetivos de selección, calificación de todos los oferentes, firmas del comité evaluador (jurídico, técnico, financiero), publicación del acta para observaciones. Aplica Decreto 1082/2015. Nota para el análisis: los datos de los oferentes constan en el documento separado de la Propuesta (ítem 8) y los criterios objetivos de selección pueden estar definidos en los Estudios Previos (ítem 5), no necesariamente repetidos en el acta — si no encuentra ese detalle en este documento, NO lo reporte como un hallazgo de incumplimiento; repórtelo como una advertencia de revisión, indicando en qué otro ítem del expediente debe verificarse." }
 };
 
 // Estado global: archivos cargados y análisis generados
@@ -721,6 +721,17 @@ const SKILLS_JURIDICOS = {
 // ITEMS_RESTRINGIDOS_GLOBAL en js/db.js, que carga antes que este archivo).
 const _NUMS_RESTRINGIDOS_ANALISIS = ITEMS_RESTRINGIDOS_GLOBAL;
 
+// Ítems donde se exige coincidencia ESTRICTA (palabra por palabra) entre el
+// Objeto Contractual declarado en el formulario (`mp_objeto`) y el texto del
+// documento — ver _verificarObjetoExacto(). Nace de un caso real: un proceso
+// con objeto declarado "adquisición de equipos BIOMÉDICOS..." tenía un
+// documento que decía "equipos MÉDICOS..." (una sola palabra distinta, no
+// una simple variación de plural/tilde) y el proceso completo fue devuelto
+// por esa discrepancia. Los 4 ítems donde más importa que el objeto quede
+// escrito exactamente igual que en el proceso: Solicitud para Contratar,
+// Estudios Previos, Estudio de Mercado y Acta de Evaluación.
+const _NUMS_OBJETO_EXACTO = [4, 5, 9, 23];
+
 function _marcarComoLocal(resultado, mensaje) {
     resultado.resumen = `⚠️ ${mensaje}\n${resultado.resumen || ''}`.trim();
     resultado.motor = 'fallback_local';
@@ -780,6 +791,85 @@ function _dividirTextoEnPartes(texto, tamano) {
         inicio = fin;
     }
     return partes;
+}
+
+// ── Reclasificación de hallazgos "cruzados" entre documentos (ítems 'ia') ──
+// Groq analiza UN documento a la vez y no ve el contenido de los demás
+// documentos del expediente. Algunos criterios de los ítems 4, 5 y 23 (los
+// únicos que pasan por Groq) describen información que en la práctica suele
+// constar en OTRO documento del checklist (ej.: las cotizaciones del
+// criterio "estudio de mercado" del ítem 5 "Estudios Previos" normalmente
+// están en el documento separado del ítem 9 "Estudio de Mercado", no dentro
+// de los Estudios Previos). La "Nota para el análisis" agregada al
+// `criterios` de esos 3 ítems (ver ITEMS_CHECKLIST) ya le pide a Groq que
+// trate esos casos como advertencia y no como incumplimiento, pero esta
+// tabla actúa como respaldo determinístico del lado del cliente por si Groq
+// igual lo reporta como hallazgo: reclasifica el hallazgo a advertencia con
+// un mensaje que señala el ítem correcto donde debe revisarse.
+// SUGERENCIA SIN CONFIRMAR: el mapeo de palabras clave → ítem relacionado
+// fue propuesto por IA a partir del texto de `ITEMS_CHECKLIST` — revisar
+// con Jurídica que la relación entre documentos sea correcta.
+const _CRITERIOS_CRUZADOS_IA = {
+    4: [ // Solicitud para contratar
+        { patron: /\b(plan anual de adquisiciones|paa)\b/, itemRelacionado: 1, criterio: 'la inclusión en el Plan Anual de Adquisiciones (PAA)' },
+        { patron: /\b(disponibilidad presupuestal|cdp)\b/, itemRelacionado: 3, criterio: 'el Certificado de Disponibilidad Presupuestal (CDP)' }
+    ],
+    5: [ // Estudios previos
+        { patron: /\b(cotizac\w*|estudio de mercado)\b/, itemRelacionado: 9, criterio: 'las cotizaciones o el análisis de precios del Estudio de Mercado' },
+        { patron: /\bmatriz de riesgo\b/, itemRelacionado: 6, criterio: 'el detalle de identificación y mitigación de riesgos de la Matriz de Riesgo' }
+    ],
+    23: [ // Acta de evaluación
+        { patron: /\boferente\w*\b/, itemRelacionado: 8, criterio: 'los datos de los oferentes que constan en la(s) Propuesta(s)' },
+        { patron: /\bcriterios (objetivos )?de (selecci[oó]n|evaluaci[oó]n)\b/, itemRelacionado: 5, criterio: 'los criterios de selección definidos en los Estudios Previos' }
+    ]
+};
+
+// Mueve de `hallazgos` a `advertencias` cualquier observación de Groq que
+// coincida con una de las reglas de arriba, reescribiendo el mensaje para
+// que apunte al ítem correcto. Si tras ese filtro ya no queda ningún
+// hallazgo real, también baja el `estado` general (de 'correccion'/'error'
+// a 'advertencia') y sube el `puntaje` a un mínimo razonable — si se deja
+// el `estado` original, el badge seguiría mostrando 🔴 aunque los mensajes
+// ya digan "advertencia" (el color del badge sale de `estado`, no de
+// contar hallazgos/advertencias — ver script.js).
+function _reclasificarCriteriosCruzados(numItem, resultado) {
+    const reglas = _CRITERIOS_CRUZADOS_IA[numItem];
+    if (!reglas || !resultado || !Array.isArray(resultado.hallazgos) || resultado.hallazgos.length === 0) {
+        return resultado;
+    }
+
+    const hallazgosRestantes = [];
+    const advertenciasNuevas = [];
+
+    resultado.hallazgos.forEach(function (h) {
+        const hNorm = _normalizarTexto(h);
+        const regla = reglas.find(function (r) { return r.patron.test(hNorm); });
+        if (!regla) {
+            hallazgosRestantes.push(h);
+            return;
+        }
+        const nombreItemRel = (ITEMS_CHECKLIST[regla.itemRelacionado] || {}).nombre || ('ítem ' + regla.itemRelacionado);
+        advertenciasNuevas.push(
+            '⚠️ Este documento no evidencia ' + regla.criterio + '. Esto puede ser normal si ese ' +
+            'soporte está en un documento aparte del expediente: asegúrese de que conste en "' +
+            nombreItemRel + '" (ítem ' + regla.itemRelacionado + ') antes de considerarlo un incumplimiento.'
+        );
+    });
+
+    if (advertenciasNuevas.length === 0) return resultado;
+
+    const huboReclasificacion = hallazgosRestantes.length < resultado.hallazgos.length;
+    const yaNoQuedanHallazgos = hallazgosRestantes.length === 0;
+    const estadoEraIncumplimiento = resultado.estado === 'correccion' || resultado.estado === 'error';
+
+    return Object.assign({}, resultado, {
+        hallazgos: hallazgosRestantes,
+        advertencias: (resultado.advertencias || []).concat(advertenciasNuevas),
+        estado: (huboReclasificacion && yaNoQuedanHallazgos && estadoEraIncumplimiento) ? 'advertencia' : resultado.estado,
+        puntaje: (huboReclasificacion && yaNoQuedanHallazgos && estadoEraIncumplimiento)
+            ? Math.max(resultado.puntaje || 0, 65)
+            : resultado.puntaje
+    });
 }
 
 // Intenta analizar con Groq (IA real); si el archivo no tiene texto legible o
@@ -852,18 +942,28 @@ async function analizarConGroq(numItem, nombreArchivo, contenido) {
             resultadoFinal = resultadosPartes[0];
         }
 
+        resultadoFinal = _reclasificarCriteriosCruzados(numItem, resultadoFinal);
+
         const textoLow = contenido.data.toLowerCase();
         _extraerContexto(numItem, nombreArchivo, textoLow);
         const obsConcordancia = _verificarConcordancia(numItem, nombreArchivo, textoLow);
         const concordanciaErr = obsConcordancia.filter(a => a.startsWith('🔴'));
         const concordanciaAdv = obsConcordancia.filter(a => !a.startsWith('🔴'));
 
+        // Coincidencia estricta palabra por palabra contra el Objeto Contractual
+        // del formulario (_NUMS_OBJETO_EXACTO) — Groq no tiene por qué detectar
+        // esto por su cuenta, así que se suma aparte como un chequeo determinístico.
+        const resObjetoExacto = _NUMS_OBJETO_EXACTO.indexOf(numItem) !== -1
+            ? _verificarObjetoExacto(contenido.data)
+            : null;
+        const hallazgosObjetoExacto = resObjetoExacto ? resObjetoExacto.hallazgos : [];
+
         return {
             estado: resultadoFinal.estado,
             puntaje: resultadoFinal.puntaje,
             resumen: resultadoFinal.resumen || '',
             titulo: resultadoFinal.titulo,
-            hallazgos: [...(resultadoFinal.hallazgos || []), ...concordanciaErr],
+            hallazgos: [...(resultadoFinal.hallazgos || []), ...concordanciaErr, ...hallazgosObjetoExacto],
             advertencias: [...(resultadoFinal.advertencias || []), ...concordanciaAdv],
             recomendaciones: resultadoFinal.recomendaciones || [],
             camposPresentes: resultadoFinal.camposPresentes || [],
@@ -1348,6 +1448,16 @@ function ejecutarSkillJuridico(numItem, nombreArchivo, contenido) {
     concordanciaAdv.forEach(a => advertencias.push(a));
     obsRedaccion.forEach(a => advertencias.push(a));
 
+    // Coincidencia estricta palabra por palabra contra el Objeto Contractual
+    // del formulario (_NUMS_OBJETO_EXACTO) — mismo chequeo que en el camino
+    // exitoso de Groq (analizarConGroq) y en ejecutarAnalisisLocalReglas,
+    // para que siga aplicando aunque Groq falle y este ítem caiga al
+    // respaldo local.
+    if (!esBinario && textoLow.length > 40 && _NUMS_OBJETO_EXACTO.indexOf(numItem) !== -1) {
+        const resObjetoExacto = _verificarObjetoExacto(texto);
+        if (resObjetoExacto) resObjetoExacto.hallazgos.forEach(h => hallazgos.push(h));
+    }
+
     // ── Calcular puntaje (0–100) ──
     const totalReglas  = skill.camposObligatorios.length + skill.advertencias.length;
     const penalizacion = hallazgos.length * 2 + advertencias.length;
@@ -1466,6 +1576,54 @@ function _extraerFechasTexto(texto) {
     }
 
     return fechas;
+}
+
+// Extrae la fecha de vigencia del PLAZO contractual declarado en el
+// documento de Estudios Previos (ítem 5), ej.: "4.5. PLAZO: La duración del
+// contrato será a partir de la suscripción del acta de inicio hasta el 31 de
+// octubre de 2026." Busca la palabra "plazo" y, en una ventana corta después
+// de ella, la fecha que sigue a "hasta" — así se evita capturar cualquier
+// otra fecha del documento que no sea la del plazo (una fecha de expedición,
+// una cita normativa, etc.). Si no hay "hasta + fecha" cerca de "plazo",
+// devuelve null — no es un incumplimiento, simplemente no se pudo detectar
+// automáticamente y no se genera alerta para ese proceso.
+function _extraerPlazoVigencia(texto) {
+    if (!texto) return null;
+    const limpio = _normalizarParaBusqueda(texto);
+
+    const idxPlazo = limpio.search(/\bplazo\b/i);
+    if (idxPlazo === -1) return null;
+
+    const VENTANA = 500;
+    const ventana = limpio.slice(idxPlazo, idxPlazo + VENTANA);
+
+    const nombresMes = Object.keys(_MESES_ES).join('|');
+    const reFechaTexto = '(\\d{1,2})\\s+de\\s+(' + nombresMes + ')\\.?\\s+de\\s+(20\\d{2})';
+    const reFechaNum   = '(\\d{1,2})\\s*[\\/\\-.]\\s*(\\d{1,2})\\s*[\\/\\-.]\\s*(20\\d{2})';
+    const re = new RegExp('hasta\\s+(?:el\\s+|la\\s+)?(?:' + reFechaTexto + '|' + reFechaNum + ')', 'i');
+
+    const m = re.exec(ventana);
+    if (!m) return null;
+
+    let fecha;
+    if (m[2]) {
+        // grupos de la fecha textual: dd, mes, yyyy
+        const d = parseInt(m[1], 10), mo = _MESES_ES[m[2].toLowerCase()], y = parseInt(m[3], 10);
+        if (!(d >= 1 && d <= 31 && mo)) return null;
+        fecha = new Date(y, mo - 1, d);
+    } else {
+        // grupos de la fecha numérica: dd, mm, yyyy
+        const d = parseInt(m[4], 10), mo = parseInt(m[5], 10), y = parseInt(m[6], 10);
+        if (!(d >= 1 && d <= 31 && mo >= 1 && mo <= 12)) return null;
+        fecha = new Date(y, mo - 1, d);
+    }
+
+    const anio = fecha.getFullYear(), mes = String(fecha.getMonth() + 1).padStart(2, '0'), dia = String(fecha.getDate()).padStart(2, '0');
+    return {
+        fecha: anio + '-' + mes + '-' + dia,
+        textoEncontrado: m[0],
+        contexto: _fragmentoContexto(ventana, m.index, 60)
+    };
 }
 
 // ¿Aparece el año vigente como número suelto en el texto (sin fecha
@@ -1620,6 +1778,50 @@ function _verificarObjetoContractual(texto) {
     return {
         ok, contexto,
         hallazgos: ok ? [] : [`🔎 No se encontró en el documento un texto similar al Objeto Contractual declarado ("${objeto.slice(0, 80)}${objeto.length > 80 ? '…' : ''}"). Independientemente del resultado, revise siempre manualmente que corresponda al mismo proceso.`],
+        advertencias: []
+    };
+}
+
+// Ítems 4, 5, 9 y 23 (_NUMS_OBJETO_EXACTO): a diferencia de
+// _verificarObjetoContractual() (ítem 10, tolera hasta 50% de palabras
+// distintas), aquí se exige que TODAS las palabras significativas del
+// objeto declarado en el formulario aparezcan tal cual (mismo texto, sin
+// sinónimos) en el documento — con tolerancia solo a un plural simple
+// ("equipo" vs "equipos"), NUNCA a una raíz distinta ("médicos" vs
+// "biomédicos", que es justo el caso real que motivó este chequeo: ver
+// _NUMS_OBJETO_EXACTO). Si falta alguna palabra, el hallazgo la nombra
+// explícitamente para que el usuario no tenga que comparar los dos textos
+// a mano.
+function _verificarObjetoExacto(texto) {
+    const campo = document.getElementById('mp_objeto');
+    const objetoDeclarado = campo ? (campo.value || '').trim() : '';
+    if (!objetoDeclarado || objetoDeclarado.length < 6) return null;
+
+    const textoNorm = _normalizarTexto(_normalizarParaBusqueda(texto));
+    const objNorm    = _normalizarTexto(objetoDeclarado);
+    const tokensTexto = new Set(textoNorm.split(/\s+/).filter(Boolean));
+    // Palabras significativas (4+ caracteres, sin repetir) del objeto declarado.
+    const palabrasDeclaradas = [...new Set(objNorm.split(/\s+/).filter(p => p.length >= 4))];
+    if (palabrasDeclaradas.length === 0) return null;
+
+    // Tolera un plural simple final ("s") comparando por token completo (no
+    // substring) en ambos sentidos ("equipo" ⇄ "equipos") — pero NO tolera
+    // una raíz distinta ("biomedicos" nunca se considera igual a "medicos").
+    const singular = (p) => (p.length > 4 && p.endsWith('s')) ? p.slice(0, -1) : p;
+    const apareceEnTexto = (palabra) => tokensTexto.has(palabra) || tokensTexto.has(palabra + 's') ||
+        (singular(palabra) !== palabra && tokensTexto.has(singular(palabra)));
+    const palabrasFaltantes = palabrasDeclaradas.filter(p => !apareceEnTexto(p));
+    const ok = palabrasFaltantes.length === 0;
+
+    if (ok) return { ok, hallazgos: [], advertencias: [] };
+
+    return {
+        ok: false,
+        hallazgos: [
+            `🔎 Posible discrepancia de Objeto Contractual: la(s) palabra(s) "${palabrasFaltantes.join('", "')}" del objeto declarado en el proceso no aparece(n) tal cual en este documento. ` +
+            `Objeto declarado: "${objetoDeclarado.slice(0, 140)}${objetoDeclarado.length > 140 ? '…' : ''}". ` +
+            `Una sola palabra distinta entre el objeto del proceso y el del documento (ej. "equipos médicos" vs "equipos biomédicos") puede ser motivo de devolución del expediente — verifique manualmente que ambos textos coincidan exactamente.`
+        ],
         advertencias: []
     };
 }
@@ -1809,6 +2011,15 @@ function ejecutarAnalisisLocalReglas(numItem, nombreArchivo, contenido) {
             const radio = document.querySelector('input[name="sub_distribuidor"]:checked');
             if (radio && radio.value === 'si' && resDistribuidor.hallazgos.length === 0) {
                 criteriosOk.push(_conContexto('se encontró mención explícita de distribuidor o proveedor exclusivo en el documento', resDistribuidor.contexto));
+            }
+        }
+
+        if (_NUMS_OBJETO_EXACTO.indexOf(numItem) !== -1) {
+            const resObjetoExacto = _verificarObjetoExacto(texto);
+            if (resObjetoExacto) {
+                hallazgosExtra.push(...resObjetoExacto.hallazgos);
+                advertenciasExtra.push(...resObjetoExacto.advertencias);
+                if (resObjetoExacto.ok) criteriosOk.push('el objeto contractual del documento coincide, palabra por palabra, con el declarado en el proceso');
             }
         }
     } else {

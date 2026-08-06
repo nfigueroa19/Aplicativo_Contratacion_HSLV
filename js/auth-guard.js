@@ -164,7 +164,7 @@ function mostrarAvisoInactividad() {
         aviso.id = '_avisoInactividad';
         aviso.innerHTML =
             '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
-                '<span style="font-size:20px;">⏰</span>' +
+                '<span style="flex-shrink:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>' +
                 '<div>' +
                     '<div style="font-weight:700;font-size:14px;">Sesión por vencer</div>' +
                     '<div style="font-size:12px;opacity:.9;margin-top:2px;">' +

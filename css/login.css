@@ -28,15 +28,17 @@ body {
 }
 
 .login-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     background: #E8FFF0;
     color: #046A38;
     border: 1px solid #86EFAC;
     border-radius: 20px;
-    padding: 4px 14px;
+    padding: 5px 14px;
     font-size: 11px;
     font-weight: 700;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .login-logo h1 {
@@ -44,12 +46,14 @@ body {
     font-size: 17px;
     font-weight: 800;
     line-height: 1.4;
+    margin-top: 4px;
 }
 
 .login-logo p {
     color: #6B7280;
     font-size: 13px;
-    margin-top: 6px;
+    line-height: 1.5;
+    margin-top: 8px;
 }
 
 .form-group {
@@ -108,8 +112,21 @@ body {
     padding: 10px 14px;
     font-size: 13px;
     font-weight: 600;
+    line-height: 1.5;
     margin-top: 14px;
     text-align: center;
+}
+
+.msg::before {
+    content: '';
+    display: inline-block;
+    vertical-align: middle;
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
 }
 
 .msg.error {
@@ -118,16 +135,28 @@ body {
     border: 1px solid #FECACA;
 }
 
+.msg.error::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23DC2626' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cline x1='12' y1='8' x2='12' y2='13'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E");
+}
+
 .msg.pendiente {
     background: #FEF3C7;
     color: #92400E;
     border: 1px solid #FDE68A;
 }
 
+.msg.pendiente::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2392400E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpolyline points='12 7 12 12 15 14'/%3E%3C/svg%3E");
+}
+
 .msg.inactivo {
     background: #F3F4F6;
     color: #6B7280;
     border: 1px solid #D1D5DB;
+}
+
+.msg.inactivo::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cline x1='8' y1='12' x2='16' y2='12'/%3E%3C/svg%3E");
 }
 
 .footer-note {

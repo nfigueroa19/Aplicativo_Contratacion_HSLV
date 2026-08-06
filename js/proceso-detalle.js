@@ -147,18 +147,20 @@ document.addEventListener('DOMContentLoaded', function() {
     overlay.id = 'sidebar-overlay';
     document.body.appendChild(overlay);
 
+    var _pdMenuIconSVG  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+    var _pdCloseIconSVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     var sidebar = document.querySelector('.sidebar');
 
     function cerrarSidebar() {
         if (sidebar) sidebar.classList.remove('sidebar-open');
         document.body.classList.remove('sidebar-abierto');
-        btn.innerHTML = '☰';
+        btn.innerHTML = _pdMenuIconSVG;
     }
 
     btn.addEventListener('click', function() {
         var abierto = sidebar.classList.toggle('sidebar-open');
         document.body.classList.toggle('sidebar-abierto', abierto);
-        btn.innerHTML = abierto ? '✕' : '☰';
+        btn.innerHTML = abierto ? _pdCloseIconSVG : _pdMenuIconSVG;
     });
 
     overlay.addEventListener('click', cerrarSidebar);
@@ -215,6 +217,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     renderizarInfo(_procesoActual);
     renderizarChecklist();
+
+    // Recién ahora hay datos reales que mostrar — antes de esto el bloque
+    // permanece oculto (ver display:none inline en proceso-detalle.html)
+    // para no exponer la tabla/barra de avance vacías mientras carga.
+    var checklistCard = document.getElementById('pd-checklist-card');
+    if (checklistCard) checklistCard.style.display = '';
 });
 
 function obtenerCodigoDeURL() {
@@ -235,7 +243,7 @@ function mostrarError(msg) {
     if (cont) {
         cont.innerHTML =
             '<div style="padding:60px 20px;text-align:center;color:#DC2626;font-weight:700;">' +
-                '⚠️ ' + msg +
+                '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' + msg +
                 '<div style="margin-top:16px;color:#6B7280;font-weight:400;font-size:13px;">Redirigiendo al dashboard…</div>' +
             '</div>';
     }
@@ -359,7 +367,7 @@ function campoValorProceso(p) {
             '<button id="pd-valor-btn" onclick="pd_actualizarValor()" ' +
                 'style="background:#123C7B;color:white;border:none;border-radius:8px;' +
                 'padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">' +
-                '💾 Guardar' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar' +
             '</button>' +
         '</div>' +
     '</div>';
@@ -374,7 +382,7 @@ async function pd_actualizarValor() {
     var btnEl = document.getElementById('pd-valor-btn');
     if (btnEl) {
         btnEl.disabled    = true;
-        btnEl.textContent = '⏳';
+        btnEl.textContent = 'Guardando…';
     }
 
     var ok = await db_actualizarValorProceso(_procesoActual.id, nuevoValor);
@@ -382,7 +390,7 @@ async function pd_actualizarValor() {
     if (!ok) {
         if (btnEl) {
             btnEl.disabled    = false;
-            btnEl.textContent = '💾 Guardar';
+            btnEl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar';
         }
         alert('❌ No se pudo actualizar el valor del proceso. Intente de nuevo.');
         return;
@@ -393,11 +401,11 @@ async function pd_actualizarValor() {
 
     var toast = document.createElement('div');
     toast.style.cssText =
-        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';
-    toast.textContent = '✅ Valor del proceso actualizado';
+    toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Valor del proceso actualizado';
     document.body.appendChild(toast);
     setTimeout(function() { toast.remove(); }, 4000);
 }
@@ -415,12 +423,12 @@ function renderizarInfo(p) {
 
     var estadoTexto = ESTADOS_TEXTO[p.estado] || ESTADOS_TEXTO.borrador;
     var estadoHTML = p.estado === 'cerrado'
-        ? '<span style="background:#FEE2E2;color:#DC2626;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;">🔒 ' + estadoTexto + '</span>'
+        ? '<span style="background:#FEE2E2;color:#DC2626;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' + estadoTexto + '</span>'
         : '<span style="background:#DBEAFE;color:#123C7B;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;">' +
             estadoTexto + '</span>';
 
     var responsableAsignadoHTML = p.responsable_asignado_nombre
-        ? '<span style="color:#0B7A43;font-weight:700;">✅ ' + p.responsable_asignado_nombre + '</span>' +
+        ? '<span style="color:#0B7A43;font-weight:700;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' + p.responsable_asignado_nombre + '</span>' +
           (p.responsable_asignado_por_nombre
               ? ' <span style="color:#6B7280;font-weight:400;font-size:12px;">(asignado por ' +
                 p.responsable_asignado_por_nombre + ')</span>'
@@ -448,7 +456,9 @@ function renderizarInfo(p) {
                 '<button id="pd-resp-btn" onclick="pd_asignarResponsable()" ' +
                     'style="background:#123C7B;color:white;border:none;border-radius:8px;' +
                     'padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">' +
-                    (p.responsable_asignado ? '🔄 Reasignar' : '✔ Asignar') +
+                    (p.responsable_asignado
+                        ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Reasignar'
+                        : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Asignar') +
                 '</button>' +
             '</div>';
     } else {
@@ -491,7 +501,7 @@ async function pd_asignarResponsable() {
     var btnEl = document.getElementById('pd-resp-btn');
     if (btnEl) {
         btnEl.disabled    = true;
-        btnEl.textContent = '⏳';
+        btnEl.textContent = 'Guardando…';
     }
 
     var ok = await db_asignarResponsable(_procesoActual.id, usuarioId);
@@ -499,7 +509,9 @@ async function pd_asignarResponsable() {
     if (!ok) {
         if (btnEl) {
             btnEl.disabled    = false;
-            btnEl.textContent = _procesoActual.responsable_asignado ? '🔄 Reasignar' : '✔ Asignar';
+            btnEl.innerHTML = _procesoActual.responsable_asignado
+                ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Reasignar'
+                : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>Asignar';
         }
         alert('❌ No se pudo asignar el responsable. Intente de nuevo.');
         return;
@@ -514,11 +526,11 @@ async function pd_asignarResponsable() {
 
     var toast = document.createElement('div');
     toast.style.cssText =
-        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';
-    toast.textContent = '✅ Responsable asignado correctamente';
+    toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Responsable asignado correctamente';
     document.body.appendChild(toast);
     setTimeout(function() { toast.remove(); }, 4000);
 }
@@ -557,9 +569,9 @@ function renderizarChecklist() {
         // guardar — antes acá seguía diciendo "Sin documento cargado" hasta
         // que el proceso se guardaba.
         var encabezadoVigente = pendiente
-            ? '<div style="font-size:12px;font-weight:600;color:#0B7A43;">✅ <strong>' + escapeHTML(pendiente.name) + '</strong></div>'
+            ? '<div style="font-size:12px;font-weight:600;color:#0B7A43;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>' + escapeHTML(pendiente.name) + '</strong></div>'
             : vigente
-                ? '<div style="font-size:12px;font-weight:700;color:#0B7A43;">✅ ' + escapeHTML(vigente.nombre_archivo || '') + '</div>'
+                ? '<div style="font-size:12px;font-weight:700;color:#0B7A43;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' + escapeHTML(vigente.nombre_archivo || '') + '</div>'
                 : '<div style="color:#9CA3AF;font-style:italic;font-size:12px;">Sin documento cargado</div>';
 
         // Conteo del badge "Ver historial": igual que hist.length en
@@ -579,7 +591,7 @@ function renderizarChecklist() {
                 'style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;' +
                 'padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;' +
                 'display:flex;align-items:center;gap:5px;">' +
-                '🕓 Ver historial <span style="background:#123C7B;color:white;' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ver historial <span style="background:#123C7B;color:white;' +
                 'border-radius:10px;padding:1px 7px;font-size:10px;">' + totalVersiones + '</span>' +
               '</button>';
 
@@ -611,16 +623,16 @@ function renderizarChecklist() {
                         '<button onclick="pd_descargar(\'' + d.id + '\')" ' +
                             'style="background:none;border:none;color:#123C7B;text-decoration:underline;' +
                             'cursor:pointer;font-size:11.5px;font-weight:700;padding:0;text-align:left;">' +
-                            '📄 ' + escapeHTML(d.nombre_archivo || '') +
+                            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escapeHTML(d.nombre_archivo || '') +
                         '</button>' +
                         (esPrimera
                             ? '<span class="hist-tag-v1">v1 · Inicial</span>'
                             : '<span class="hist-tag-vN">v' + d.version + '</span>') +
-                        (esLaMasReciente ? '<span class="hist-tag-last">⬆ Actual</span>' : '') +
+                        (esLaMasReciente ? '<span class="hist-tag-last"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:1px;" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Actual</span>' : '') +
                     '</div>' +
-                    '<div class="hist-meta">📅 ' + fecha + ' &nbsp;·&nbsp; 🕐 ' + hora +
-                        ' &nbsp;·&nbsp; 💾 ' + tamano +
-                        (subidoPorNombre ? ' &nbsp;·&nbsp; 👤 Subido por: ' + escapeHTML(subidoPorNombre) : '') + '</div>' +
+                    '<div class="hist-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + fecha + ' &nbsp;·&nbsp; <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + hora +
+                        ' &nbsp;·&nbsp; <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>' + tamano +
+                        (subidoPorNombre ? ' &nbsp;·&nbsp; <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Subido por: ' + escapeHTML(subidoPorNombre) : '') + '</div>' +
                 '</div>' +
             '</div>';
         }).join('');
@@ -650,18 +662,18 @@ function renderizarChecklist() {
                 return '<div class="hist-entrada">' +
                     '<div class="hist-num hist-num-vN">' + entry.version + '</div>' +
                     '<div class="hist-info">' +
-                        '<div class="hist-nombre">📄 ' + escapeHTML(entry.archivo.name) +
+                        '<div class="hist-nombre"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escapeHTML(entry.archivo.name) +
                             '<span class="hist-tag-vN">v' + entry.version + '</span>' +
-                            (esActual ? '<span class="hist-tag-last">⬆ Actual</span>' : '') +
+                            (esActual ? '<span class="hist-tag-last"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:1px;" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Actual</span>' : '') +
                             ' <button onclick="pd_quitarPendiente(' + num + ',' + entry.idx + ')" title="Quitar este archivo" ' +
                                 'style="background:none;border:1px solid #DC2626;color:#DC2626;' +
                                 'border-radius:6px;padding:1px 7px;font-size:10.5px;cursor:pointer;font-weight:600;margin-left:6px;">' +
-                                '🗑️ Quitar' +
+                                '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Quitar' +
                             '</button>' +
                         '</div>' +
                         '<div class="hist-meta">' +
-                            '📅 ' + fechaHoy + ' &nbsp;·&nbsp; 🕐 ' + horaHoy +
-                            ' &nbsp;·&nbsp; 💾 ' + formatearTamanoArchivo(entry.archivo.size) +
+                            '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + fechaHoy + ' &nbsp;·&nbsp; <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + horaHoy +
+                            ' &nbsp;·&nbsp; <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>' + formatearTamanoArchivo(entry.archivo.size) +
                         '</div>' +
                     '</div>' +
                 '</div>';
@@ -686,7 +698,7 @@ function renderizarChecklist() {
             ? '<div style="margin-top:6px;">' +
                 '<button class="btn" onclick="pd_elegirArchivo(' + num + ')" ' +
                     'style="padding:10px 14px;font-size:13px;">' +
-                    '📎 Agregar nueva versión' +
+                    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Agregar nueva versión' +
                 '</button>' +
                 '<input type="file" id="pd-file-' + num + '" style="display:none;" ' +
                     'accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" ' +
@@ -745,9 +757,9 @@ function renderizarChecklist() {
                     '<div style="color:#1F2937;margin-top:2px;">' + escapeHTML(borradorComentario) + '</div>' +
                     '<div style="margin-top:4px;">' +
                         '<a onclick="pd_editarComentarioPendiente(' + num + ')" ' +
-                            'style="color:#123C7B;font-size:10px;cursor:pointer;margin-right:10px;">✏️ Editar</a>' +
+                            'style="color:#123C7B;font-size:10px;cursor:pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Editar</a>' +
                         '<a onclick="pd_borrarComentarioPendiente(' + num + ')" ' +
-                            'style="color:#B91C1C;font-size:10px;cursor:pointer;">🗑️ Borrar</a>' +
+                            'style="color:#B91C1C;font-size:10px;cursor:pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Borrar</a>' +
                     '</div>' +
                 '</div>';
         } else if (puedeComentar) {
@@ -774,7 +786,7 @@ function renderizarChecklist() {
                         'onclick="pd_confirmarComentario(' + num + ')" ' +
                         'style="position:absolute;right:5px;bottom:5px;background:#123C7B;color:white;' +
                         'border:none;border-radius:50%;width:22px;height:22px;padding:0;font-size:11px;' +
-                        'line-height:22px;text-align:center;cursor:pointer;">➤</button>' +
+                        'line-height:22px;text-align:center;cursor:pointer;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg></button>' +
                 '</div>';
         }
 
@@ -785,7 +797,7 @@ function renderizarChecklist() {
         var bloqueComentarios =
             '<div class="checklist-comentario" style="margin-top:10px;border-top:1px dashed #E5E7EB;padding-top:8px;">' +
                 '<div style="font-size:10px;color:#6B7280;font-weight:700;text-transform:uppercase;margin-bottom:4px;">' +
-                    '💬 Comentarios' +
+                    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Comentarios' +
                 '</div>' +
                 comentariosHTML +
                 formularioComentario +
@@ -799,8 +811,9 @@ function renderizarChecklist() {
                 '<td style="color:#1F2937;">' + label + '</td>' +
                 '<td>' +
                     '<div class="pd-carga-caja">' +
-                        versionesHTML + controlSubida + bloqueComentarios +
+                        versionesHTML + controlSubida +
                     '</div>' +
+                    bloqueComentarios +
                 '</td>' +
                 '<td style="min-width:260px;max-width:340px;vertical-align:top;">' + pd_celdaAnalisis(num) + '</td>' +
             '</tr>';
@@ -826,7 +839,7 @@ function renderizarChecklist() {
             'style="background:#F3F4F6;color:#374151;border:1px solid #E5E7EB;' +
             'padding:12px 22px;border-radius:12px;font-weight:700;font-size:14px;' +
             'cursor:pointer;margin-right:10px;text-decoration:none;display:inline-block;">' +
-            '🏠 Volver al inicio' +
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Volver al inicio' +
         '</a>';
 
     if (proceso.estado === 'cerrado') {
@@ -836,11 +849,11 @@ function renderizarChecklist() {
                 ? '<button id="pd-btn-guardar" onclick="pd_guardar()" ' +
                     'style="background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;border:none;' +
                     'padding:12px 26px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;margin-right:10px;">' +
-                    '💾 Guardar comentarios' +
+                    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar comentarios' +
                   '</button>'
                 : '') +
             '<span style="color:#6B7280;font-size:13px;font-style:italic;">' +
-                '🔒 Este proceso fue finalizado y ya no admite cambios en documentos.' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Este proceso fue finalizado y ya no admite cambios en documentos.' +
             '</span>';
     } else if (puedeEditar) {
         accionesEl.innerHTML =
@@ -848,12 +861,12 @@ function renderizarChecklist() {
             '<button id="pd-btn-guardar" onclick="pd_guardar()" ' +
                 'style="background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;border:none;' +
                 'padding:12px 26px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;margin-right:10px;">' +
-                '💾 Guardar' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar' +
             '</button>' +
             '<button onclick="pd_finalizar()" ' +
                 'style="background:#DC2626;color:white;border:none;' +
                 'padding:12px 26px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;">' +
-                '🔒 Finalizar Proceso' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Finalizar Proceso' +
             '</button>';
     } else {
         accionesEl.innerHTML = botonInicio;
@@ -991,7 +1004,7 @@ async function pd_guardar() {
     var btnGuardar = document.getElementById('pd-btn-guardar');
     if (btnGuardar) {
         btnGuardar.disabled = true;
-        btnGuardar.innerHTML = '⏳ Guardando…';
+        btnGuardar.textContent = 'Guardando…';
     }
 
     var labelsProceso    = CHECKLISTS_POR_TIPO[_procesoActual.tipo] || CHECKLISTS_POR_TIPO.CD1P;
@@ -1008,6 +1021,19 @@ async function pd_guardar() {
         // anterior ya marcada como inactiva y calcule bien la siguiente.
         for (var k = 0; k < archivos.length; k++) {
             await db_subirDocumento(_procesoActual.id, num, label, archivos[k], restringido);
+        }
+
+        // Ítem 5 = Estudios Previos: si al analizar este documento se
+        // detectó una fecha de vigencia de plazo (ver pd_analizarDocumento),
+        // persistirla en el proceso ya existente.
+        if (num === 5) {
+            var claveEst5 = archivos.map(function(a) { return num + '__' + a.name; })
+                .map(function(k) { return estadoDocumentos[k]; })
+                .filter(function(v) { return v && v.analisis && v.analisis.plazoVigenciaDetectado; })
+                .pop();
+            if (claveEst5) {
+                await db_actualizarPlazoProceso(_procesoActual.id, claveEst5.analisis.plazoVigenciaDetectado.fecha);
+            }
         }
     }
 
@@ -1032,11 +1058,11 @@ async function pd_guardar() {
 
     var toast = document.createElement('div');
     toast.style.cssText =
-        'position:fixed;bottom:24px;right:24px;z-index:99998;' +
+        'position:fixed;bottom:24px;right:24px;z-index:99999999;' +
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';
-    toast.textContent = '✅ Guardado correctamente';
+    toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Guardado correctamente';
     document.body.appendChild(toast);
     setTimeout(function() { toast.remove(); }, 4000);
 }
@@ -1115,7 +1141,7 @@ function pd_actualizarPanelJuriskills() {
     estadoBadge.style.display = 'inline-block';
     if (nAnal > 0) {
         estadoBadge.className = 'ia-badge badge-analizando';
-        estadoBadge.textContent = '⏳ Analizando…';
+        estadoBadge.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Analizando…';
     } else if (nErr > 0) {
         estadoBadge.className = 'ia-badge badge-error';
         estadoBadge.textContent = nErr + (nErr !== 1 ? ' correcciones requeridas' : ' corrección requerida');
@@ -1124,7 +1150,7 @@ function pd_actualizarPanelJuriskills() {
         estadoBadge.textContent = nAdv + ' advertencia' + (nAdv !== 1 ? 's' : '');
     } else {
         estadoBadge.className = 'ia-badge badge-ok';
-        estadoBadge.textContent = '✅ Todo en orden';
+        estadoBadge.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Todo en orden';
     }
 
     resumenGlobal.textContent =
@@ -1174,8 +1200,8 @@ function pd_renderTarjetaAnalisis(val, clave) {
 
     if (val.estado === 'analizando') {
         return '<div style="display:flex;align-items:center;gap:6px;color:#6366F1;font-size:11px;">' +
-                '<span class="ia-badge badge-analizando">⏳ Analizando</span>' +
-                '<span style="color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ' +
+                '<span class="ia-badge badge-analizando"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Analizando</span>' +
+                '<span style="color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
                     escapeHTML(val.archivo ? val.archivo.name : '') + '</span>' +
             '</div>' +
             (val.progreso ? '<div style="margin-top:4px;font-size:10px;color:#6366F1;">' + escapeHTML(val.progreso) + '</div>' : '') +
@@ -1186,10 +1212,10 @@ function pd_renderTarjetaAnalisis(val, clave) {
     // contratacion.html (no se dispara el análisis automático para no gastar
     // cuota de Groq si se subió el documento equivocado por error).
     if (val.estado === 'pendiente' || !val.analisis) {
-        return '<div style="margin-bottom:8px;font-size:12px;color:#0B7A43;font-weight:600;">✅ <strong>' +
+        return '<div style="margin-bottom:8px;font-size:12px;color:#0B7A43;font-weight:600;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>' +
                 escapeHTML(val.archivo ? val.archivo.name : '') + '</strong></div>' +
             '<button class="btn" style="padding:10px 14px;font-size:13px;" ' +
-                'onclick="pd_analizarDocumento(\'' + clave.replace(/'/g, "\\'") + '\')">🔎 Analizar</button>';
+                'onclick="pd_analizarDocumento(\'' + clave.replace(/'/g, "\\'") + '\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Analizar</button>';
     }
 
     var a = val.analisis;
@@ -1197,7 +1223,7 @@ function pd_renderTarjetaAnalisis(val, clave) {
     // Documentos de identificación (ítems sin análisis requerido): solo se
     // muestra el archivo cargado, sin badge ni barra de cumplimiento.
     if (val.estado === 'sin_analisis' || a.sinAnalisis) {
-        return '<div style="font-size:12px;color:#0B7A43;font-weight:600;">✅ <strong>' +
+        return '<div style="font-size:12px;color:#0B7A43;font-weight:600;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>' +
                 escapeHTML(val.archivo ? val.archivo.name : '') + '</strong></div>' +
             '<div style="font-size:10.5px;color:#9CA3AF;font-style:italic;margin-top:2px;">Documento de identificación — sin análisis.</div>';
     }
@@ -1205,11 +1231,15 @@ function pd_renderTarjetaAnalisis(val, clave) {
     var puntaje = a.puntaje != null ? a.puntaje : (a.estado === 'ok' ? 90 : a.estado === 'advertencia' ? 65 : 30);
     var pColor = puntaje >= 80 ? '#22C55E' : puntaje >= 50 ? '#F59E0B' : '#EF4444';
     var badgeClase = a.estado === 'ok' ? 'badge-ok' : a.estado === 'advertencia' ? 'badge-warning' : 'badge-error';
-    var badgeTexto = a.estado === 'ok' ? '✅ Correcto' : a.estado === 'advertencia' ? '⚠️ Advertencia' : '🔴 Corrección';
+    var badgeTexto = a.estado === 'ok'
+        ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Correcto'
+        : a.estado === 'advertencia'
+        ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Advertencia'
+        : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Corrección';
 
     return '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">' +
             '<span class="ia-badge ' + badgeClase + '" style="flex-shrink:0;">' + badgeTexto + '</span>' +
-            '<span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ' +
+            '<span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
                 escapeHTML(val.archivo ? val.archivo.name : '') + '</span>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">' +
@@ -1220,7 +1250,7 @@ function pd_renderTarjetaAnalisis(val, clave) {
             '<span style="font-size:11px;font-weight:800;color:' + pColor + ';white-space:nowrap;">' + puntaje + '%</span>' +
         '</div>' +
         '<a href="javascript:void(0)" onclick="pd_juriskillsAbrirModal(\'' + clave.replace(/'/g, "\\'") + '\')" ' +
-            'style="font-size:11px;font-weight:700;color:#2563EB;text-decoration:underline;">🔍 Ver análisis completo</a>';
+            'style="font-size:11px;font-weight:700;color:#2563EB;text-decoration:underline;">Ver análisis completo</a>';
 }
 
 // Modal de detalle completo — mismo markup que _renderContenidoCompletoAnalisis()
@@ -1229,8 +1259,8 @@ function pd_renderTarjetaAnalisis(val, clave) {
 function pd_juriskillsAbrirModal(clave) {
     var val = (typeof estadoDocumentos !== 'undefined') ? estadoDocumentos[clave] : null;
     if (!val || !val.analisis) return;
-    document.getElementById('juriskillsModalTitulo').textContent =
-        '🤖 Análisis JURISKILLS — ' + (val.archivo ? val.archivo.name : '');
+    document.getElementById('juriskillsModalTituloTexto').textContent =
+        'Análisis JURISKILLS — ' + (val.archivo ? val.archivo.name : '');
     document.getElementById('juriskillsModalContenido').innerHTML = pd_renderContenidoCompletoAnalisis(val);
     document.getElementById('juriskillsModal').style.display = 'flex';
 }
@@ -1246,7 +1276,11 @@ function pd_renderContenidoCompletoAnalisis(val) {
     var puntaje = a.puntaje != null ? a.puntaje : (a.estado === 'ok' ? 90 : a.estado === 'advertencia' ? 65 : 30);
     var pColor = puntaje >= 80 ? '#22C55E' : puntaje >= 50 ? '#F59E0B' : '#EF4444';
     var badgeClase = a.estado === 'ok' ? 'badge-ok' : a.estado === 'advertencia' ? 'badge-warning' : 'badge-error';
-    var badgeTexto = a.estado === 'ok' ? '✅ Correcto' : a.estado === 'advertencia' ? '⚠️ Advertencia' : '🔴 Corrección';
+    var badgeTexto = a.estado === 'ok'
+        ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Correcto'
+        : a.estado === 'advertencia'
+        ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Advertencia'
+        : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Corrección';
 
     var hallazgos = a.hallazgos || [];
     var hallNorm = hallazgos.filter(function(x) { return x.indexOf('⚠️ Concordancia') !== 0 && x.indexOf('🔴 Inconsistencia') !== 0; });
@@ -1285,7 +1319,7 @@ function pd_renderContenidoCompletoAnalisis(val) {
     return '<div>' +
         '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">' +
             '<span class="ia-badge ' + badgeClase + '" style="flex-shrink:0;">' + badgeTexto + '</span>' +
-            '<span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ' +
+            '<span style="font-size:11px;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
                 escapeHTML(val.archivo ? val.archivo.name : '') + '</span>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">' +
@@ -1297,24 +1331,24 @@ function pd_renderContenidoCompletoAnalisis(val) {
         '</div>' +
         (a.resumen ? '<p style="font-size:11.5px;color:#374151;font-style:italic;margin:0 0 6px;">' + escapeHTML(a.resumen) + '</p>' : '') +
         (hallNormHTML ? '<div style="margin-bottom:6px;background:#FEF2F2;border-radius:8px;padding:6px 8px;">' +
-            '<div style="font-size:11px;font-weight:700;color:#DC2626;margin-bottom:4px;">🔴 Incumplimientos normativos:</div>' +
+            '<div style="font-size:11px;font-weight:700;color:#DC2626;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Incumplimientos normativos:</div>' +
             '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + hallNormHTML + '</ul></div>' : '') +
         (hallConcHTML ? '<div style="margin-bottom:6px;background:#FFF1F2;border-radius:8px;padding:6px 8px;border:1px solid #FECDD3;">' +
-            '<div style="font-size:11px;font-weight:700;color:#BE123C;margin-bottom:4px;">🔴 Inconsistencias entre documentos:</div>' +
+            '<div style="font-size:11px;font-weight:700;color:#BE123C;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Inconsistencias entre documentos:</div>' +
             '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + hallConcHTML + '</ul></div>' : '') +
         (advNormHTML ? '<div style="margin-bottom:6px;background:#FFFBEB;border-radius:8px;padding:6px 8px;">' +
-            '<div style="font-size:11px;font-weight:700;color:#D97706;margin-bottom:4px;">⚠️ Advertencias normativas:</div>' +
+            '<div style="font-size:11px;font-weight:700;color:#D97706;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Advertencias normativas:</div>' +
             '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + advNormHTML + '</ul></div>' : '') +
         (advRedacHTML ? '<div style="margin-bottom:6px;background:#F0F9FF;border-radius:8px;padding:6px 8px;border:1px solid #BAE6FD;">' +
-            '<div style="font-size:11px;font-weight:700;color:#0369A1;margin-bottom:4px;">✏️ Observaciones de redacción:</div>' +
+            '<div style="font-size:11px;font-weight:700;color:#0369A1;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Observaciones de redacción:</div>' +
             '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + advRedacHTML + '</ul></div>' : '') +
         (advConcHTML ? '<div style="margin-bottom:6px;background:#FFF7ED;border-radius:8px;padding:6px 8px;border:1px solid #FED7AA;">' +
-            '<div style="font-size:11px;font-weight:700;color:#C2410C;margin-bottom:4px;">🔗 Concordancia entre documentos:</div>' +
+            '<div style="font-size:11px;font-weight:700;color:#C2410C;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Concordancia entre documentos:</div>' +
             '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + advConcHTML + '</ul></div>' : '') +
         (recomHTML ? '<div style="margin-bottom:2px;background:#F0FDF4;border-radius:8px;padding:6px 8px;">' +
-            '<div style="font-size:11px;font-weight:700;color:#0B7A43;margin-bottom:4px;">💡 Recomendaciones:</div>' +
+            '<div style="font-size:11px;font-weight:700;color:#0B7A43;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>Recomendaciones:</div>' +
             '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;">' + recomHTML + '</ul></div>' : '') +
-        (a.normativa ? '<div style="font-size:10px;color:#9CA3AF;border-top:1px solid #F1F5F9;padding-top:4px;margin-top:4px;">📌 ' + escapeHTML(a.normativa) + '</div>' : '') +
+        (a.normativa ? '<div style="font-size:10px;color:#9CA3AF;border-top:1px solid #F1F5F9;padding-top:4px;margin-top:4px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z"/><circle cx="12" cy="9" r="2"/></svg>' + escapeHTML(a.normativa) + '</div>' : '') +
         '<div style="margin-top:10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:8px 10px;font-size:10.5px;color:#1E3A8A;line-height:1.5;">' +
             'ⓘ El análisis es generado por IA/reglas automáticas con base en el contenido real de cada documento cargado y la normativa contractual vigente. No reemplaza el criterio jurídico del equipo de contratación. <strong>Independientemente del porcentaje o resultado obtenido — incluso al 100% — este documento siempre debe revisarse manualmente antes de continuar el proceso.</strong>' +
         '</div>' +
@@ -1353,6 +1387,14 @@ async function pd_analizarDocumento(clave) {
             : modo === 'ia'
                 ? await analizarConIA(num, archivo.name, contenido)
                 : ejecutarAnalisisLocalReglas(num, archivo.name, contenido);
+
+        // Ítem 5 = Estudios Previos: intentar extraer localmente la fecha de
+        // vigencia del PLAZO (ver _extraerPlazoVigencia en
+        // juriskills-engine.js) — se persiste en pd_guardar() si el usuario
+        // confirma el guardado de este documento.
+        if (num === 5 && contenido.tipo === 'texto' && contenido.data) {
+            analisis.plazoVigenciaDetectado = _extraerPlazoVigencia(contenido.data);
+        }
 
         estadoDocumentos[clave] = { numItem: num, archivo: archivo, analisis: analisis, estado: analisis.estado };
 
