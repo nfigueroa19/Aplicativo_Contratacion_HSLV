@@ -5,11 +5,11 @@
 //  Solo usa las funciones ya existentes en js/db.js:
 //  db_contarNotificaciones, db_cargarNotificaciones,
 //  db_marcarLeida, db_marcarTodasLeidas.
+//  Se mantiene al día en vivo vía Supabase Realtime (sección
+//  "REALTIME" más abajo) en vez de polling.
 // ════════════════════════════════════════════════════
 
 (function () {
-
-    var _INTERVALO_REVISION = 20000; // 20 segundos, a pedido del usuario
 
     function _notif_escaparHTML(texto) {
         var div = document.createElement('div');
@@ -148,10 +148,47 @@
         });
     }
 
+    // ════════════════════════════════════════════════════
+    //  REALTIME — reemplaza el polling cada 20s (hasta 2026-08-06) por
+    //  una suscripción de Supabase Realtime (postgres_changes) sobre
+    //  `notificaciones`, mismo mecanismo que ya usa el dashboard
+    //  (index.html) para `procesos` — ver js/script.js, sección
+    //  "REALTIME", y sql/0003_habilitar_realtime_notificaciones.sql.
+    //  Requiere que `notificaciones` esté agregada a la publicación
+    //  `supabase_realtime` (correr ese script una vez en Supabase).
+    //
+    //  Realtime respeta las mismas políticas RLS que ya protegen
+    //  `notificaciones`: cada usuario solo recibe por el canal sus
+    //  propias notificaciones, igual que con el polling anterior.
+    //
+    //  supabaseClient ya existe como global acá (js/supabase.js se
+    //  carga antes que este script en las 8 páginas), así que no hace
+    //  falta esperar ningún promise de inicialización.
+    // ════════════════════════════════════════════════════
+    function _notif_onCambioRealtime() {
+        _notif_actualizarContador();
+        var panel = document.getElementById('panelNotificaciones');
+        if (panel && panel.style.display === 'block') _notif_cargarLista();
+    }
+
+    function _notif_suscribirRealtime() {
+        if (typeof supabaseClient === 'undefined' || !supabaseClient.channel) return;
+
+        supabaseClient
+            .channel('notificaciones-cambios')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones' },
+                _notif_onCambioRealtime)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notificaciones' },
+                _notif_onCambioRealtime)
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'notificaciones' },
+                _notif_onCambioRealtime)
+            .subscribe();
+    }
+
     function _notif_iniciar() {
         _notif_construirUI();
         _notif_actualizarContador();
-        setInterval(_notif_actualizarContador, _INTERVALO_REVISION);
+        _notif_suscribirRealtime();
     }
 
     if (document.readyState === 'loading') {

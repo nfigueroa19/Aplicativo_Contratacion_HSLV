@@ -12,6 +12,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 500);
     });
+    // Antes de que termine _dbListo, HIST_BD está vacío y dash_actualizar()
+    // mostraba "0" en las tarjetas del dashboard (parecía que no había
+    // procesos). window._dashDatosListos hace que dash_actualizar() muestre
+    // "Cargando..." mientras tanto, y se pone en true recién cuando la
+    // carga real terminó, para pintar los números definitivos una sola vez.
+    window._dashDatosListos = false;
+    window._dbListo.then(function() {
+        window._dashDatosListos = true;
+        if (typeof dash_actualizar === 'function') dash_actualizar();
+    });
     var btn = document.getElementById('sidebar-toggle');
 
     var overlay = document.createElement('div');
@@ -267,81 +277,145 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ════════════════════════════════════════════════════
-//  SPLASH — barra sincronizada con carga real
-//  Combina tiempo mínimo (3s) + carga real de la página
+//  SPLASH — barra sincronizada con carga real de datos
+//  Se muestra en CADA carga de index.html (login→index y
+//  también volver desde cualquier otra página), porque cada
+//  navegación recarga la página entera y vuelve a pedir los
+//  datos del dashboard — sin el splash tapando esa espera,
+//  las tarjetas se ven un instante en "Cargando...".
+//  Solo aplica a index.html, que es la única página con
+//  #splashScreen.
+//
+//  Dos modos, según de dónde viene el usuario:
+//  - Desde login (marca 'hslv_splash_desde_login' en
+//    sessionStorage, puesta por login.js): secuencia larga —
+//    imagen primero, barra después (por CSS), con mínimo
+//    visual de 3s combinado con window._dbListo.
+//  - Desde cualquier otra página: imagen y barra aparecen
+//    juntas (clase .splash-simultaneo), sin mínimo de tiempo —
+//    el splash dura exactamente lo que tarde window._dbListo,
+//    sea cual sea ese tiempo.
 // ════════════════════════════════════════════════════
 (function() {
-    // Si ya se mostró el splash en esta sesión, no mostrarlo de nuevo
-    var yaVisto = sessionStorage.getItem('splash_visto');
-    var splash  = document.getElementById('splashScreen');
+    var splash = document.getElementById('splashScreen');
+    if (!splash) return;
 
-    if (yaVisto && splash) {
-        splash.remove();
-        document.body.style.overflow = 'auto';
-        document.body.classList.remove('splash-activo');
-        return; // salir sin hacer nada más
-    }
+    var desdeLogin = sessionStorage.getItem('hslv_splash_desde_login') === '1';
+    sessionStorage.removeItem('hslv_splash_desde_login');
 
-    // Primera vez — mostrar el splash normalmente
     document.body.classList.add('splash-activo');
 
-    var percent       = document.getElementById('splashPercent');
-    var bar           = document.getElementById('splashBar');
-    var MIN_MS        = 3000;
-    var start         = Date.now();
-    var paginaCargada = false;
-    var tiempoMinCumplido = false;
-    var pctTiempo     = 0;
-    var pctCarga      = 0;
+    var percent = document.getElementById('splashPercent');
+    var bar     = document.getElementById('splashBar');
 
-    function tickTiempo() {
-        var elapsed = Date.now() - start;
-        pctTiempo = Math.min(100, Math.round((elapsed / MIN_MS) * 100));
-        actualizarBarra();
-        if (elapsed < MIN_MS) {
-            requestAnimationFrame(tickTiempo);
+    // window._dbListo se crea dentro de un listener de DOMContentLoaded
+    // (arriba en este mismo archivo) — como este IIFE corre en cuanto se
+    // parsea el <script>, ANTES de que DOMContentLoaded dispare, todavía
+    // no existe en ese momento. Hay que esperar a ese evento (si ya pasó,
+    // conectar de inmediato) para engancharse a la promesa real en vez de
+    // caer siempre al fallback de window.load.
+    function conectarDatos(callback) {
+        function intentar() {
+            if (window._dbListo && typeof window._dbListo.then === 'function') {
+                window._dbListo.then(callback).catch(callback);
+            } else {
+                // Fallback si _dbListo no llegó a definirse de todos modos
+                window.addEventListener('load', callback);
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', intentar);
         } else {
-            pctTiempo         = 100;
-            tiempoMinCumplido = true;
-            actualizarBarra();
-            intentarOcultar();
+            intentar();
         }
     }
-    requestAnimationFrame(tickTiempo);
 
-    window.addEventListener('load', function() {
-        pctCarga      = 100;
-        paginaCargada = true;
-        actualizarBarra();
-        intentarOcultar();
-    });
-
-    function actualizarBarra() {
-        var pctFinal = Math.round((pctTiempo + pctCarga) / 2);
-        if (percent) percent.textContent = pctFinal + '%';
-        if (bar)     bar.style.width     = pctFinal + '%';
-    }
-
-    function intentarOcultar() {
-        if (!paginaCargada || !tiempoMinCumplido) return;
-
+    function ocultarSplash() {
         if (percent) percent.textContent = '100%';
         if (bar)     bar.style.width     = '100%';
         document.body.style.overflow     = 'auto';
 
         setTimeout(function() {
-            if (splash) {
-                splash.classList.add('hide');
-                setTimeout(function() {
-                    if (splash) splash.remove();
-                    document.body.classList.remove('splash-activo');
-
-                    // Marcar como visto para esta sesión
-                    sessionStorage.setItem('splash_visto', '1');
-
-                }, 800);
-            }
+            splash.classList.add('hide');
+            setTimeout(function() {
+                splash.remove();
+                document.body.classList.remove('splash-activo');
+            }, 800);
         }, 300);
+    }
+
+    if (desdeLogin) {
+        // ── Secuencia larga: mínimo visual de 3s + carga real ──
+        var MIN_MS        = 3000;
+        var start         = Date.now();
+        var datosListos   = false;
+        var tiempoMinCumplido = false;
+        var pctTiempo     = 0;
+        var pctCarga      = 0;
+
+        function tickTiempo() {
+            var elapsed = Date.now() - start;
+            pctTiempo = Math.min(100, Math.round((elapsed / MIN_MS) * 100));
+            actualizarBarra();
+            if (elapsed < MIN_MS) {
+                requestAnimationFrame(tickTiempo);
+            } else {
+                pctTiempo         = 100;
+                tiempoMinCumplido = true;
+                actualizarBarra();
+                intentarOcultar();
+            }
+        }
+        requestAnimationFrame(tickTiempo);
+
+        function marcarDatosListos() {
+            pctCarga    = 100;
+            datosListos = true;
+            actualizarBarra();
+            intentarOcultar();
+        }
+
+        conectarDatos(marcarDatosListos);
+
+        function actualizarBarra() {
+            var pctFinal = Math.round((pctTiempo + pctCarga) / 2);
+            if (percent) percent.textContent = pctFinal + '%';
+            if (bar)     bar.style.width     = pctFinal + '%';
+        }
+
+        function intentarOcultar() {
+            if (!datosListos || !tiempoMinCumplido) return;
+            ocultarSplash();
+        }
+
+    } else {
+        // ── Transición corta: imagen + barra juntas, sin mínimo ──
+        splash.classList.add('splash-simultaneo');
+
+        // Avance visual mientras se espera _dbListo (nunca llega a 100%
+        // por sí solo) — el porcentaje real de "listo" lo pone _dbListo,
+        // sin importar cuánto tarde.
+        var pct = 0;
+        var avanceInterval = setInterval(function() {
+            if (pct < 90) {
+                pct += (90 - pct) * 0.15;
+                actualizarBarraCorta();
+            }
+        }, 120);
+
+        function actualizarBarraCorta() {
+            var pctMostrado = Math.round(pct);
+            if (percent) percent.textContent = pctMostrado + '%';
+            if (bar)     bar.style.width     = pctMostrado + '%';
+        }
+        actualizarBarraCorta();
+
+        function marcarDatosListosCorta() {
+            clearInterval(avanceInterval);
+            ocultarSplash();
+        }
+
+        conectarDatos(marcarDatosListosCorta);
     }
 })();
 
@@ -356,6 +430,22 @@ function dash_actualizar() {
     // Las tarjetas del dashboard solo existen en index.html — en otras
     // páginas (historial, proceso-detalle, etc.) esta función no debe hacer nada.
     if (!document.getElementById('dash-total')) return;
+
+    // Mientras no haya terminado la primera carga real de Supabase
+    // (window._dashDatosListos, fijado por window._dbListo más arriba),
+    // HIST_BD todavía está vacío — mostrar "Cargando..." en vez de "0"
+    // para no dar la falsa impresión de que no hay procesos guardados.
+    if (typeof window._dashDatosListos !== 'undefined' && !window._dashDatosListos) {
+        ['dash-total', 'dash-cd1p', 'dash-d3p', 'dash-conv', 'dash-sub'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = '...';
+        });
+        ['dash-sub-total', 'dash-sub-cd1p', 'dash-sub-d3p', 'dash-sub-conv', 'dash-sub-sub'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = 'Cargando procesos...';
+        });
+        return;
+    }
 
     var total = HIST_BD.length;
     var cd1p  = HIST_BD.filter(function(p){ return p.tipo === 'CD1P'; }).length;
@@ -1888,45 +1978,47 @@ async function guardarProceso() {
               })();
         var ok = cb ? cb.checked : false;
 
-        // Obtener archivo(s) del ítem — se guardan TODOS los archivos de los
-        // ítems con varios recuadros, no solo el primero (antes se perdían).
-        var archivos = [];
-
-        // Ítems simples
-        var archSimple = document.getElementById('archivo_' + num);
-        if (archSimple && archSimple.files && archSimple.files[0]) {
-            archivos.push(archSimple.files[0]);
-        }
-
-        // Ítems con sub-archivos. El ítem 9 (Estudio de Mercado) tiene 3
-        // recuadros propios y NO existe un "archivo_9" simple — por eso antes
-        // este ítem nunca guardaba ningún archivo en la base de datos.
-        var subSufijos = {
-            9:  ['9_mercado','9_propuestas','9_carta'],
-            15: ['15a','15b','15c','15d'],
-            20: ['20a','20b','20c'],
-            21: ['21a','21b']
-        };
-        if (subSufijos[num]) {
-            subSufijos[num].forEach(function(sufijo) {
-                var inp = document.getElementById('archivo_' + sufijo);
-                if (inp && inp.files && inp.files[0]) {
-                    archivos.push(inp.files[0]);
-                }
-            });
-        }
+        // Obtener archivo(s) del ítem — se guardan TODAS las versiones
+        // elegidas antes de guardar para CADA recuadro del ítem (el simple
+        // "archivo_N", o los sub-recuadros del ítem 9/15/20/21), no solo la
+        // que quedó vigente en el input nativo (ver _histU_todasLasVersiones
+        // — un input de archivo solo retiene la última selección; sin esto,
+        // reemplazar un archivo antes de guardar perdía en silencio la
+        // versión anterior y su análisis JURISKILLS).
+        var versionesItem     = _histU_todasLasVersiones('', num);
+        var archivos          = versionesItem.map(function(v) { return v.archivo; });
+        var versionesArchivos = versionesItem.map(function(v) { return v.version; });
+        var activosArchivos   = versionesItem.map(function(v) { return v.activo; });
 
         var comentEl  = document.getElementById('coment_' + num);
         var comentario = comentEl ? comentEl.value.trim() : '';
 
+        // Análisis JURISKILLS ya hecho (botón "Analizar") para cada archivo
+        // de este ítem, en el mismo orden que `archivos` — se guarda como
+        // historial en analisis_juriskills junto con el documento (ver
+        // db_guardarProceso en js/db.js). null si ese archivo no se analizó.
+        var analisisArchivos = archivos.map(function(a) {
+            var entry = (typeof estadoDocumentos !== 'undefined') ? estadoDocumentos[num + '__' + a.name] : null;
+            return (entry && entry.analisis) ? entry.analisis : null;
+        });
+
+        // `archivo` (singular) solo se usa como resumen informativo (ej. la
+        // fila local de HIST_BD en db_guardarProceso, ver js/db.js) — debe
+        // ser un archivo VIGENTE (activo), no necesariamente el primero que
+        // se registró en _histU_datos.
+        var archivoVigente = (versionesItem.filter(function(v) { return v.activo; })[0] || {}).archivo || null;
+
         checklist.push({
-            num:           num,
-            label:         label,
-            ok:            ok,
-            archivo:       archivos[0] || null,
-            archivos:      archivos,
-            esRestringido: ITEMS_RESTRINGIDOS.indexOf(num) !== -1,
-            comentario:    comentario
+            num:              num,
+            label:            label,
+            ok:               ok,
+            versionesArchivos: versionesArchivos,
+            activosArchivos:   activosArchivos,
+            archivo:          archivoVigente,
+            archivos:         archivos,
+            analisisArchivos: analisisArchivos,
+            esRestringido:    ITEMS_RESTRINGIDOS.indexOf(num) !== -1,
+            comentario:       comentario
         });
     });
 
@@ -2679,15 +2771,15 @@ async function guardarProcesoHistorial(tipo) {
         .map(function(_, idx) { return idx + 1; });
 
     listaNumeros.forEach(function(n, idx) {
-        // Se guardan TODOS los archivos de los ítems con varios recuadros
-        // (antes solo se guardaba el primero y los demás se perdían)
-        var archivos = [];
-
-        // Intentar archivo simple con prefijo del módulo
-        var archEl = document.getElementById(pref + '_arch_' + n);
-        if (archEl && archEl.files && archEl.files[0]) {
-            archivos.push(archEl.files[0]);
-        }
+        // Se guardan TODAS las versiones elegidas antes de guardar (ver
+        // _histU_todasLasVersiones y la misma nota en guardarProceso() /
+        // checklist CD1P más arriba) — no solo la vigente en el input
+        // nativo, que se pierde en silencio si el usuario reemplazó el
+        // archivo del ítem antes de presionar "Guardar Proceso".
+        var versionesItem2     = _histU_todasLasVersiones(pref + '_', n);
+        var archivos           = versionesItem2.map(function(v) { return v.archivo; });
+        var versionesArchivos2 = versionesItem2.map(function(v) { return v.version; });
+        var activosArchivos2   = versionesItem2.map(function(v) { return v.activo; });
 
         // Checkbox del ítem
         var cbEl = document.getElementById(pref + '_chk_' + n);
@@ -2696,14 +2788,28 @@ async function guardarProcesoHistorial(tipo) {
         var comentEl2  = document.getElementById(pref + '_coment_' + n);
         var comentario = comentEl2 ? comentEl2.value.trim() : '';
 
+        // Ver misma nota en guardarProceso() (checklist CD1P) más arriba —
+        // D3P usa el mismo motor JURISKILLS con la numeración real de ítem
+        // (n), así que la clave de estadoDocumentos también es n + '__' + nombre.
+        var analisisArchivos2 = archivos.map(function(a) {
+            var entry = (typeof estadoDocumentos !== 'undefined') ? estadoDocumentos[n + '__' + a.name] : null;
+            return (entry && entry.analisis) ? entry.analisis : null;
+        });
+
+        // Ver misma nota sobre `archivo` (singular) en guardarProceso() más arriba.
+        var archivoVigente2 = (versionesItem2.filter(function(v) { return v.activo; })[0] || {}).archivo || null;
+
         checklist.push({
-            num:           n,
-            label:         labelsModulo ? labelsModulo[idx] : ('Ítem ' + n),
-            ok:            ok,
-            archivo:       archivos[0] || null,
-            archivos:      archivos,
-            esRestringido: ITEMS_RESTRINGIDOS.indexOf(n) !== -1,
-            comentario:    comentario
+            num:               n,
+            label:             labelsModulo ? labelsModulo[idx] : ('Ítem ' + n),
+            ok:                ok,
+            versionesArchivos: versionesArchivos2,
+            activosArchivos:   activosArchivos2,
+            archivo:           archivoVigente2,
+            archivos:          archivos,
+            analisisArchivos:  analisisArchivos2,
+            esRestringido:     ITEMS_RESTRINGIDOS.indexOf(n) !== -1,
+            comentario:        comentario
         });
     });
 
@@ -2989,6 +3095,8 @@ function hist_renderTabla() {
               textoAsignado +
               '<div style="display:flex;gap:6px;align-items:center;">' +
                   '<select id="resp_select_' + p.id + '" ' +
+                      'data-guardado="' + (p.responsable_asignado || '') + '" ' +
+                      'onchange="_hist_marcarCambioResponsable(\'' + p.id + '\')" ' +
                       'style="flex:1;padding:6px 9px;border-radius:8px;' +
                            'border:1.5px solid #BFDBFE;font-size:11px;' +
                            'color:#123C7B;outline:none;background:#F8FAFF;">' +
@@ -3187,6 +3295,21 @@ async function hist_eliminar(id) {
   toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Proceso <strong>' + id + '</strong> eliminado correctamente';
   document.body.appendChild(toast);
   setTimeout(function(){ toast.remove(); }, 4000);
+}
+
+// Enciende/apaga el parpadeo del botón "Guardar responsable" según si la
+// selección del combo difiere de lo que ya está guardado (data-guardado).
+function _hist_marcarCambioResponsable(procesoId) {
+    var selectEl = document.getElementById('resp_select_' + procesoId);
+    var btnEl    = document.getElementById('resp_btn_' + procesoId);
+    if (!selectEl || !btnEl) return;
+
+    // Solo parpadea si se eligió un responsable real (no "— Seleccione —")
+    // y es distinto al que ya está guardado; volver a "— Seleccione —" o
+    // dejarlo igual al guardado apaga el parpadeo.
+    var haycambio = selectEl.value !== '' &&
+                    selectEl.value !== (selectEl.dataset.guardado || '');
+    btnEl.classList.toggle('btn-resp-pendiente', haycambio);
 }
 
 // ── Asignar responsable jurídico a un proceso ──
@@ -3578,6 +3701,45 @@ async function mostrarArchivo(input, elementoId) {
 //  Solicitud CDP, CDP).
 // ════════════════════════════════════════════════════
 var _histU_datos = {}; // clave: prefijo+num → array de versiones
+
+// Reconstruye TODAS las versiones elegidas para un ítem antes de guardar,
+// agrupadas por recuadro (origenId) — no solo la que quedó vigente en cada
+// `<input type="file">` nativo. Un input de archivo nativo solo retiene el
+// ÚLTIMO archivo elegido: si el usuario carga un documento, JURISKILLS lo
+// analiza, y luego reemplaza ese mismo recuadro por otro archivo antes de
+// presionar "Guardar Proceso", el primero desaparece de `input.files` —
+// pero `_histU_datos` sí lo conserva (guarda la referencia real al File,
+// ver histU_registrar). Sin esta función, guardarProceso()/
+// guardarProcesoHistorial() leían el input directamente y perdían esa
+// primera versión (y su análisis JURISKILLS) en silencio al guardar.
+// Cada recuadro (origenId) mantiene su propia numeración de versión — un
+// ítem con sub-documentos (9, 15, 20, 21) tiene varios recuadros
+// compartiendo el mismo `_histU_datos[clave]`, cada uno con su propia
+// cadena de versiones independiente.
+function _histU_todasLasVersiones(prefijo, num) {
+    var hist = _histU_datos[prefijo + num] || [];
+    var porOrigen = {};
+    var ordenOrigenes = [];
+    hist.forEach(function(h) {
+        if (!porOrigen[h.origenId]) {
+            porOrigen[h.origenId] = [];
+            ordenOrigenes.push(h.origenId);
+        }
+        porOrigen[h.origenId].push(h);
+    });
+    var resultado = [];
+    ordenOrigenes.forEach(function(origenId) {
+        var versiones = porOrigen[origenId];
+        versiones.forEach(function(v, idx) {
+            resultado.push({
+                archivo: v.archivo,
+                version: idx + 1,
+                activo:  idx === versiones.length - 1
+            });
+        });
+    });
+    return resultado;
+}
 
 function _histU_parsear(elementoId) {
     var m;

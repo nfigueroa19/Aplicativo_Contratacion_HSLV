@@ -124,6 +124,16 @@ var _comentariosConfirmados = {};
 var _historialAbierto = {}; // { itemNum: true/false }
 var _usuariosJuridicosActuales = []; // solo se llena si el usuario actual es Admin
 
+// Historial de análisis JURISKILLS ya guardados en Supabase (tabla
+// analisis_juriskills — ver sql/2026-08-06_historial_analisis_juriskills.sql),
+// agrupado por ítem: { itemNum: [fila, fila, ...] }, más reciente primero.
+// Se llena una sola vez al cargar la página (ver DOMContentLoaded) — no
+// cambia salvo que se recargue, igual que _documentosActuales.
+var _historialAnalisisPorItem = {};
+// Igual que _historialAbierto, pero para la caja de historial de análisis
+// de cada ítem (independiente de la de versiones de documento).
+var _historialAnalisisAbierto = {};
+
 function escapeHTML(texto) {
     var div = document.createElement('div');
     div.textContent = texto == null ? '' : String(texto);
@@ -196,6 +206,17 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     _documentosActuales = await db_cargarDocumentos(proceso.id);
     _comentariosActuales = await db_cargarComentarios(proceso.id);
+
+    // Historial de análisis JURISKILLS ya guardados (solo tiene datos para
+    // CD1P/D3P — ver pd_tipoConAnalisisJuriskills), agrupado por ítem para
+    // que pd_celdaAnalisis() lo muestre junto a cada fila del checklist.
+    if (pd_tipoConAnalisisJuriskills(proceso.tipo)) {
+        var filasAnalisis = await db_cargarHistorialAnalisis(proceso.id);
+        filasAnalisis.forEach(function(fila) {
+            if (!_historialAnalisisPorItem[fila.item_num]) _historialAnalisisPorItem[fila.item_num] = [];
+            _historialAnalisisPorItem[fila.item_num].push(fila);
+        });
+    }
 
     // Marca de "conocimiento": si quien abre es el jurídico asignado y
     // todavía no existe una primera visita registrada, se guarda ahora.
@@ -359,9 +380,10 @@ function campoValorProceso(p) {
             'Valor' +
         '</div>' +
         '<div style="display:flex;gap:8px;align-items:center;">' +
-            '<input id="pd-valor-input" type="text" inputmode="decimal" value="' + escapeHTML(_fmt_rawAValorInput(p.valor)) + '" ' +
+            '<input id="pd-valor-input" type="text" inputmode="decimal" autocomplete="off" value="' + escapeHTML(_fmt_rawAValorInput(p.valor)) + '" ' +
+                'data-guardado="' + escapeHTML(p.valor || '') + '" ' +
                 'placeholder="Valor estimado del proceso ($)" ' +
-                'oninput="_fmt_formatearValorInput(this)" ' +
+                'oninput="_fmt_formatearValorInput(this);_pd_marcarCambioValor()" ' +
                 'style="flex:1;min-width:0;padding:7px 10px;border-radius:8px;border:1.5px solid #BFDBFE;' +
                 'font-size:13px;color:#1F2937;outline:none;background:#F8FAFF;">' +
             '<button id="pd-valor-btn" onclick="pd_actualizarValor()" ' +
@@ -371,6 +393,18 @@ function campoValorProceso(p) {
             '</button>' +
         '</div>' +
     '</div>';
+}
+
+// Enciende/apaga el parpadeo del botón "Guardar" del valor según si lo
+// escrito en el input difiere de lo que ya está guardado — mismo criterio
+// que _pd_marcarCambioResponsable / _hist_marcarCambioResponsable.
+function _pd_marcarCambioValor() {
+    var inputEl = document.getElementById('pd-valor-input');
+    var btnEl   = document.getElementById('pd-valor-btn');
+    if (!inputEl || !btnEl) return;
+
+    var haycambio = _fmt_valorARaw(inputEl.value) !== (inputEl.dataset.guardado || '');
+    btnEl.classList.toggle('btn-resp-pendiente', haycambio);
 }
 
 async function pd_actualizarValor() {
@@ -449,7 +483,9 @@ function renderizarInfo(p) {
         bloqueResponsable =
             '<div style="font-size:14px;margin-bottom:8px;">' + responsableAsignadoHTML + '</div>' +
             '<div style="display:flex;gap:8px;align-items:center;max-width:380px;">' +
-                '<select id="pd-resp-select" style="flex:1;padding:7px 10px;border-radius:8px;' +
+                '<select id="pd-resp-select" data-guardado="' + (p.responsable_asignado || '') + '" ' +
+                    'onchange="_pd_marcarCambioResponsable()" ' +
+                    'style="flex:1;padding:7px 10px;border-radius:8px;' +
                     'border:1.5px solid #BFDBFE;font-size:12px;color:#123C7B;outline:none;background:#F8FAFF;">' +
                     opcionesHTML +
                 '</select>' +
@@ -485,6 +521,19 @@ function renderizarInfo(p) {
             '</div>' +
             bloqueResponsable +
         '</div>';
+}
+
+// Enciende/apaga el parpadeo del botón asignar/reasignar responsable según
+// si la selección del combo difiere de lo que ya está guardado — mismo
+// comportamiento que _hist_marcarCambioResponsable en js/script.js.
+function _pd_marcarCambioResponsable() {
+    var selectEl = document.getElementById('pd-resp-select');
+    var btnEl    = document.getElementById('pd-resp-btn');
+    if (!selectEl || !btnEl) return;
+
+    var haycambio = selectEl.value !== '' &&
+                    selectEl.value !== (selectEl.dataset.guardado || '');
+    btnEl.classList.toggle('btn-resp-pendiente', haycambio);
 }
 
 async function pd_asignarResponsable() {
@@ -909,6 +958,17 @@ function pd_toggleHistorial(num) {
     _historialAbierto[num] = abrir; // se recuerda entre renders (ver renderizarChecklist)
 }
 
+// Igual que pd_toggleHistorial(), pero para la caja de historial de
+// análisis JURISKILLS de la columna "Análisis JURISKILLS" (ver
+// pd_celdaAnalisis) — caja independiente de la de versiones de documento.
+function pd_toggleHistorialAnalisis(num) {
+    var c = document.getElementById('pd-historial-analisis-' + num);
+    if (!c) return;
+    var abrir = c.style.display === 'none';
+    c.style.display = abrir ? 'block' : 'none';
+    _historialAnalisisAbierto[num] = abrir;
+}
+
 function pd_archivoElegido(num, inputEl) {
     if (!inputEl.files || !inputEl.files[0]) return;
     // Cada archivo elegido se AGREGA al arreglo del ítem en vez de
@@ -1021,6 +1081,22 @@ async function pd_guardar() {
         // anterior ya marcada como inactiva y calcule bien la siguiente.
         for (var k = 0; k < archivos.length; k++) {
             await db_subirDocumento(_procesoActual.id, num, label, archivos[k], restringido);
+
+            // Si este archivo ya se analizó con JURISKILLS (botón "Analizar",
+            // ver pd_analizarDocumento) antes de guardar, registrar ese
+            // análisis en el historial (tabla analisis_juriskills) y
+            // reflejarlo de inmediato en la caja "Historial de análisis" del
+            // ítem, sin esperar a recargar la página.
+            var entryAnalisis = estadoDocumentos[num + '__' + archivos[k].name];
+            if (entryAnalisis && entryAnalisis.analisis) {
+                var filaAnalisis = await db_guardarAnalisisJuriskills(
+                    _procesoActual.id, num, label, archivos[k].name, entryAnalisis.analisis
+                );
+                if (filaAnalisis) {
+                    if (!_historialAnalisisPorItem[num]) _historialAnalisisPorItem[num] = [];
+                    _historialAnalisisPorItem[num].unshift(filaAnalisis);
+                }
+            }
         }
 
         // Ítem 5 = Estudios Previos: si al analizar este documento se
@@ -1168,26 +1244,105 @@ function pd_celdaAnalisis(num) {
     }
 
     var pendientesArrIA = _archivosPendientes[num] || [];
-    if (!pendientesArrIA.length) {
-        return '<div style="color:#9CA3AF;font-style:italic;font-size:12px;">Cargue un documento nuevo para analizarlo.</div>';
-    }
 
     // Cada archivo pendiente del ítem consigue su propia tarjeta — igual que
     // _renderTarjetasJuriskills() en contratacion.html/js/script.js, donde
     // TODOS los archivos elegidos (no solo el último) quedan disponibles
     // para analizar. Antes acá solo se leía el último del arreglo, así que
     // el análisis del primero desaparecía en cuanto se elegía un segundo.
-    return pendientesArrIA.map(function(pendiente, idxDoc) {
-        var clave = num + '__' + pendiente.name;
-        var entry = (typeof estadoDocumentos !== 'undefined') ? estadoDocumentos[clave] : null;
+    var tarjetasHTML = pendientesArrIA.length
+        ? pendientesArrIA.map(function(pendiente, idxDoc) {
+            var clave = num + '__' + pendiente.name;
+            var entry = (typeof estadoDocumentos !== 'undefined') ? estadoDocumentos[clave] : null;
 
-        if (!entry) {
-            entry = { numItem: num, archivo: pendiente, analisis: null, estado: 'pendiente' };
-        }
+            if (!entry) {
+                entry = { numItem: num, archivo: pendiente, analisis: null, estado: 'pendiente' };
+            }
 
-        var separador = idxDoc > 0 ? 'border-top:1px solid #F1F5F9;padding-top:8px;margin-top:8px;' : '';
-        return '<div style="' + separador + '">' + pd_renderTarjetaAnalisis(entry, clave) + '</div>';
+            var separador = idxDoc > 0 ? 'border-top:1px solid #F1F5F9;padding-top:8px;margin-top:8px;' : '';
+            return '<div style="' + separador + '">' + pd_renderTarjetaAnalisis(entry, clave) + '</div>';
+          }).join('')
+        : '<div style="color:#9CA3AF;font-style:italic;font-size:12px;">Cargue un documento nuevo para analizarlo.</div>';
+
+    // El historial de análisis ya guardados (ver _historialAnalisisPorItem,
+    // cargado en DOMContentLoaded) se muestra SIEMPRE que exista, incluso
+    // sin un archivo pendiente — es lo que permite consultar qué se analizó
+    // en el pasado sobre este ítem, aunque hoy no se esté cargando nada nuevo.
+    return tarjetasHTML + pd_historialAnalisisHTML(num);
+}
+
+// Caja colapsable "🕓 Historial de análisis" de un ítem del checklist —
+// mismo patrón visual que el "Ver historial" de versiones de documento
+// (toggleHistorialHTML/entradasHistorial más abajo en renderizarChecklist),
+// pero listando filas de analisis_juriskills en vez de versiones de archivo.
+// Cada entrada abre el mismo modal #juriskillsModal con el resultado
+// guardado (ver pd_verAnalisisHistorial).
+function pd_historialAnalisisHTML(num) {
+    var filas = _historialAnalisisPorItem[num] || [];
+    if (!filas.length) return '';
+
+    var abierto = _historialAnalisisAbierto[num] ? 'block' : 'none';
+
+    var entradasHTML = filas.map(function(f) {
+        var fechaObj = f.created_at ? new Date(f.created_at) : null;
+        var fecha = fechaObj
+            ? fechaObj.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            : '';
+        var hora = fechaObj
+            ? fechaObj.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            : '';
+        var puntaje = f.puntaje != null ? f.puntaje : 0;
+        var pColor = puntaje >= 80 ? '#22C55E' : puntaje >= 50 ? '#F59E0B' : '#EF4444';
+        var badgeClase = f.estado === 'ok' ? 'badge-ok' : f.estado === 'advertencia' ? 'badge-warning' : 'badge-error';
+        var badgeTexto = f.estado === 'ok' ? 'Correcto' : f.estado === 'advertencia' ? 'Advertencia' : 'Corrección';
+        var analistaNombre = (f.analizadoPor && f.analizadoPor.nombre) || '';
+
+        return '<div class="hist-entrada">' +
+            '<div class="hist-info">' +
+                '<div class="hist-nombre">' +
+                    '<span class="ia-badge ' + badgeClase + '" style="font-size:9px;">' + badgeTexto + '</span> ' +
+                    '<span style="font-size:11px;font-weight:800;color:' + pColor + ';">' + puntaje + '%</span> ' +
+                    '<button onclick="pd_verAnalisisHistorial(\'' + f.id + '\')" ' +
+                        'style="background:none;border:none;color:#2563EB;text-decoration:underline;cursor:pointer;' +
+                        'font-size:11px;font-weight:700;padding:0;margin-left:4px;">Ver detalle</button>' +
+                '</div>' +
+                '<div class="hist-meta">' + escapeHTML(f.nombre_archivo || '') +
+                    ' &nbsp;·&nbsp; ' + fecha + ' &nbsp;·&nbsp; ' + hora +
+                    (analistaNombre ? ' &nbsp;·&nbsp; Subido por: ' + escapeHTML(analistaNombre) : '') +
+                '</div>' +
+            '</div>' +
+        '</div>';
     }).join('');
+
+    return '<button onclick="pd_toggleHistorialAnalisis(' + num + ')" ' +
+            'style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;' +
+            'padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;' +
+            'display:flex;align-items:center;gap:5px;">' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Historial de análisis <span style="background:#123C7B;color:white;' +
+            'border-radius:10px;padding:1px 7px;font-size:10px;">' + filas.length + '</span>' +
+          '</button>' +
+        '<div id="pd-historial-analisis-' + num + '" style="display:' + abierto + ';margin-top:6px;max-height:160px;' +
+            'overflow-y:auto;border:1px solid #E5E7EB;border-radius:10px;font-size:11px;background:#F8FAFC;">' +
+            entradasHTML +
+        '</div>';
+}
+
+// Abre el modal de detalle (#juriskillsModal, mismo markup que
+// pd_juriskillsAbrirModal) con el resultado de una fila del historial ya
+// guardada en Supabase, en vez de un análisis en memoria.
+function pd_verAnalisisHistorial(id) {
+    var fila = null;
+    Object.keys(_historialAnalisisPorItem).some(function(num) {
+        fila = _historialAnalisisPorItem[num].filter(function(f) { return String(f.id) === String(id); })[0];
+        return !!fila;
+    });
+    if (!fila) return;
+
+    document.getElementById('juriskillsModalTituloTexto').textContent =
+        'Análisis JURISKILLS — ' + (fila.nombre_archivo || '') + ' (histórico)';
+    document.getElementById('juriskillsModalContenido').innerHTML =
+        pd_renderContenidoCompletoAnalisis({ analisis: fila.resultado, archivo: { name: fila.nombre_archivo } });
+    document.getElementById('juriskillsModal').style.display = 'flex';
 }
 
 // Tarjeta compacta de la celda "Análisis JURISKILLS": mismo markup que
@@ -1451,4 +1606,48 @@ async function reAnalizarTodo() {
         await pd_analizarDocumento(claves[i]);
     }
 }
+
+// ════════════════════════════════════════════════════
+//  AVISO AL CERRAR/RECARGAR CON CAMBIOS SIN GUARDAR
+//  Mismo mecanismo que _procesoFormSucio en js/script.js (páginas
+//  de creación de proceso), pero aquí no hace falta una variable
+//  aparte: cada tipo de cambio ya tiene su propia fuente de verdad
+//  de "sin guardar todavía" —
+//   - documentos/comentarios del checklist: _archivosPendientes y
+//     _comentariosPendientes (pd_guardar() los vacía al subir todo
+//     con éxito, ver líneas 1075-1077),
+//   - campo "Valor": input#pd-valor-input vs. su data-guardado
+//     (mismo criterio que _pd_marcarCambioValor, arriba),
+//   - "Responsable jurídico asignado" (solo Admin): select#pd-resp-select
+//     vs. su data-guardado (mismo criterio que _pd_marcarCambioResponsable).
+//  El texto del aviso lo pone el propio navegador.
+// ════════════════════════════════════════════════════
+function _pd_hayCambiosSinGuardar() {
+    if (Object.keys(_archivosPendientes).length > 0) return true;
+
+    var hayComentarioPendiente = Object.keys(_comentariosPendientes).some(function(num) {
+        return (_comentariosPendientes[num] || '').trim() !== '';
+    });
+    if (hayComentarioPendiente) return true;
+
+    var valorInput = document.getElementById('pd-valor-input');
+    if (valorInput && _fmt_valorARaw(valorInput.value) !== (valorInput.dataset.guardado || '')) {
+        return true;
+    }
+
+    var respSelect = document.getElementById('pd-resp-select');
+    if (respSelect && respSelect.value !== '' &&
+        respSelect.value !== (respSelect.dataset.guardado || '')) {
+        return true;
+    }
+
+    return false;
+}
+
+window.addEventListener('beforeunload', function(e) {
+    if (!_pd_hayCambiosSinGuardar()) return;
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+});
 

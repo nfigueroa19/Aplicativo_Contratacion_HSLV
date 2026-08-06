@@ -44,6 +44,7 @@ var _MS_LIMITE_SESION = 10 * 60 * 1000; // 10 minutos
 
     if (perfil && perfil.estado === 'aprobado') {
         // Ya está autenticado y aprobado → ir al dashboard
+        sessionStorage.setItem('hslv_splash_desde_login', '1');
         window.location.href = DASHBOARD_URL;
         return;
     }
@@ -132,6 +133,9 @@ async function validarLogin() {
     if (perfil.estado === 'aprobado') {
         // Todo en orden → registrar el inicio de la actividad e ir al dashboard
         localStorage.setItem(_CLAVE_ACTIVIDAD, Date.now().toString());
+        // Le avisa al splash de index.html que este ingreso viene de login,
+        // para que muestre la secuencia larga (imagen, luego barra, mínimo 3s)
+        sessionStorage.setItem('hslv_splash_desde_login', '1');
         window.location.href = DASHBOARD_URL;
         return;
     }

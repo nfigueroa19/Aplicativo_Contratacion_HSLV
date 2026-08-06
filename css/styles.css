@@ -59,6 +59,14 @@
   max-width: 82vw;
   animation: splashIn 0.8s ease 0.9s both;
 }
+/* Transición corta (vuelta desde otra página): imagen y barra entran
+   juntas, sin el desfase de 0.9s pensado para la secuencia larga de login. */
+#splashScreen.splash-simultaneo .splash-img {
+  animation-delay: 0s;
+}
+#splashScreen.splash-simultaneo .splash-loader-wrap {
+  animation-delay: 0s;
+}
 .splash-loader-label {
   display: flex;
   justify-content: space-between;
@@ -1771,6 +1779,16 @@ body.sidebar-abierto .content {
   font-weight: 700; cursor: pointer;
 }
 .hist-btn-del:hover { background: #DC2626; color: white; }
+/* Parpadeo del botón "Guardar responsable" cuando se eligió un responsable
+   distinto al ya guardado y todavía no se ha dado clic para guardar — el
+   fondo alterna entre el navy normal y el verde de :hover (mismo par de
+   colores que ya usa onmouseover/onmouseout) para que se note más que un
+   simple resplandor. */
+.btn-resp-pendiente { animation: respPendientePulso 1.1s ease-in-out infinite; }
+@keyframes respPendientePulso {
+  0%, 100%  { background: #123C7B; box-shadow: 0 0 0 0 rgba(11,122,67,.55); }
+  50%       { background: #0B7A43; box-shadow: 0 0 0 6px rgba(11,122,67,0); }
+}
 #hist-filtro-modal {
   padding: 8px 14px; border: 1.5px solid #CBD5E1;
   border-radius: 10px; font-size: 13px; outline: none;

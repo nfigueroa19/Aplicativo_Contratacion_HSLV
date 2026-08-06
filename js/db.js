@@ -180,6 +180,20 @@ async function db_guardarProceso(datos) {
                 for (var f = 0; f < archivosItem.length; f++) {
                     var arch = archivosItem[f];
 
+                    // Versión real dentro de SU recuadro y si es la vigente —
+                    // ver _histU_todasLasVersiones (js/script.js). Un ítem con
+                    // varios recuadros (9, 15, 20, 21) puede traer más de un
+                    // archivo con activo:true a la vez (uno por recuadro,
+                    // comportamiento esperado); lo que NO debe pasar es que
+                    // dos versiones del MISMO recuadro queden ambas activas.
+                    // Si el checklist no trae esta info (llamado desde otro
+                    // lugar), se asume versión 1 / activa, mismo criterio de
+                    // antes.
+                    var versionArch = (item.versionesArchivos && item.versionesArchivos[f] != null)
+                        ? item.versionesArchivos[f] : 1;
+                    var activoArch = (item.activosArchivos && item.activosArchivos[f] != null)
+                        ? item.activosArchivos[f] : true;
+
                     try {
                         if (_db_archivoDemasiadoGrande(arch)) {
                             erroresArchivos.push('Ítem ' + item.num + ': ' + arch.name + ' (más de 50 MB)');
@@ -190,12 +204,14 @@ async function db_guardarProceso(datos) {
                             ? 'documentos-restringidos'
                             : 'documentos-procesos';
 
-                        // Ruta organizada: proceso/item/version_archivo.
-                        // Si el ítem trae varios archivos, se agrega un número
-                        // para que dos archivos con el mismo nombre no choquen.
+                        // Ruta organizada: proceso/item/version_archivo. Se
+                        // agrega el índice del archivo dentro del ítem para
+                        // que dos archivos con el mismo nombre (ej. dos
+                        // versiones reemplazadas del mismo recuadro) no choquen
+                        // en la misma ruta de Storage.
                         var rutaArchivo = procesoId + '/' +
                                           'item-' + item.num + '/' +
-                                          'v1_' + (archivosItem.length > 1 ? (f + 1) + '_' : '') +
+                                          'v' + versionArch + '_' + (f + 1) + '_' +
                                           arch.name;
 
                         var { error: errorSubida } = await supabaseClient
@@ -220,10 +236,22 @@ async function db_guardarProceso(datos) {
                                 url_archivo:    bucket + '/' + rutaArchivo,
                                 subido_por:     perfil.id,
                                 es_restringido: item.esRestringido || false,
-                                version:        1,
-                                activo:         true,
+                                version:        versionArch,
+                                activo:         activoArch,
                                 tamano_bytes:   arch.size
                             });
+
+                        // Si este archivo ya se analizó con JURISKILLS antes de
+                        // guardar el proceso (botón "Analizar" en el checklist,
+                        // ver analizarDocumentoCD1P/analizarConIA en js/script.js),
+                        // registrar ese análisis en el historial — ver
+                        // db_guardarAnalisisJuriskills() más abajo.
+                        var analisisArch = item.analisisArchivos ? item.analisisArchivos[f] : null;
+                        if (analisisArch) {
+                            await db_guardarAnalisisJuriskills(
+                                procesoId, item.num, item.label || '', arch.name, analisisArch
+                            );
+                        }
 
                     } catch (errItem) {
                         console.error('Error en ítem ' + item.num, errItem);
@@ -433,6 +461,79 @@ async function db_subirDocumento(procesoId, itemNum, itemLabel, archivo, esRestr
     } catch (err) {
         console.error('Error en db_subirDocumento:', err);
         return null;
+    }
+}
+
+
+// ════════════════════════════════════════════════════
+//  HISTORIAL DE ANÁLISIS JURISKILLS
+//  Registra cada análisis (botón "Analizar"/"Actualizar análisis") que
+//  termina asociado a un documento que sí se guarda — en creación de
+//  proceso (db_guardarProceso) o al reanalizar un documento ya guardado
+//  en proceso-detalle.html (db_subirDocumento + esta función, llamada
+//  desde pd_guardar() en js/proceso-detalle.js). Nunca se actualiza ni
+//  se borra una fila ya insertada — cada análisis es una entrada nueva
+//  del historial, mismo criterio que las versiones de `documentos`.
+//  Ver sql/2026-08-06_historial_analisis_juriskills.sql y
+//  _Segundo_Cerebro/Flujo_Analisis_IA_JURISKILLS.md.
+// ════════════════════════════════════════════════════
+async function db_guardarAnalisisJuriskills(procesoId, itemNum, itemLabel, nombreArchivo, analisis) {
+    try {
+        if (!analisis) return null;
+        var perfil = await db_perfil();
+
+        var puntaje = analisis.puntaje != null
+            ? analisis.puntaje
+            : (analisis.estado === 'ok' ? 90 : analisis.estado === 'advertencia' ? 65 : 30);
+
+        var { data, error } = await supabaseClient
+            .from('analisis_juriskills')
+            .insert({
+                proceso_id:     procesoId,
+                item_num:       itemNum,
+                item_label:     itemLabel || '',
+                nombre_archivo: nombreArchivo,
+                motor:          analisis.motor || null,
+                estado:         analisis.estado || null,
+                puntaje:        puntaje,
+                resultado:      analisis,
+                analizado_por:  perfil ? perfil.id : null
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error guardando historial de análisis JURISKILLS:', error);
+            return null;
+        }
+        return data;
+
+    } catch (err) {
+        console.error('Error en db_guardarAnalisisJuriskills:', err);
+        return null;
+    }
+}
+
+// Trae TODO el historial de análisis de un proceso (todos los ítems),
+// más reciente primero — proceso-detalle.js lo agrupa por item_num
+// (ver pd_cargarHistorialAnalisis en js/proceso-detalle.js).
+async function db_cargarHistorialAnalisis(procesoId) {
+    try {
+        var { data, error } = await supabaseClient
+            .from('analisis_juriskills')
+            .select('*, analizadoPor:analizado_por(nombre)')
+            .eq('proceso_id', procesoId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error cargando historial de análisis JURISKILLS:', error);
+            return [];
+        }
+        return data || [];
+
+    } catch (err) {
+        console.error('Error en db_cargarHistorialAnalisis:', err);
+        return [];
     }
 }
 
@@ -962,8 +1063,8 @@ async function db_finalizarProceso(procesoId) {
 // ════════════════════════════════════════════════════
 //  ELIMINAR PROCESO (definitivo)
 //  Solo Admin. Borra primero los registros hijos
-//  (comentarios, notificaciones, documentos) para no
-//  violar las FK contra `procesos`, y al final la fila
+//  (comentarios, notificaciones, documentos, analisis_juriskills)
+//  para no violar las FK contra `procesos`, y al final la fila
 //  del proceso.
 // ════════════════════════════════════════════════════
 async function db_eliminarProceso(procesoId) {
@@ -979,6 +1080,7 @@ async function db_eliminarProceso(procesoId) {
         await supabaseClient.from('comentarios').delete().eq('proceso_id', procesoId);
         await supabaseClient.from('notificaciones').delete().eq('proceso_id', procesoId);
         await supabaseClient.from('documentos').delete().eq('proceso_id', procesoId);
+        await supabaseClient.from('analisis_juriskills').delete().eq('proceso_id', procesoId);
 
         // .select() fuerza a que Supabase devuelva las filas borradas: sin
         // esto, si no existe una política RLS de DELETE para `procesos`,
