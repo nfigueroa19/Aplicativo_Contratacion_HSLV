@@ -18,6 +18,10 @@ var LOGIN_URL = (window.location.hostname === 'localhost' ||
 
 var _timerInactividad   = null;
 var _timerAviso         = null;
+// Contador (no booleano) porque puede haber varios análisis IA en curso a la
+// vez (ver [[Flujo_Analisis_IA_JURISKILLS]]) — solo se reanuda el monitor
+// cuando el ÚLTIMO análisis en curso termina.
+var _analisisEnCurso    = 0;
 var _MINUTOS_LIMITE     = 10;
 var _MINUTOS_AVISO      = 8;    // aviso 2 minutos antes de cerrar
 var _MS_LIMITE          = _MINUTOS_LIMITE * 60 * 1000;
@@ -127,7 +131,32 @@ function iniciarMonitorInactividad() {
 function reiniciarContador() {
     // Refrescar la marca de actividad real (localStorage) y los timers
     _marcarActividad();
+    // Mientras haya un análisis IA en curso los timers quedan detenidos
+    // (ver pausarMonitorInactividad) — no reiniciarlos aquí aunque llegue
+    // actividad del usuario o de otra pestaña.
+    if (_analisisEnCurso > 0) return;
     _reiniciarTimers();
+}
+
+// ════════════════════════════════════════════════════
+//  Pausa/reanudación del monitor durante análisis IA largos
+//  (Groq puede tardar más que el límite de inactividad — ver
+//  js/juriskills-engine.js » analizarConGroq)
+// ════════════════════════════════════════════════════
+
+function pausarMonitorInactividad() {
+    _analisisEnCurso++;
+    clearTimeout(_timerInactividad);
+    clearTimeout(_timerAviso);
+    ocultarAvisoInactividad();
+}
+
+function reanudarMonitorInactividad() {
+    _analisisEnCurso = Math.max(0, _analisisEnCurso - 1);
+    // Solo reinicia el conteo de inactividad cuando termina el ÚLTIMO
+    // análisis en curso; el tiempo que duró el análisis no cuenta como
+    // inactividad (se marca como actividad "ahora" al reanudar).
+    if (_analisisEnCurso === 0) reiniciarContador();
 }
 
 function _reiniciarTimers() {

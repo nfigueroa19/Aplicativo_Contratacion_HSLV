@@ -182,6 +182,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Barra de carga de #pd-info (ver markup en proceso-detalle.html): a
+// diferencia del splash de index.html, acá no hay un solo _dbListo — son
+// varias llamadas a Supabase en secuencia, así que el % avanza un paso por
+// cada await resuelto en vez de simularse con un temporizador. pasosTotal
+// arranca en los 5 pasos fijos (perfil, proceso, documentos, comentarios,
+// render final) y se ajusta a los condicionales (admin / juriskills) en
+// cuanto se conoce el rol y el tipo de proceso, así el 100% siempre
+// coincide con "ya está todo renderizado".
+var _pdLoaderPasos = 0;
+var _pdLoaderTotal = 5;
+// Devuelve una promesa que se resuelve en el próximo frame: sin este await
+// el navegador puede fusionar dos actualizaciones seguidas del % en un solo
+// repintado (p. ej. el paso 6 y el 100% final, que corren sin ningún I/O de
+// por medio) y el usuario nunca llega a ver ese número en pantalla.
+function pdLoaderAvanzar() {
+    _pdLoaderPasos++;
+    var pct = Math.min(100, Math.round((_pdLoaderPasos / _pdLoaderTotal) * 100));
+    var elPct = document.getElementById('pd-loader-pct');
+    var elBar = document.getElementById('pd-loader-bar');
+    if (elPct) elPct.textContent = pct + '%';
+    if (elBar) elBar.style.width = pct + '%';
+    return new Promise(function(resolve) { requestAnimationFrame(resolve); });
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     var codigo = obtenerCodigoDeURL();
     if (!codigo) {
@@ -198,24 +222,41 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     _procesoActual = proceso;
 
+    // Recién ahora se conoce el rol y el tipo de proceso, así que recién
+    // ahora se sabe cuántos pasos opcionales van a correr — el total se fija
+    // ANTES de contar cualquier paso (ni siquiera los dos ya resueltos arriba)
+    // para que el % nunca se calcule contra un total que después cambia.
+    var esAdmin = _perfilActual && _perfilActual.rol === 'admin';
+    var conAnalisis = pd_tipoConAnalisisJuriskills(proceso.tipo);
+    if (esAdmin) _pdLoaderTotal++;
+    if (conAnalisis) _pdLoaderTotal++;
+
+    // Se "cobran" ahora los dos pasos (perfil, proceso) que ya corrieron.
+    await pdLoaderAvanzar();
+    await pdLoaderAvanzar();
+
     // Solo el Admin puede asignar/reasignar responsable jurídico —
     // cargar la lista de jurídicos únicamente en ese caso.
-    if (_perfilActual && _perfilActual.rol === 'admin') {
+    if (esAdmin) {
         _usuariosJuridicosActuales = await db_cargarUsuariosJuridicos();
+        await pdLoaderAvanzar();
     }
 
     _documentosActuales = await db_cargarDocumentos(proceso.id);
+    await pdLoaderAvanzar();
     _comentariosActuales = await db_cargarComentarios(proceso.id);
+    await pdLoaderAvanzar();
 
     // Historial de análisis JURISKILLS ya guardados (solo tiene datos para
     // CD1P/D3P — ver pd_tipoConAnalisisJuriskills), agrupado por ítem para
     // que pd_celdaAnalisis() lo muestre junto a cada fila del checklist.
-    if (pd_tipoConAnalisisJuriskills(proceso.tipo)) {
+    if (conAnalisis) {
         var filasAnalisis = await db_cargarHistorialAnalisis(proceso.id);
         filasAnalisis.forEach(function(fila) {
             if (!_historialAnalisisPorItem[fila.item_num]) _historialAnalisisPorItem[fila.item_num] = [];
             _historialAnalisisPorItem[fila.item_num].push(fila);
         });
+        await pdLoaderAvanzar();
     }
 
     // Marca de "conocimiento": si quien abre es el jurídico asignado y
@@ -235,6 +276,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (_perfilActual && proceso.responsable_asignado === _perfilActual.id) {
         db_marcarActividadProceso(proceso.id);
     }
+
+    // Último paso: con esto _pdLoaderPasos === _pdLoaderTotal, así que la
+    // barra llega a 100% justo antes de que renderizarInfo() reemplace su
+    // markup con la info real del proceso. El await asegura que el 100%
+    // se alcance a pintar (ver comentario en pdLoaderAvanzar) antes de que
+    // el markup del loader desaparezca.
+    await pdLoaderAvanzar();
 
     renderizarInfo(_procesoActual);
     renderizarChecklist();
@@ -354,6 +402,63 @@ function _fmt_valorARaw(valorFormateado) {
     return limpio;
 }
 
+// Conversión número a letras (pesos colombianos). Copia de numeroALetras()
+// en js/script.js — se duplica acá porque esta página no carga script.js
+// (mismo criterio que el resto de funciones _fmt_* de este bloque).
+function numeroALetras(num) {
+    var unidades = ['','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve',
+        'diez','once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve'];
+    var decenas = ['','diez','veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+    var centenas = ['','ciento','doscientos','trescientos','cuatrocientos','quinientos',
+        'seiscientos','setecientos','ochocientos','novecientos'];
+
+    function convertirGrupo(n) {
+        if (n === 0) return '';
+        if (n === 100) return 'cien';
+        var res = '';
+        if (n >= 100) { res += centenas[Math.floor(n/100)] + ' '; n %= 100; }
+        if (n >= 20) { res += decenas[Math.floor(n/10)]; if (n%10) res += ' y ' + unidades[n%10]; }
+        else if (n > 0) res += unidades[n];
+        return res.trim();
+    }
+
+    // Recursivo por grupos de 3 dígitos — ver comentario en numeroALetras()
+    // de js/script.js (misma lógica, duplicada acá). Soporta hasta
+    // 999.999.999.999 (999 mil millones); no maneja "billón".
+    function convertirNumero(n) {
+        n = Math.floor(n);
+        if (n === 0) return '';
+        if (n < 1000) return convertirGrupo(n);
+        if (n < 1000000) {
+            var miles = Math.floor(n / 1000), resto = n % 1000;
+            var parteMiles = (miles === 1) ? 'mil' : convertirNumero(miles) + ' mil';
+            return resto > 0 ? parteMiles + ' ' + convertirGrupo(resto) : parteMiles;
+        }
+        if (n < 1000000000) {
+            var millones = Math.floor(n / 1000000), resto2 = n % 1000000;
+            var parteMillones = (millones === 1) ? 'un millón' : convertirNumero(millones) + ' millones';
+            return resto2 > 0 ? parteMillones + ' ' + convertirNumero(resto2) : parteMillones;
+        }
+        var milMillones = Math.floor(n / 1000000000), resto3 = n % 1000000000;
+        var parteMilMillones = (milMillones === 1) ? 'mil millones' : convertirNumero(milMillones) + ' mil millones';
+        return resto3 > 0 ? parteMilMillones + ' ' + convertirNumero(resto3) : parteMilMillones;
+    }
+
+    num = Math.round(num);
+    if (num === 0) return 'cero pesos';
+    return convertirNumero(num).trim() + ' pesos';
+}
+
+// Actualiza el textito en letras debajo del campo "Valor" (pd-valor-input /
+// pd-valor-input_letras). Copia de _fmt_actualizarValorLetras() en
+// js/script.js.
+function _fmt_actualizarValorLetras(input) {
+    var destino = document.getElementById(input.id + '_letras');
+    if (!destino) return;
+    var raw = parseFloat(_fmt_valorARaw(input.value));
+    destino.textContent = (raw > 0) ? numeroALetras(raw) : '';
+}
+
 // Convierte el valor crudo guardado en Supabase ("15000000" o
 // "15000000.5") al mismo formato visual que produce _fmt_formatearValorInput
 // ("$ 15.000.000" o "$ 15.000.000,5"), para precargar el input al abrir la
@@ -383,7 +488,7 @@ function campoValorProceso(p) {
             '<input id="pd-valor-input" type="text" inputmode="decimal" autocomplete="off" value="' + escapeHTML(_fmt_rawAValorInput(p.valor)) + '" ' +
                 'data-guardado="' + escapeHTML(p.valor || '') + '" ' +
                 'placeholder="Valor estimado del proceso ($)" ' +
-                'oninput="_fmt_formatearValorInput(this);_pd_marcarCambioValor()" ' +
+                'oninput="_fmt_formatearValorInput(this);_pd_marcarCambioValor();_fmt_actualizarValorLetras(this)" ' +
                 'style="flex:1;min-width:0;padding:7px 10px;border-radius:8px;border:1.5px solid #BFDBFE;' +
                 'font-size:13px;color:#1F2937;outline:none;background:#F8FAFF;">' +
             '<button id="pd-valor-btn" onclick="pd_actualizarValor()" ' +
@@ -391,6 +496,9 @@ function campoValorProceso(p) {
                 'padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">' +
                 '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar' +
             '</button>' +
+        '</div>' +
+        '<div id="pd-valor-input_letras" style="font-size:11px;color:#6B7280;font-style:italic;margin-top:4px;">' +
+            (p.valor > 0 ? escapeHTML(numeroALetras(parseFloat(p.valor))) : '') +
         '</div>' +
     '</div>';
 }
@@ -733,7 +841,9 @@ function renderizarChecklist() {
         // que historial_N en contratacion.html — el pendiente entra AQUÍ
         // como la entrada más reciente (arriba de las ya guardadas), en vez
         // de vivir aparte en fondo blanco.
-        var historialEstaAbierto = _historialAbierto[num] ? 'block' : 'none';
+        // Abierto por defecto al cargar la página (num aún sin toggle propio);
+        // solo se cierra si el usuario lo colapsa explícitamente (pd_toggleHistorial).
+        var historialEstaAbierto = _historialAbierto[num] === false ? 'none' : 'block';
         var versionesHTML =
             encabezadoVigente +
             toggleHistorialHTML +
@@ -1281,7 +1391,9 @@ function pd_historialAnalisisHTML(num) {
     var filas = _historialAnalisisPorItem[num] || [];
     if (!filas.length) return '';
 
-    var abierto = _historialAnalisisAbierto[num] ? 'block' : 'none';
+    // Igual que historialEstaAbierto arriba: abierto por defecto al cargar,
+    // se cierra solo si el usuario lo colapsa (pd_toggleHistorialAnalisis).
+    var abierto = _historialAnalisisAbierto[num] === false ? 'none' : 'block';
 
     var entradasHTML = filas.map(function(f) {
         var fechaObj = f.created_at ? new Date(f.created_at) : null;

@@ -887,6 +887,11 @@ async function analizarConGroq(numItem, nombreArchivo, contenido) {
         );
     }
 
+    // Mientras Groq procesa (puede tardar más que el límite de inactividad,
+    // sobre todo con documentos divididos en varias partes) el monitor de
+    // auth-guard.js se pausa — así un análisis largo no cierra la sesión sola.
+    // Ver [[Flujo_Auth_Guard]] » pausarMonitorInactividad/reanudarMonitorInactividad.
+    if (typeof pausarMonitorInactividad === 'function') pausarMonitorInactividad();
     try {
         const meta = (typeof ITEMS_CHECKLIST !== 'undefined' ? ITEMS_CHECKLIST[numItem] : null) || {};
         const skill = typeof SKILLS_JURIDICOS !== 'undefined' ? SKILLS_JURIDICOS[numItem] : null;
@@ -975,6 +980,8 @@ async function analizarConGroq(numItem, nombreArchivo, contenido) {
     } catch (err) {
         console.error('Groq no disponible, usando motor local de respaldo:', err);
         return ejecutarSkillJuridico(numItem, nombreArchivo, contenido);
+    } finally {
+        if (typeof reanudarMonitorInactividad === 'function') reanudarMonitorInactividad();
     }
 }
 

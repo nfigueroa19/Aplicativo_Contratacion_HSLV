@@ -1772,6 +1772,17 @@ function _fmt_valorARaw(valorFormateado) {
     return limpio;
 }
 
+// Actualiza el textito "(quince millones de pesos m/cte)" debajo del campo
+// "Valor del Proceso", usando numeroALetras() ya existente para scdp-valor.
+// El div destino es <input id>-letras (ver mp_valor_letras en las 4 páginas
+// de creación de proceso).
+function _fmt_actualizarValorLetras(input) {
+    var destino = document.getElementById(input.id + '_letras');
+    if (!destino) return;
+    var raw = parseFloat(_fmt_valorARaw(input.value));
+    destino.textContent = (raw > 0) ? numeroALetras(raw) : '';
+}
+
 function _cd1pMostrarCamposPostVerificacion() {
     ['fg_area', 'fg_responsable', 'fg_valor', 'cd1p-post-verificacion'].forEach(function(id) {
         var el = document.getElementById(id);
@@ -2433,18 +2444,33 @@ function numeroALetras(num) {
         return res.trim();
     }
 
+    // Recursivo por grupos de 3 dígitos (unidades → miles → millones → mil
+    // millones), para soportar valores grandes: convertirGrupo() por sí solo
+    // solo cubre 0-999, así que "9.999 millones" necesita volver a pasar por
+    // acá para resolver el "nueve mil" antes de la palabra "millones".
+    // Soporta hasta 999.999.999.999 (999 mil millones); no maneja "billón".
+    function convertirNumero(n) {
+        n = Math.floor(n);
+        if (n === 0) return '';
+        if (n < 1000) return convertirGrupo(n);
+        if (n < 1000000) {
+            const miles = Math.floor(n / 1000), resto = n % 1000;
+            const parteMiles = (miles === 1) ? 'mil' : convertirNumero(miles) + ' mil';
+            return resto > 0 ? parteMiles + ' ' + convertirGrupo(resto) : parteMiles;
+        }
+        if (n < 1000000000) {
+            const millones = Math.floor(n / 1000000), resto = n % 1000000;
+            const parteMillones = (millones === 1) ? 'un millón' : convertirNumero(millones) + ' millones';
+            return resto > 0 ? parteMillones + ' ' + convertirNumero(resto) : parteMillones;
+        }
+        const milMillones = Math.floor(n / 1000000000), resto = n % 1000000000;
+        const parteMilMillones = (milMillones === 1) ? 'mil millones' : convertirNumero(milMillones) + ' mil millones';
+        return resto > 0 ? parteMilMillones + ' ' + convertirNumero(resto) : parteMilMillones;
+    }
+
     num = Math.round(num);
-    if (num === 0) return 'cero pesos m/cte';
-    let res = '';
-    const millones = Math.floor(num / 1000000);
-    const miles = Math.floor((num % 1000000) / 1000);
-    const resto = num % 1000;
-    if (millones === 1) res += 'un millón ';
-    else if (millones > 1) res += convertirGrupo(millones) + ' millones ';
-    if (miles === 1) res += 'mil ';
-    else if (miles > 1) res += convertirGrupo(miles) + ' mil ';
-    if (resto > 0) res += convertirGrupo(resto);
-    return res.trim() + ' pesos m/cte';
+    if (num === 0) return 'cero pesos';
+    return convertirNumero(num).trim() + ' pesos';
 }
 
 function scdpAutoLetras() {

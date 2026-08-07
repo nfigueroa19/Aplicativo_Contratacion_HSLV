@@ -89,7 +89,8 @@
 
             <div class="form-group" id="fg_valor" style="display:none;">
               <label>Valor del Proceso</label>
-              <input id="mp_valor" type="text" inputmode="decimal" placeholder="Valor estimado del proceso ($)" autocomplete="off" oninput="_fmt_formatearValorInput(this)">
+              <input id="mp_valor" type="text" inputmode="decimal" placeholder="Valor estimado del proceso ($)" autocomplete="off" oninput="_fmt_formatearValorInput(this);_fmt_actualizarValorLetras(this)">
+              <div id="mp_valor_letras" style="font-size:11px;color:#6B7280;font-style:italic;margin-top:4px;"></div>
             </div>
         </div>
         </div><!-- fin section-card Datos del Proceso -->

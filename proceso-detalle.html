@@ -46,7 +46,22 @@
 
             <!-- Información general del proceso (solo lectura) -->
             <div id="pd-info" class="section-card" style="margin-bottom:22px;">
-                <div style="text-align:center;color:#9CA3AF;padding:20px;">Cargando proceso…</div>
+                <!-- Barra de carga con el mismo lenguaje visual que "Avance
+                     Documental" más abajo en esta misma página (ver
+                     #pd-avance-bar) — a todo el ancho de la tarjeta en vez
+                     de la barra angosta del splash de index.html, para que
+                     no se pierda en el recuadro blanco. renderizarInfo() la
+                     reemplaza por la info real en cuanto termina la carga
+                     (ver proceso-detalle.js). -->
+                <div id="pd-loader-box" style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:14px;padding:18px 22px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span style="font-size:13px;font-weight:700;color:#0B7A43;text-transform:uppercase;letter-spacing:.5px;">Cargando proceso</span>
+                        <span id="pd-loader-pct" style="font-size:22px;font-weight:800;color:#0B7A43;">0%</span>
+                    </div>
+                    <div style="height:13px;border-radius:7px;background:#D1FAE5;overflow:hidden;">
+                        <div id="pd-loader-bar" style="height:100%;width:0%;border-radius:7px;background:linear-gradient(90deg,#0B7A43,#123C7B);transition:width .3s ease;"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Checklist de documentos. Oculto mientras el proceso carga
