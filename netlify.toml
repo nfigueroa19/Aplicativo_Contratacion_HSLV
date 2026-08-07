@@ -1,0 +1,29 @@
+# ════════════════════════════════════════════════════
+#  netlify.toml — HSLV Contratación
+# ════════════════════════════════════════════════════
+#
+#  Lo importante de este archivo es `publish = "dist"`.
+#
+#  Antes, Netlify publicaba la RAÍZ del repositorio. Eso significa que
+#  cualquiera podía descargar del sitio en vivo:
+#    /_Segundo_Cerebro/Pruebas_Locales.md   ← credenciales de admin
+#    /sql/*.sql                             ← esquema y políticas RLS
+#    /supabase/functions/.../index.ts       ← los prompts del motor jurídico
+#    /CLAUDE.md
+#  (verificado con HTTP 200 durante la auditoría del 2026-08-06).
+#
+#  Con `publish = "dist"`, Netlify solo puede servir lo que build.js copió
+#  ahí: los 9 HTML, el CSS minificado, el JS ofuscado y _redirects. No
+#  existe ninguna ruta hacia el resto del repositorio.
+# ════════════════════════════════════════════════════
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Las cabeceras de seguridad las escribe build.js en dist/_headers, para
+# que la lista de dominios permitidos viva junto al código que la necesita.
+# Ver _Segundo_Cerebro/Auditoria_360_Y_Blindaje.md » SEC-02.

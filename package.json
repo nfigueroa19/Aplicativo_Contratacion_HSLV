@@ -1,0 +1,17 @@
+{
+  "name": "hslv-contratacion",
+  "version": "1.0.0",
+  "description": "Sistema de Contratación HSLV — build de producción ofuscado para Netlify",
+  "scripts": {
+    "dev": "serve .",
+    "build": "node build.js",
+    "preview:dist": "serve dist"
+  },
+  "type": "commonjs",
+  "devDependencies": {
+    "clean-css": "^5.3.3",
+    "fs-extra": "^11.4.0",
+    "javascript-obfuscator": "^4.2.2"
+  },
+  "private": true
+}
