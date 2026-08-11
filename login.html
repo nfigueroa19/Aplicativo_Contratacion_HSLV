@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión — HSLV Contratación</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase.js"></script>
+    <script defer src="/js/vendor/supabase-js.js"></script>
+    <script defer src="js/supabase.js"></script>
 
     <link rel="stylesheet" href="css/login.css">
 </head>
@@ -23,7 +23,9 @@
             <p>Ingrese sus credenciales institucionales para acceder</p>
         </div>
 
-        <form id="loginForm" autocomplete="off" onsubmit="event.preventDefault(); validarLogin();">
+        <form id="loginForm" autocomplete="off"
+              data-accion="enviarLogin" data-evento="submit"
+              data-args='["@evento"]'>
 
             <!-- Campos señuelo -->
             <input
@@ -51,7 +53,6 @@
                     autocapitalize="off"
                     spellcheck="false"
                     placeholder="correo@hslv.gov.co"
-                    onkeydown="if(event.key === 'Enter') validarLogin()"
                 >
             </div>
 
@@ -63,7 +64,6 @@
                     name="clave_hslv"
                     autocomplete="new-password"
                     placeholder="••••••••"
-                    onkeydown="if(event.key === 'Enter') validarLogin()"
                 >
             </div>
 
@@ -87,7 +87,8 @@
 
     </div>
 
-    <script src="js/login.js"></script>
+    <script defer src="/js/acciones.js"></script>
+    <script defer src="js/login.js"></script>
 
 </body>
 </html>

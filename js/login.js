@@ -57,7 +57,9 @@ var _MS_LIMITE_SESION = 10 * 60 * 1000; // 10 minutos
 
 // ════════════════════════════════════════════════════
 //  Función principal: validar e iniciar sesión
-//  Se llama al hacer clic en el botón o presionar Enter
+//  Se llama al enviar el formulario: con el botón "Iniciar Sesión"
+//  o pulsando Enter dentro de cualquiera de los dos campos
+//  (envío implícito del formulario, que el navegador ya hace solo).
 // ════════════════════════════════════════════════════
 
 async function validarLogin() {
@@ -146,4 +148,59 @@ async function validarLogin() {
     await supabaseClient.auth.signOut();
     btn.disabled    = false;
     btn.textContent = 'Iniciar Sesión';
+}
+
+
+// ════════════════════════════════════════════════════
+//  REGISTRO DE ACCIONES (Sprint 4 — ver js/acciones.js)
+//  Sustituye al atributo onsubmit del formulario, que hacía
+//  preventDefault y llamaba a la validación.
+//
+//  (Ojo al editar este comentario: si se escribe un on*= con comillas,
+//   verificar-nombres-reservados.js lo lee como una llamada real.)
+// ════════════════════════════════════════════════════
+function enviarLogin(evento) {
+    if (evento) evento.preventDefault();
+    validarLogin();
+}
+
+if (typeof registrarAcciones === 'function') {
+    registrarAcciones({
+        // login.html
+        enviarLogin: enviarLogin
+    });
+} else {
+    console.error('js/acciones.js no está cargado: el formulario de login no ' +
+                  'responderá. Revisa el orden de los <script>.');
+}
+
+
+// ── Enter dentro de un campo ──
+// Sustituye a los dos atributos onkeydown que tenían los campos. No se
+// delega en acciones.js a propósito: keydown no está entre los eventos
+// del delegador, y colgarlo de document costaría un closest() por cada
+// tecla de toda la app para algo que solo necesita esta página.
+//
+// El navegador ya envía el formulario solo al pulsar Enter (tiene un
+// botón type="submit"), pero eso NO se pudo comprobar en el panel de la
+// sesión donde se hizo el cambio, así que aquí se hace explícito:
+//   · preventDefault() cancela ese envío implícito,
+//   · requestSubmit() dispara UNO.
+// Resultado: exactamente una validación por Enter. Los onkeydown
+// originales provocaban DOS —una del keydown y otra del envío que ese
+// mismo Enter causaba— porque no cancelaban nada.
+var _formLogin = document.getElementById('loginForm');
+if (_formLogin) {
+    _formLogin.addEventListener('keydown', function (evento) {
+        if (evento.key !== 'Enter') return;
+        evento.preventDefault();
+        // requestSubmit existe desde Chrome 76 / Safari 16. En algo más
+        // viejo se llama a la validación directamente antes que dejar el
+        // Enter muerto.
+        if (typeof _formLogin.requestSubmit === 'function') {
+            _formLogin.requestSubmit();
+        } else {
+            validarLogin();
+        }
+    });
 }

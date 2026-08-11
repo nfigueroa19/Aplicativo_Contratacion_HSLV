@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supervisión — HSLV Contratación</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/js/supabase.js"></script>
-    <script src="/js/auth-guard.js"></script>
+    <script defer src="/js/vendor/supabase-js.js"></script>
+    <script defer src="/js/supabase.js"></script>
+    <script defer src="/js/auth-guard.js"></script>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -60,24 +60,20 @@
                             Nombre Completo del Supervisor
                         </label>
                         <input type="text" id="sup_nombre"
+                            class="campo-hslv campo-hslv-verde"
                             placeholder="Ej: Juan Carlos Pérez López"
-                            style="border:1.5px solid #86d19d;border-radius:10px;
-                                   padding:11px 13px;font-size:13px;width:100%;
-                                   outline:none;transition:border .2s;"
-                            onfocus="this.style.borderColor='#0B7A43'"
-                            onblur="this.style.borderColor='#86d19d'">
+                            style="border-radius:10px;
+                                   padding:11px 13px;font-size:13px;width:100%;">
                     </div>
                     <div class="form-group" style="margin-bottom:0;">
                         <label style="color:#0B7A43;font-size:13px;">
                             Área del Supervisor
                         </label>
                         <input type="text" id="sup_area"
+                            class="campo-hslv campo-hslv-verde"
                             placeholder="Ej: Subdirección Administrativa"
-                            style="border:1.5px solid #86d19d;border-radius:10px;
-                                   padding:11px 13px;font-size:13px;width:100%;
-                                   outline:none;transition:border .2s;"
-                            onfocus="this.style.borderColor='#0B7A43'"
-                            onblur="this.style.borderColor='#86d19d'">
+                            style="border-radius:10px;
+                                   padding:11px 13px;font-size:13px;width:100%;">
                     </div>
                 </div>
 
@@ -112,25 +108,23 @@
                             Número de Contrato
                         </label>
                         <input type="text" id="sup_contrato"
+                            class="campo-hslv campo-hslv-azul"
                             placeholder="Ej: CD1P-0012-2025"
-                            style="border:1.5px solid #BFDBFE;border-radius:10px;
-                                   padding:11px 13px;font-size:13px;width:100%;
-                                   outline:none;transition:border .2s;"
-                            onfocus="this.style.borderColor='#123C7B'"
-                            onblur="this.style.borderColor='#BFDBFE'">
+                            style="border-radius:10px;
+                                   padding:11px 13px;font-size:13px;width:100%;">
                     </div>
                     <div class="form-group" style="margin-bottom:0;">
                         <label style="color:#123C7B;font-size:13px;">
                             Avance Físico (%)
                         </label>
                         <input type="number" id="sup_avance"
+                            class="campo-hslv campo-hslv-azul"
                             min="0" max="100" placeholder="0 - 100"
-                            oninput="supActualizarBarra(this.value)"
-                            style="border:1.5px solid #BFDBFE;border-radius:10px;
-                                   padding:11px 13px;font-size:13px;width:100%;
-                                   outline:none;transition:border .2s;"
-                            onfocus="this.style.borderColor='#123C7B'"
-                            onblur="this.style.borderColor='#BFDBFE'">
+                            data-accion="supActualizarBarra"
+                            data-evento="input"
+                            data-args='["@valor"]'
+                            style="border-radius:10px;
+                                   padding:11px 13px;font-size:13px;width:100%;">
                         <!-- Barra avance -->
                         <div style="margin-top:8px;height:8px;background:#DBEAFE;
                                     border-radius:6px;overflow:hidden;">
@@ -153,13 +147,12 @@
                     Hallazgos y Observaciones
                 </label>
                 <textarea id="sup_hallazgos" rows="5"
+                    class="campo-hslv campo-hslv-gris"
                     placeholder="Describa los hallazgos, observaciones o novedades
 identificadas durante la supervisión…"
-                    style="border:1.5px solid #CBD5E1;border-radius:12px;
+                    style="border-radius:12px;
                            padding:13px;font-size:13px;width:100%;resize:vertical;
-                           outline:none;transition:border .2s;min-height:120px;"
-                    onfocus="this.style.borderColor='#123C7B'"
-                    onblur="this.style.borderColor='#CBD5E1'"></textarea>
+                           min-height:120px;"></textarea>
             </div>
 
             <!-- Botones -->
@@ -167,20 +160,20 @@ identificadas durante la supervisión…"
                         gap:12px;flex-wrap:wrap;
                         border-top:1px solid #E5E7EB;padding-top:18px;">
                 <button class="btn"
-                    onclick="window.location.href='/dashboard'"
+                    data-accion="navegar" data-args='["/dashboard"]'
                     style="background:#F3F4F6;color:#374151;
                            border:none;min-width:140px;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Volver al Dashboard
                 </button>
                 <button class="btn"
-                    onclick="supLimpiar()"
+                    data-accion="supLimpiar"
                     style="background:white;color:#0B7A43;
                            border:2px solid #86d19d;min-width:140px;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
                     Limpiar
                 </button>
                 <button class="btn finalizar-btn"
-                    onclick="registrarSupervision()"
+                    data-accion="registrarSupervision"
                     style="background:linear-gradient(90deg,#0B7A43,#123C7B);
                            color:white;min-width:200px;font-size:15px;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -192,11 +185,12 @@ identificadas durante la supervisión…"
 
     </div><!-- fin content -->
 
-    <script src="/js/sidebar.js"></script>
-    <script src="/js/db.js"></script>
-    <script src="/js/notificaciones.js"></script>
-    <script src="/js/juriskills-engine.js"></script>
-    <script src="/js/script.js"></script>
+    <script defer src="/js/acciones.js"></script>
+    <script defer src="/js/sidebar.js"></script>
+    <script defer src="/js/db.js"></script>
+    <script defer src="/js/notificaciones.js"></script>
+    <script defer src="/js/juriskills-engine.js"></script>
+    <script defer src="/js/script.js"></script>
 
 </body>
 </html>

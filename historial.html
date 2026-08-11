@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial de Procesos — HSLV Contratación</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="/js/supabase.js"></script>
-    <script src="/js/auth-guard.js"></script>
+    <script defer src="/js/vendor/supabase-js.js"></script>
+    <script defer src="/js/supabase.js"></script>
+    <script defer src="/js/auth-guard.js"></script>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body>
+<body data-pagina="historial">
 
     <button id="sidebar-toggle" style="display:flex;align-items:center;justify-content:center;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -53,10 +52,10 @@
                 <span style="font-size:13px;font-weight:700;color:#374151;">
                     Modalidad:
                 </span>
-                <select id="hist-filtro-modal" onchange="hist_renderTabla()"
+                <select id="hist-filtro-modal"
+                    data-accion="hist_renderTabla" data-evento="change"
                     style="padding:8px 12px;border-radius:8px;
-                           border:1.5px solid #CBD5E1;font-size:13px;
-                           outline:none;color:#374151;">
+                           font-size:13px;color:#374151;">
                     <option value="">Todas</option>
                     <option value="CD1P">Directa 1 Propuesta</option>
                     <option value="D3P">Directa 3 Invitaciones</option>
@@ -70,12 +69,9 @@
                 <span style="color:#374151;display:inline-flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
                 <input id="hist-filtro-buscar" type="text"
                     placeholder="Buscar por objeto o área…"
-                    oninput="hist_renderTabla()"
+                    data-accion="hist_renderTabla" data-evento="input"
                     style="padding:8px 12px;border-radius:8px;
-                           border:1.5px solid #CBD5E1;font-size:13px;
-                           outline:none;min-width:200px;"
-                    onfocus="this.style.borderColor='#123C7B'"
-                    onblur="this.style.borderColor='#CBD5E1'">
+                           font-size:13px;min-width:200px;">
             </div>
 
             <!-- Filtro responsable -->
@@ -83,30 +79,21 @@
                 <span style="color:#374151;display:inline-flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
                 <input id="hist-filtro-responsable" type="text"
                     placeholder="Filtrar por responsable…"
-                    oninput="hist_renderTabla()"
+                    data-accion="hist_renderTabla" data-evento="input"
                     list="hist-responsables-datalist"
                     style="padding:8px 12px;border-radius:8px;
-                           border:1.5px solid #CBD5E1;font-size:13px;
-                           outline:none;min-width:180px;"
-                    onfocus="this.style.borderColor='#123C7B'"
-                    onblur="this.style.borderColor='#CBD5E1'">
+                           font-size:13px;min-width:180px;">
                 <datalist id="hist-responsables-datalist"></datalist>
-                <button
-                    onclick="document.getElementById('hist-filtro-responsable').value='';
-                             hist_renderTabla();"
-                    title="Limpiar filtro responsable"
-                    style="background:none;border:1.5px solid #CBD5E1;
-                           border-radius:8px;padding:5px 9px;cursor:pointer;
-                           font-size:12px;color:#6B7280;transition:.2s;"
-                    onmouseenter="this.style.background='#F1F5F9'"
-                    onmouseleave="this.style.background='none'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                <button class="btn-limpiar-filtro"
+                    data-accion="hist_limpiarFiltroResponsable"
+                    title="Limpiar filtro responsable"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
 
             <!-- Contador y exportar -->
             <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
                 <span id="hist-contador"
                     style="font-size:13px;color:#6B7280;font-weight:600;"></span>
-                <button onclick="hist_exportarExcel()"
+                <button data-accion="hist_exportarExcel"
                     style="background:#0B7A43;color:white;border:none;
                            padding:8px 16px;border-radius:10px;font-size:12px;
                            font-weight:700;cursor:pointer;">
@@ -172,8 +159,7 @@
                         align-items:center;margin-bottom:20px;">
                 <h3 id="hist-det-titulo"
                     style="margin:0;color:#123C7B;font-size:18px;"></h3>
-                <span onclick="document.getElementById('hist-detalle-panel')
-                                   .classList.remove('open')"
+                <span data-accion="hist_cerrarDetalle"
                     style="font-size:28px;cursor:pointer;
                            color:#6B7280;line-height:1;">&times;</span>
             </div>
@@ -181,31 +167,20 @@
         </div>
     </div>
 
-    <script src="/js/sidebar.js"></script>
-    <script src="/js/db.js"></script>
-    <script src="/js/notificaciones.js"></script>
-    <script src="/js/juriskills-engine.js"></script>
-    <script src="/js/script.js"></script>
+    <script defer src="/js/acciones.js"></script>
+    <script defer src="/js/sidebar.js"></script>
+    <script defer src="/js/db.js"></script>
+    <script defer src="/js/notificaciones.js"></script>
+    <script defer src="/js/juriskills-engine.js"></script>
+    <script defer src="/js/script.js"></script>
 
-    <!-- Inicializar la tabla al cargar la página -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Pequeña pausa para que script.js termine de cargar HIST_BD
-            setTimeout(function() {
-                if (typeof hist_renderTabla === 'function') {
-                    hist_renderTabla();
-                }
-                // Redibujar de nuevo cuando lleguen los datos reales de
-                // Supabase (evita que quede desactualizada si la tabla
-                // se dibujó antes de que terminara de cargar)
-                if (window._dbListo && typeof window._dbListo.then === 'function') {
-                    window._dbListo.then(function() {
-                        if (typeof hist_renderTabla === 'function') hist_renderTabla();
-                    });
-                }
-            }, 300);
-        });
-    </script>
+    <!-- La inicialización de la tabla se mudó a js/script.js (Sprint 4).
+         Era el último bloque de JavaScript en línea del proyecto, y
+         'unsafe-inline' en el script-src de la CSP no bloquea solo los
+         atributos de evento: bloquea todo el JavaScript en línea, este
+         incluido. Allí se reconoce esta página por el data-pagina del body.
+         Nota: sin escribir aquí la etiqueta literal, para no dejar un falso
+         positivo a quien busque bloques en línea con grep. -->
 
 </body>
 </html>

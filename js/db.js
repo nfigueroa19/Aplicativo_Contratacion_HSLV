@@ -1061,8 +1061,80 @@ async function db_finalizarProceso(procesoId) {
 
 
 // ════════════════════════════════════════════════════
+//  BORRAR LOS ARCHIVOS DE STORAGE DE UN PROCESO
+//
+//  Las rutas de los archivos solo existen en documentos.url_archivo, con el
+//  formato "bucket/ruta/del/archivo" (el mismo que interpreta
+//  db_descargarDocumento). Si se borra la fila antes que el archivo, ya no
+//  queda forma de saber qué había en el bucket: el archivo se queda ahí para
+//  siempre y sigue siendo descargable por quien conozca su ruta. Así se
+//  acumularon los 15 archivos huérfanos (11 MB) que encontró la auditoría
+//  del 2026-08-07 (SEC-09).
+//
+//  Se borran TODAS las versiones (activo = true y false): todas ocupan
+//  espacio y todas son igual de descargables.
+// ════════════════════════════════════════════════════
+async function _db_borrarArchivosDeProceso(procesoId) {
+    var resultado = { ok: true, total: 0, borrados: 0, fallos: [] };
+
+    var { data: docs, error } = await supabaseClient
+        .from('documentos')
+        .select('url_archivo')
+        .eq('proceso_id', procesoId);
+
+    if (error) {
+        console.error('No se pudo listar los documentos del proceso:', error);
+        resultado.ok = false;
+        resultado.fallos.push('no se pudo consultar la tabla documentos');
+        return resultado;
+    }
+    if (!docs || docs.length === 0) return resultado;
+
+    // remove() trabaja sobre un bucket a la vez, y aquí conviven dos:
+    // 'documentos-procesos' y 'documentos-restringidos'.
+    var porBucket = {};
+    docs.forEach(function (d) {
+        if (!d.url_archivo) return;
+        var partes = d.url_archivo.split('/');
+        var bucket = partes[0];
+        var ruta   = partes.slice(1).join('/');
+        if (!bucket || !ruta) return;
+        if (!porBucket[bucket]) porBucket[bucket] = [];
+        porBucket[bucket].push(ruta);
+    });
+
+    var buckets = Object.keys(porBucket);
+    for (var i = 0; i < buckets.length; i++) {
+        var rutas = porBucket[buckets[i]];
+        resultado.total += rutas.length;
+
+        // En tandas de 100: la API acepta varias rutas por llamada, pero una
+        // lista muy larga puede pasarse del límite de la petición.
+        for (var j = 0; j < rutas.length; j += 100) {
+            var tanda = rutas.slice(j, j + 100);
+            var { data: quitados, error: errBorrado } = await supabaseClient
+                .storage
+                .from(buckets[i])
+                .remove(tanda);
+
+            if (errBorrado) {
+                console.error('Error borrando de ' + buckets[i] + ':', errBorrado);
+                resultado.ok = false;
+                resultado.fallos.push(buckets[i] + ': ' + errBorrado.message);
+                continue;
+            }
+            resultado.borrados += (quitados || []).length;
+        }
+    }
+
+    return resultado;
+}
+
+
+// ════════════════════════════════════════════════════
 //  ELIMINAR PROCESO (definitivo)
-//  Solo Admin. Borra primero los registros hijos
+//  Solo Admin. Borra primero los ARCHIVOS de Storage —mientras las rutas
+//  todavía existen en `documentos`—, después los registros hijos
 //  (comentarios, notificaciones, documentos, analisis_juriskills)
 //  para no violar las FK contra `procesos`, y al final la fila
 //  del proceso.
@@ -1075,6 +1147,20 @@ async function db_eliminarProceso(procesoId) {
         if (perfil.rol !== 'admin') {
             alert('⚠️ Solo un Administrador puede eliminar procesos.');
             return false;
+        }
+
+        // Storage ANTES que la base de datos: ver el comentario de
+        // _db_borrarArchivosDeProceso(). Este orden es lo que arregla SEC-09.
+        var archivos = await _db_borrarArchivosDeProceso(procesoId);
+        if (!archivos.ok) {
+            var seguir = confirm(
+                '⚠️ No se pudieron borrar los archivos de este proceso del ' +
+                'almacenamiento:\n\n' + archivos.fallos.join('\n') + '\n\n' +
+                'Si continúas, la información se elimina de la base de datos ' +
+                'pero los archivos seguirán ocupando espacio y seguirán siendo ' +
+                'descargables por quien conozca su ruta.\n\n' +
+                '¿Eliminar el proceso de todas formas?');
+            if (!seguir) return false;
         }
 
         await supabaseClient.from('comentarios').delete().eq('proceso_id', procesoId);
@@ -1397,11 +1483,29 @@ async function db_inicializar() {
     }
 }
 
+// ── Claves heredadas de la versión anterior a Supabase ──
+// Los módulos PAA/CDP guardaban datos contractuales (área, valor, objeto,
+// fechas) en localStorage sin cifrar. Ese código se eliminó en el Sprint 3,
+// pero las claves siguen en el navegador de quien ya usó la app: no se van
+// solas al borrar el código que las escribía. En un equipo compartido del
+// hospital eso significa que los datos de un usuario siguen ahí después de
+// que cierre sesión. Se borran al cerrar sesión hasta que no quede ninguna.
+//
+// 'historialProcesos' nunca lo escribió nadie en esta versión, pero lo leía
+// actualizarIndicadoresDesdeHistorial() (también eliminada): si existe en
+// algún navegador, viene de una versión más antigua todavía.
+var CLAVES_LOCALSTORAGE_HEREDADAS = [
+    'registrosPAA', 'archivosCDP', 'solicitudesCDP', 'historialProcesos'
+];
+
 // Limpiar cache al cerrar sesión (llamado desde auth-guard.js)
 async function cerrarSesionConLimpieza() {
     db_limpiarCache();
     sessionStorage.removeItem('splash_visto');
     localStorage.removeItem('hslv_ultima_actividad');
+    CLAVES_LOCALSTORAGE_HEREDADAS.forEach(function (clave) {
+        try { localStorage.removeItem(clave); } catch (e) { /* modo privado */ }
+    });
     await supabaseClient.auth.signOut();
     window.location.href = '/login';
 }

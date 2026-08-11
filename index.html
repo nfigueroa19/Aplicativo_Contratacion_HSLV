@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="js/supabase.js"></script>
-  <script src="js/auth-guard.js"></script>
+  <script defer src="/js/vendor/supabase-js.js"></script>
+  <script defer src="js/supabase.js"></script>
+  <script defer src="js/auth-guard.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Aplicativo Contratación HSLV</title>
@@ -77,42 +76,42 @@
 
 <div class="cards">
 
-    <div class="dash-card" data-indicator="total" onclick="dash_abrirHistorial('')" title="Ver todos los procesos en el historial" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border:1px solid #6EE7B7;">
+    <div class="dash-card" data-indicator="total" data-accion="dash_abrirHistorial" data-args='[""]' title="Ver todos los procesos en el historial" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border:1px solid #6EE7B7;">
         <h3 style="color:#065F46;">Procesos Guardados</h3>
         <div class="card-number" id="dash-total" style="color:#0B7A43;">0</div>
         <div class="dash-card-bar"><div class="dash-card-bar-fill" id="dash-bar-total" style="width:100%;background:linear-gradient(90deg,#0B7A43,#059669);"></div></div>
         <div class="card-sub" id="dash-sub-total">Haz clic para ver el historial</div>
     </div>
 
-    <div class="dash-card" data-indicator="directa" onclick="dash_abrirHistorial('CD1P')" title="Ver procesos Contratación Directa 1 Propuesta" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);border:1px solid #FCD34D;">
+    <div class="dash-card" data-indicator="directa" data-accion="dash_abrirHistorial" data-args='["CD1P"]' title="Ver procesos Contratación Directa 1 Propuesta" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);border:1px solid #FCD34D;">
         <h3 style="color:#92400E;">Contratación Directa</h3>
         <div class="card-number" id="dash-cd1p" style="color:#D97706;">0</div>
         <div class="dash-card-bar"><div class="dash-card-bar-fill" id="dash-bar-cd1p" style="width:100%;background:linear-gradient(90deg,#D97706,#FBBF24);"></div></div>
         <div class="card-sub" id="dash-sub-cd1p">1 Propuesta · Ver historial</div>
     </div>
 
-    <div class="dash-card" data-indicator="directa-3p" onclick="dash_abrirHistorial('D3P')" title="Ver procesos Directa 3 Invitaciones" style="background:linear-gradient(135deg,#CCFBF1,#99F6E4);border:1px solid #5EEAD4;">
+    <div class="dash-card" data-indicator="directa-3p" data-accion="dash_abrirHistorial" data-args='["D3P"]' title="Ver procesos Directa 3 Invitaciones" style="background:linear-gradient(135deg,#CCFBF1,#99F6E4);border:1px solid #5EEAD4;">
         <h3 style="color:#115E59;">3 Invitaciones</h3>
         <div class="card-number" id="dash-d3p" style="color:#0D9488;">0</div>
         <div class="dash-card-bar"><div class="dash-card-bar-fill" id="dash-bar-d3p" style="width:100%;background:linear-gradient(90deg,#0D9488,#2DD4BF);"></div></div>
         <div class="card-sub" id="dash-sub-d3p">Directa 3P · Ver historial</div>
     </div>
 
-    <div class="dash-card" data-indicator="convocatoria" onclick="dash_abrirHistorial('CONV')" title="Ver procesos de Convocatoria Pública" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border:1px solid #C4B5FD;">
+    <div class="dash-card" data-indicator="convocatoria" data-accion="dash_abrirHistorial" data-args='["CONV"]' title="Ver procesos de Convocatoria Pública" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border:1px solid #C4B5FD;">
         <h3 style="color:#4C1D95;">Convocatoria Pública</h3>
         <div class="card-number" id="dash-conv" style="color:#7C3AED;">0</div>
         <div class="dash-card-bar"><div class="dash-card-bar-fill" id="dash-bar-conv" style="width:100%;background:linear-gradient(90deg,#7C3AED,#A78BFA);"></div></div>
         <div class="card-sub" id="dash-sub-conv">Convocatoria · Ver historial</div>
     </div>
 
-    <div class="dash-card" data-indicator="subasta" onclick="dash_abrirHistorial('SUB')" title="Ver procesos de Subasta Inversa" style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1px solid #93C5FD;">
+    <div class="dash-card" data-indicator="subasta" data-accion="dash_abrirHistorial" data-args='["SUB"]' title="Ver procesos de Subasta Inversa" style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1px solid #93C5FD;">
         <h3 style="color:#1e3a8a;">Subasta Inversa</h3>
         <div class="card-number" id="dash-sub" style="color:#2563EB;">0</div>
         <div class="dash-card-bar"><div class="dash-card-bar-fill" id="dash-bar-sub" style="width:100%;background:linear-gradient(90deg,#2563EB,#60A5FA);"></div></div>
         <div class="card-sub" id="dash-sub-sub">Subasta · Ver historial</div>
     </div>
 
-    <div class="dash-card" data-indicator="documentos" onclick="panel_abrirSeguimientoConocimiento()" title="Solo Admin: ver seguimiento de procesos" style="display:none;">
+    <div class="dash-card" data-indicator="documentos" data-accion="panel_abrirSeguimientoConocimiento" title="Solo Admin: ver seguimiento de procesos" style="display:none;">
         <h3>Seguimiento de Procesos</h3>
         <div class="card-number" id="dash-docs" style="color:#D97706;">0</div>
         <div class="dash-card-bar"><div class="dash-card-bar-fill" id="dash-bar-docs" style="width:0%;background:linear-gradient(90deg,#DC2626,#F59E0B);"></div></div>
@@ -230,950 +229,6 @@
       </div>
 
     </div>
-    <div id="solicitudescdp" class="section-content" style="display:none;">
-
-      <div class="card" style="border:3px solid #16a34a; margin-bottom:20px;">
-        <h2 style="color:#16a34a;">MÓDULO SOLICITUD CDP</h2>
-
-        <p style="margin-top:10px; line-height:1.8;">
-          Este módulo permite registrar solicitudes de Certificado de Disponibilidad Presupuestal, cargar cotizaciones PDF y visualizar los registros almacenados dinámicamente dentro del aplicativo.
-        </p>
-      </div>
-      <div class="card">
-
-        <h3>Almacenamiento Solicitudes CDP</h3>
-
-        <div class="alert-box">
-          Visualización de solicitudes CDP registradas y almacenadas en memoria del aplicativo.
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Área</th>
-              <th>Fecha</th>
-              <th>Valor</th>
-              <th>Objeto</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-
-          <tbody id="tablaCDPBody"></tbody>
-        </table>
-
-        <br>
-
-        <button class="btn" onclick="openModal('modalSolicitudCDP')">Nueva Solicitud CDP</button>
-
-      </div>
-    
-<div class="card" style="margin-top:20px;">
-
-    <h3>CDP almacenados</h3>
-
-    <div class="alert-box">
-        Los certificados CDP cargados se almacenan temporalmente en LocalStorage del navegador.
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Número CDP</th>
-                <th>Fecha</th>
-                <th>Archivo PDF</th>
-                <th>Estado</th>
-            </tr>
-        </thead>
-
-        <tbody id="tablaArchivosCDP"></tbody>
-    </table>
-
-</div>
-
-</div>
-
-
-
-    <div id="directa" class="section-content" style="display:none;overflow:visible !important;">
-      <div class="card" style="overflow:visible !important;">
-
-        <h3 style="color:#123C7B;font-size:22px;margin-bottom:14px;">Contratación Directa (3 Invitaciones)</h3>
-
-        <div class="alert-box">
-          Registro integral del proceso contractual con checklist documental y carga individual de soportes.
-        </div>
-
-        <div class="grid">
-          <div class="form-group">
-            <label>Objeto Contractual</label>
-            <textarea rows="4" placeholder="Ingrese el objeto contractual"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Modalidad</label>
-            <select>
-              <option value="">-- Seleccione modalidad --</option>
-              <option>Contratación Directa (1) Propuesta</option>
-              <option>Contratación Directa (3) Propuestas</option>
-              <option>Contratación por Convocatoria Pública</option>
-              <option>Subasta Inversa</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Área Solicitante</label>
-            <input type="text" placeholder="Dependencia solicitante">
-          </div>
-        </div>
-
-        <h3 style="color:#123C7B;margin-top:20px;">Checklist Documental del Proceso</h3>
-        <div class="alert-box">Cada requisito permite cargar un documento independiente como soporte del expediente contractual.</div>
-
-        <div class="checklist-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Documento Requerido</th>
-              <th>Validación</th>
-              <th>Carga de Documento</th>
-            </tr>
-          </thead>
-          <tbody>
-
-            <!-- ÍTEM 1: CERTIFICADO PAA -->
-            <tr>
-              <td>1</td>
-              <td>CERTIFICADO PAA</td>
-              <td><input type="checkbox"></td>
-              <td>
-                <button class="btn" style="padding:10px 14px;font-size:13px;display:inline-flex;align-items:center;gap:6px;" onclick="document.getElementById('d3p_modalPAA').style.display='flex'"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Cargar Documento</button>
-                <input type="file" id="d3p_arch_1" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="d3p_mostrarArchivo(this,'d3p_nom_1')">
-                <div id="d3p_nom_1" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                <div id="d3p_paa_preview" style="display:none;margin-top:6px;font-size:11px;color:#374151;background:#F0FDF4;border-radius:8px;padding:6px 10px;border:1px solid #BBF7D0;">
-                  <strong>UNSPSC:</strong> <span id="d3p_paa_unspsc_lbl"></span><br>
-                  <strong>Detalle:</strong> <span id="d3p_paa_detalle_lbl"></span>
-                </div>
-              </td>
-            </tr>
-
-            <!-- MINI-MODAL PAA -->
-            <div id="d3p_modalPAA" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.6);justify-content:center;align-items:center;padding:20px;">
-              <div style="background:#fff;border-radius:20px;padding:28px;width:100%;max-width:480px;box-shadow:0 20px 50px rgba(0,0,0,.3);max-height:92vh;overflow-y:auto;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-                  <h3 style="color:#123C7B;font-size:18px;margin:0;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6"/><path d="M9 16h6"/><path d="M13 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8Z"/><path d="M13 3v5h5"/></svg> Certificado PAA</h3>
-                  <span onclick="document.getElementById('d3p_modalPAA').style.display='none'" style="font-size:26px;cursor:pointer;color:#6B7280;line-height:1;">&times;</span>
-                </div>
-                <div style="margin-bottom:14px;">
-                  <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:6px;font-size:13px;">Código(s) UNSPSC</label>
-                  <input id="d3p_paa_unspsc" type="text" placeholder="Ej: 42142500, 81112100" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-                  <div style="font-size:11px;color:#6B7280;margin-top:4px;">Separe múltiples códigos con coma.</div>
-                </div>
-                <div style="margin-bottom:18px;">
-                  <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:6px;font-size:13px;">Detalle / Descripción</label>
-                  <textarea id="d3p_paa_detalle" rows="3" placeholder="Descripción del bien o servicio incluido en el PAA…" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;"></textarea>
-                </div>
-                <div style="margin-bottom:18px;">
-                  <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:6px;font-size:13px;">Documento PAA</label>
-                  <button onclick="document.getElementById('d3p_arch_1').click()" style="width:100%;background:#F8FAFC;border:1.5px dashed #94A3B8;color:#374151;padding:11px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Seleccionar archivo</button>
-                  <div id="d3p_arch_1_modal" style="margin-top:6px;font-size:12px;color:#0B7A43;font-weight:600;"></div>
-                </div>
-                <div style="display:flex;gap:10px;">
-                  <button onclick="d3p_guardarPAA()" style="flex:1;background:linear-gradient(90deg,#0B7A43,#123C7B);color:#fff;border:none;padding:12px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
-                  <button onclick="document.getElementById('d3p_modalPAA').style.display='none'" style="flex:1;background:#F3F4F6;color:#374151;border:none;padding:12px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;">Cancelar</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- ÍTEM 2: CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL -->
-            <tr>
-              <td>2</td>
-              <td>CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL</td>
-              <td><input type="checkbox"></td>
-              <td>
-                <button class="btn" style="padding:10px 14px;font-size:13px;display:inline-flex;align-items:center;gap:6px;" onclick="document.getElementById('d3p_modalCDP').style.display='flex'"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Cargar Documento</button>
-                <input type="file" id="d3p_arch_2" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="d3p_mostrarArchivo(this,'d3p_nom_2')">
-                <div id="d3p_nom_2" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                <div id="d3p_cdp_preview" style="display:none;margin-top:6px;font-size:11px;color:#374151;background:#FFF7ED;border-radius:8px;padding:6px 10px;border:1px solid #FED7AA;">
-                  <strong>N° CDP:</strong> <span id="d3p_cdp_num_lbl"></span><br>
-                  <strong>Fecha:</strong> <span id="d3p_cdp_fecha_lbl"></span><br>
-                  <strong>Objeto:</strong> <span id="d3p_cdp_objeto_lbl"></span>
-                </div>
-              </td>
-            </tr>
-
-            <!-- MINI-MODAL CDP -->
-            <div id="d3p_modalCDP" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.6);justify-content:center;align-items:center;padding:20px;">
-              <div style="background:#fff;border-radius:20px;padding:28px;width:100%;max-width:480px;box-shadow:0 20px 50px rgba(0,0,0,.3);max-height:92vh;overflow-y:auto;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-                  <h3 style="color:#123C7B;font-size:17px;margin:0;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 12h6"/><path d="M9 16h6"/><path d="M13 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8Z"/><path d="M13 3v5h5"/></svg> Certificado de Disponibilidad Presupuestal</h3>
-                  <span onclick="document.getElementById('d3p_modalCDP').style.display='none'" style="font-size:26px;cursor:pointer;color:#6B7280;line-height:1;">&times;</span>
-                </div>
-                <div style="margin-bottom:13px;">
-                  <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Número de CDP</label>
-                  <input id="d3p_cdp_num" type="text" placeholder="Ej: CDP-2025-001" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-                </div>
-                <div style="margin-bottom:13px;">
-                  <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Fecha del CDP</label>
-                  <input id="d3p_cdp_fecha" type="date" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-                </div>
-                <div style="margin-bottom:18px;">
-                  <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Objeto del CDP</label>
-                  <textarea id="d3p_cdp_objeto" rows="3" placeholder="Describa el objeto para el cual se expide el CDP…" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;"></textarea>
-                </div>
-                <div style="margin-bottom:18px;">
-                  <label style="display:block;font-weight:700;color:#123C7B;margin-bottom:5px;font-size:13px;">Documento CDP</label>
-                  <button onclick="document.getElementById('d3p_arch_2').click()" style="width:100%;background:#F8FAFC;border:1.5px dashed #94A3B8;color:#374151;padding:11px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Seleccionar archivo</button>
-                  <div id="d3p_arch_2_modal" style="margin-top:6px;font-size:12px;color:#0B7A43;font-weight:600;"></div>
-                </div>
-                <div style="display:flex;gap:10px;">
-                  <button onclick="d3p_guardarCDP()" style="flex:1;background:linear-gradient(90deg,#0B7A43,#123C7B);color:#fff;border:none;padding:12px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
-                  <button onclick="document.getElementById('d3p_modalCDP').style.display='none'" style="flex:1;background:#F3F4F6;color:#374151;border:none;padding:12px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;">Cancelar</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- ÍTEM 3: SOLICITUD PARA CONTRATAR -->
-            <tr>
-              <td>3</td>
-              <td>SOLICITUD PARA CONTRATAR</td>
-              <td><input type="checkbox"></td>
-              <td>
-                <button class="btn" style="padding:10px 14px;font-size:13px;display:inline-flex;align-items:center;gap:6px;" onclick="document.getElementById('d3p_arch_3').click()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Cargar Documento</button>
-                <input type="file" id="d3p_arch_3" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="d3p_mostrarArchivo(this,'d3p_nom_3')">
-                <div id="d3p_nom_3" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-              </td>
-            </tr>
-
-            <!-- ÍTEM 4: ESTUDIO PREVIO -->
-            <tr>
-              <td>4</td>
-              <td>ESTUDIO PREVIO</td>
-              <td><input type="checkbox"></td>
-              <td>
-                <button class="btn" style="padding:10px 14px;font-size:13px;display:inline-flex;align-items:center;gap:6px;" onclick="document.getElementById('d3p_arch_4').click()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Cargar Documento</button>
-                <input type="file" id="d3p_arch_4" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="d3p_mostrarArchivo(this,'d3p_nom_4')">
-                <div id="d3p_nom_4" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-              </td>
-            </tr>
-
-            <!-- ÍTEM 5: MATRIZ DE RIESGOS -->
-            <tr>
-              <td>5</td>
-              <td>MATRIZ DE RIESGOS</td>
-              <td><input type="checkbox"></td>
-              <td>
-                <button class="btn" style="padding:10px 14px;font-size:13px;display:inline-flex;align-items:center;gap:6px;" onclick="document.getElementById('d3p_arch_5').click()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Cargar Documento</button>
-                <input type="file" id="d3p_arch_5" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="d3p_mostrarArchivo(this,'d3p_nom_5')">
-                <div id="d3p_nom_5" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-              </td>
-            </tr>
-
-            <!-- ÍTEM 6: ESTUDIO DE MERCADO -->
-            <tr>
-              <td>6</td>
-              <td>ESTUDIO DE MERCADO</td>
-              <td><input type="checkbox"></td>
-              <td>
-                <button class="btn" style="padding:10px 14px;font-size:13px;display:inline-flex;align-items:center;gap:6px;" onclick="document.getElementById('d3p_arch_6').click()"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Cargar Documento</button>
-                <input type="file" id="d3p_arch_6" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="d3p_mostrarArchivo(this,'d3p_nom_6')">
-                <div id="d3p_nom_6" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-              </td>
-            </tr>
-
-          </tbody>
-        </table>
-        </div>
-
-        <br>
-        <button class="btn" onclick="alert('Contratación Directa (3 Propuestas) registrada correctamente')">Guardar Contratación</button>
-
-      </div>
-    </div>
-
-
-    <div id="licitaciones" class="section-content" style="display:none;">
-      <div class="card">
-        <h3>Procedimiento Contratación Directa > 250 SMLMV y ≤ 1500 SMLMV</h3>
-
-        <div class="alert-box">
-          Integración completa del procedimiento institucional código SLV-GJR-AJR-02 versión 8 aprobado el 30 de octubre de 2025.
-        </div>
-
-        <div class="grid">
-
-          <div class="form-group">
-            <label>Valor del Contrato</label>
-            <input type="number" placeholder="Mayor a 250 SMLMV y menor o igual a 1500 SMLMV">
-          </div>
-
-          <div class="form-group">
-            <label>Modalidad</label>
-            <select>
-              <option value="">-- Seleccione modalidad --</option>
-              <option>Contratación Directa (1) Propuesta</option>
-              <option>Contratación Directa (3) Propuestas</option>
-              <option>Contratación por Convocatoria Pública</option>
-              <option>Subasta Inversa</option>
-            </select>
-          </div>
-
-        </div>
-
-        <h3>Requisitos Financieros Mínimos</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Requisito</th>
-              <th>Validación</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Oferta no excede presupuesto oficial</td>
-              <td><input type="checkbox"></td>
-            </tr>
-            <tr>
-              <td>Estados financieros certificados</td>
-              <td><input type="checkbox"></td>
-            </tr>
-            <tr>
-              <td>Tarjeta profesional contador</td>
-              <td><input type="checkbox"></td>
-            </tr>
-            <tr>
-              <td>Antecedentes Junta Central de Contadores</td>
-              <td><input type="checkbox"></td>
-            </tr>
-            <tr>
-              <td>Registro Único de Proponentes</td>
-              <td><input type="checkbox"></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <br>
-
-        <h3>Flujo Completo del Procedimiento</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Actividad</th>
-              <th>Responsable</th>
-              <th>Documento Generado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1</td>
-              <td>Documentación precontractual</td>
-              <td>Subdirector o Jefe dependencia</td>
-              <td>CDP, estudios previos, matriz riesgos, estudio mercado</td>
-            </tr>
-
-            <tr>
-              <td>2</td>
-              <td>Proyección términos de condiciones</td>
-              <td>Oficina Asesora Jurídica</td>
-              <td>Invitación a ofertar</td>
-            </tr>
-
-            <tr>
-              <td>3</td>
-              <td>Escogencia de oferentes</td>
-              <td>Gerencia</td>
-              <td>Oficio dirigido a Jurídica</td>
-            </tr>
-
-            <tr>
-              <td>4</td>
-              <td>Envío invitación</td>
-              <td>Oficina Asesora Jurídica</td>
-              <td>Comunicación escrita o electrónica</td>
-            </tr>
-
-            <tr>
-              <td>5</td>
-              <td>Acta cierre y apertura</td>
-              <td>Subdirección administrativa</td>
-              <td>Acta apertura propuestas</td>
-            </tr>
-
-            <tr>
-              <td>6</td>
-              <td>Evaluación de propuestas</td>
-              <td>Comité evaluador</td>
-              <td>Evaluación jurídica, técnica y financiera</td>
-            </tr>
-
-            <tr>
-              <td>7</td>
-              <td>Traslado informe evaluación</td>
-              <td>Comité evaluador</td>
-              <td>Informe inicial evaluación</td>
-            </tr>
-
-            <tr>
-              <td>8</td>
-              <td>Aceptación propuesta o declaratoria desierta</td>
-              <td>Jurídica y Gerencia</td>
-              <td>Acto administrativo</td>
-            </tr>
-
-            <tr>
-              <td>8.1</td>
-              <td>Posibilidad apartarse recomendación comité</td>
-              <td>Gerencia y Jurídica</td>
-              <td>Acto administrativo motivado</td>
-            </tr>
-
-            <tr>
-              <td>9</td>
-              <td>Perfeccionamiento contrato</td>
-              <td>Jurídica y Gerencia</td>
-              <td>Contrato legalizado</td>
-            </tr>
-
-            <tr>
-              <td>10</td>
-              <td>Requisitos ejecución contractual</td>
-              <td>Jurídica y Presupuesto</td>
-              <td>RP y aprobación pólizas SECOP II</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <br>
-
-        <h3>Checklist del Proceso</h3>
-
-        <div class="grid">
-
-          <div class="card">
-            <h4>Documentos Precontractuales</h4>
-            <ul>
-              <li><input type="checkbox"> Certificación PAA</li>
-              <li><input type="checkbox"> Solicitud CDP</li>
-              <li><input type="checkbox"> Certificado CDP</li>
-              <li><input type="checkbox"> Estudios Previos</li>
-              <li><input type="checkbox"> Matriz de Riesgos</li>
-              <li style="list-style:none;padding:12px;background:#F9FAFB;border-radius:8px;margin-top:8px;">
-                <div style="margin-bottom:12px;">
-                  <input type="checkbox" id="conv_mercado_checkbox"> Estudio de Mercado
-                </div>
-                <div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:12px;border-radius:6px;margin-bottom:12px;font-size:13px;color:#92400E;">
-                  <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-weight:600;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <span>Este documento solo aplica para los proveedores o contratistas que <strong>NO</strong> son distribuidores exclusivos</span></div>
-                  <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;font-weight:normal;">
-                      <input type="radio" name="conv_distribuidor" value="no" onchange="actualizarOpcionesConv()"> No es distribuidor exclusivo
-                    </label>
-                  </div>
-                  <div style="display:flex;gap:8px;align-items:center;">
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;font-weight:normal;">
-                      <input type="radio" name="conv_distribuidor" value="si" onchange="actualizarOpcionesConv()"> Es distribuidor o proveedor exclusivo
-                    </label>
-                  </div>
-                </div>
-                <div id="conv_opciones_documentos" style="display:none;">
-                  <div style="background:#EBF8F5;border-radius:8px;padding:12px;margin-top:8px;">
-                    <div id="conv_opcion_no_distribuidor" style="display:none;">
-                      <p style="font-size:13px;font-weight:600;margin-bottom:10px;color:#0B7A43;">Documentos a cargar:</p>
-                      <div style="display:flex;flex-direction:column;gap:8px;">
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;background:white;border-radius:6px;border:1px solid #CBD5E1;">
-                          <input type="checkbox" id="conv_mercado_file" style="width:18px;height:18px;cursor:pointer;">
-                          <span style="font-size:13px;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6"/><path d="M9 16h6"/><path d="M13 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8Z"/><path d="M13 3v5h5"/></svg> Estudio de Mercado</span>
-                        </label>
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;background:white;border-radius:6px;border:1px solid #CBD5E1;">
-                          <input type="checkbox" id="conv_propuestas_file" style="width:18px;height:18px;cursor:pointer;">
-                          <span style="font-size:13px;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg> Propuestas de Proveedores</span>
-                        </label>
-                      </div>
-                    </div>
-                    <div id="conv_opcion_distribuidor" style="display:none;">
-                      <p style="font-size:13px;font-weight:600;margin-bottom:10px;color:#0B7A43;">Documento a cargar:</p>
-                      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;background:white;border-radius:6px;border:1px solid #CBD5E1;">
-                        <input type="checkbox" id="conv_carta_distribuidor" style="width:18px;height:18px;cursor:pointer;">
-                        <span style="font-size:13px;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18"/><path d="M2 22h20"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M9 22v-4h6v4"/></svg> Carta de Distribuidor o Proveedor Exclusivo</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          <div class="card">
-            <h4>Documentos Contractuales</h4>
-            <ul>
-              <li><input type="checkbox"> Acta apertura propuestas</li>
-              <li><input type="checkbox"> Informe evaluación</li>
-              <li><input type="checkbox"> Resolución adjudicación</li>
-              <li><input type="checkbox"> Contrato legalizado</li>
-              <li><input type="checkbox"> Registro presupuestal</li>
-              <li><input type="checkbox"> Pólizas SECOP II</li>
-            </ul>
-          </div>
-
-        </div>
-
-        <br>
-
-        <h3>Base Normativa Integrada</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Norma</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Constitución Política de 1991</td>
-              <td>Integrada</td>
-            </tr>
-            <tr>
-              <td>Resolución 5185 de 2013</td>
-              <td>Integrada</td>
-            </tr>
-            <tr>
-              <td>Resolución 1440 de 2024</td>
-              <td>Integrada</td>
-            </tr>
-            <tr>
-              <td>Acuerdo 015 de 2024</td>
-              <td>Integrada</td>
-            </tr>
-            <tr>
-              <td>Resolución 0456 de 2024</td>
-              <td>Integrada</td>
-            </tr>
-            <tr>
-              <td>Ley 80 de 1993</td>
-              <td>Integrada</td>
-            </tr>
-            <tr>
-              <td>Ley 1150 de 2007</td>
-              <td>Integrada</td>
-            </tr>
-            <tr>
-              <td>Ley 1474 de 2011</td>
-              <td>Integrada</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <br>
-
-        <button class="btn" onclick="alert('Proceso contractual >250 y ≤1500 SMLMV registrado correctamente')">Guardar Procedimiento</button>
-      </div>
-    </div>
-
-    <div id="documental" class="section-content" style="display:none;">
-      <div class="card">
-        <h3>Gestión Documental</h3>
-        <ul>
-          <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg> Estudios previos</li>
-          <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg> Contratos</li>
-          <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg> Pólizas</li>
-          <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg> Actas de inicio</li>
-          <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg> Informes de supervisión</li>
-          <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg> Liquidaciones</li>
-        </ul>
-        <button class="btn">Cargar Documento</button>
-      </div>
-    </div>
-
-    <div id="auditoria" class="section-content" style="display:none;">
-      <div class="card">
-        <h3>Auditoría y Trazabilidad</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Evento</th>
-              <th>Usuario</th>
-              <th>Fecha</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Creación contrato</td>
-              <td>Jurídica</td>
-              <td>15/05/2026</td>
-            </tr>
-            <tr>
-              <td>Actualización póliza</td>
-              <td>Supervisor</td>
-              <td>16/05/2026</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-<!-- ══════════════════════════════════════════════════════════════
-     PESTAÑA: CONTRATACIÓN DIRECTA (1 PROPUESTA)
-══════════════════════════════════════════════════════════════ -->
-<div id="tab-cd1p" class="section-content" style="display:none;">
-  <div style="background:linear-gradient(90deg,#046A38,#123C7B);border-radius:22px;padding:24px 28px;margin-bottom:22px;display:flex;align-items:center;gap:18px;">
-    <div style="width:54px;height:54px;border-radius:14px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 12h6"/><path d="M9 16h6"/><path d="M13 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8Z"/><path d="M13 3v5h5"/></svg></div>
-    <div>
-      <h2 style="color:white;margin:0;font-size:26px;font-weight:800;">Contratación Directa — 1 Propuesta</h2>
-      <p style="color:rgba(255,255,255,.8);margin:4px 0 0;font-size:14px;">Procedimiento SLV-GJR-AJR-01 · Acuerdo 015/2024 · Resolución 0456/2024</p>
-    </div>
-  </div>
-
-  <!-- PESTAÑAS INTERNAS -->
-  <div style="display:flex;gap:0;border-bottom:2px solid #E5E7EB;margin-bottom:22px;flex-wrap:wrap;">
-    <button onclick="switchSubTab('cd1p','checklist')" id="cd1p-tab-checklist"
-      style="padding:12px 22px;border:none;background:none;font-weight:700;font-size:14px;color:#0B7A43;border-bottom:3px solid #0B7A43;cursor:pointer;">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg> Checklist Documental
-    </button>
-    <button onclick="switchSubTab('cd1p','lexcon')" id="cd1p-tab-lexcon"
-      style="padding:12px 22px;border:none;background:none;font-weight:600;font-size:14px;color:#6B7280;border-bottom:3px solid transparent;cursor:pointer;">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg> JURISKILLS IA
-    </button>
-    <button onclick="switchSubTab('cd1p','observaciones')" id="cd1p-tab-observaciones"
-      style="padding:12px 22px;border:none;background:none;font-weight:600;font-size:14px;color:#6B7280;border-bottom:3px solid transparent;cursor:pointer;">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Observaciones
-    </button>
-  </div>
-
-  <!-- SUB-PANEL: CHECKLIST -->
-  <div id="cd1p-panel-checklist" class="hslv-fade-panel">
-    <div class="section-card">
-      <h3 style="color:#123C7B;margin-bottom:6px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 7a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9L12 8h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg> Lista de Chequeo — Contratación Directa 1 Propuesta</h3>
-      <p style="color:#64748B;font-size:13px;margin-bottom:16px;">Marque cada ítem y cargue el documento correspondiente. El progreso se actualiza automáticamente.</p>
-      <!-- Barra de progreso -->
-      <div style="background:#EFF6FF;border-radius:12px;padding:14px;margin-bottom:18px;display:flex;align-items:center;gap:14px;">
-        <span style="font-weight:700;color:#123C7B;font-size:13px;">Progreso:</span>
-        <div style="flex:1;background:#DBEAFE;border-radius:10px;height:10px;overflow:hidden;">
-          <div id="cd1p-prog-bar" style="background:linear-gradient(90deg,#0B7A43,#123C7B);height:10px;width:0%;border-radius:10px;transition:width .4s;"></div>
-        </div>
-        <span id="cd1p-prog-txt" style="font-weight:800;color:#0B7A43;min-width:50px;text-align:right;font-size:14px;">0%</span>
-      </div>
-      <div style="overflow-x:auto;border:1px solid #E5E7EB;border-radius:14px;">
-        <table style="min-width:700px;">
-          <thead>
-            <tr>
-              <th style="width:50px;">#</th>
-              <th>Documento</th>
-              <th style="width:80px;text-align:center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg></th>
-              <th>Cargar Archivo</th>
-            </tr>
-          </thead>
-          <tbody id="cd1p-tbody">
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- SUB-PANEL: JURISKILLS IA -->
-  <div id="cd1p-panel-lexcon" class="hslv-fade-panel" style="display:none;">
-    <div style="border:2px solid #86d19d;border-radius:18px;background:#FCFFFD;padding:22px;">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div style="width:56px;height:56px;border-radius:50%;background:#0B7A43;color:white;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(11,122,67,.25);"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div>
-          <div>
-            <div style="font-size:22px;font-weight:800;color:#0B7A43;">JURISKILLS IA <span style="background:#E8FFF0;color:#0B7A43;border:1px solid #86d19d;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:6px;">BETA</span></div>
-            <p style="color:#4B5563;font-size:13px;margin:4px 0 0;">Análisis Documental de Contratación Pública — Directa 1 Propuesta</p>
-          </div>
-        </div>
-        <button onclick="lexconAnalizar('cd1p')" style="background:#0B7A43;color:white;border:none;border-radius:12px;padding:12px 20px;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analizar Expediente</button>
-      </div>
-      <div id="cd1p-lexcon-resultado" style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;min-height:200px;">
-        <div style="text-align:center;color:#9CA3AF;padding:40px 0;">
-          <div style="margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div>
-          <p style="font-size:15px;">Haga clic en <strong>"Analizar Expediente"</strong> para que JURISKILLS IA revise los documentos cargados en el checklist y genere alertas jurídicas.</p>
-        </div>
-      </div>
-      <div style="margin-top:14px;background:#F0FBF4;border:1px solid #C7EFD4;border-radius:12px;padding:14px;">
-        <h4 style="color:#0B7A43;margin-bottom:8px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg> Marco Normativo Aplicable</h4>
-        <ul style="padding-left:18px;color:#4B5563;line-height:2;font-size:13px;">
-          <li>Ley 80 de 1993 — Estatuto General de Contratación</li>
-          <li>Ley 1150 de 2007 — Eficiencia y Transparencia</li>
-          <li>Decreto 1082 de 2015 — Reglamentación Contratación Pública</li>
-          <li>Acuerdo 015 de 2024 — Manual de Contratación HSLV</li>
-          <li>Resolución 0456 de 2024 — Procedimiento Interno HSLV</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- SUB-PANEL: OBSERVACIONES -->
-  <div id="cd1p-panel-observaciones" class="hslv-fade-panel" style="display:none;">
-    <div class="section-card">
-      <h3 style="color:#123C7B;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Observaciones del Proceso — Directa 1 Propuesta</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:18px;">
-        <div>
-          <label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">N° de Proceso / Contrato</label>
-          <input type="text" id="cd1p-obs-id" placeholder="Ej: CD-001-2026" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-        </div>
-        <div>
-          <label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Responsable</label>
-          <input type="text" id="cd1p-obs-resp" placeholder="Nombre del responsable" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-        </div>
-        <div>
-          <label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Fecha</label>
-          <input type="date" id="cd1p-obs-fecha" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-        </div>
-        <div>
-          <label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Estado del Proceso</label>
-          <select id="cd1p-obs-estado" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;">
-            <option>En trámite</option><option>Adjudicado</option><option>Ejecutando</option><option>Liquidado</option><option>Suspendido</option>
-          </select>
-        </div>
-      </div>
-      <div style="margin-bottom:14px;">
-        <label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Observaciones Generales</label>
-        <textarea id="cd1p-obs-general" rows="4" placeholder="Ingrese observaciones del proceso contractual..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;"></textarea>
-      </div>
-      <div style="margin-bottom:14px;">
-        <label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Alertas Jurídicas / Riesgos Identificados</label>
-        <textarea id="cd1p-obs-alertas" rows="3" placeholder="Ej: Póliza próxima a vencer, documentos incompletos..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;background:#FFFBEB;"></textarea>
-      </div>
-      <div style="margin-bottom:18px;">
-        <label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Acciones a Realizar</label>
-        <textarea id="cd1p-obs-acciones" rows="3" placeholder="Ej: Solicitar renovación de póliza, notificar al supervisor..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;background:#F0FBF4;"></textarea>
-      </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <button onclick="guardarObservacion('cd1p')" style="background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;border:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar Observación</button>
-        <button onclick="exportarObservacion('cd1p')" style="background:#EFF6FF;color:#123C7B;border:2px solid #BFDBFE;padding:13px 24px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 12h6"/><path d="M9 16h6"/><path d="M13 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8Z"/><path d="M13 3v5h5"/></svg> Exportar PDF</button>
-      </div>
-      <!-- Historial -->
-      <div id="cd1p-obs-historial" style="margin-top:22px;display:none;">
-        <h4 style="color:#123C7B;margin-bottom:12px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg> Historial de Observaciones</h4>
-        <div id="cd1p-obs-lista" style="display:flex;flex-direction:column;gap:10px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════
-     PESTAÑA: CONTRATACIÓN DIRECTA (3 PROPUESTAS)
-══════════════════════════════════════════════════════════════ -->
-<div id="tab-cd3p" class="section-content" style="display:none;">
-  <div style="background:linear-gradient(90deg,#123C7B,#0B7A43);border-radius:22px;padding:24px 28px;margin-bottom:22px;display:flex;align-items:center;gap:18px;">
-    <div style="width:54px;height:54px;border-radius:14px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M8 8h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2z"/><path d="M4 16V4a2 2 0 0 1 2-2h10"/></svg></div>
-    <div>
-      <h2 style="color:white;margin:0;font-size:26px;font-weight:800;">Contratación Directa — 3 Propuestas</h2>
-      <p style="color:rgba(255,255,255,.8);margin:4px 0 0;font-size:14px;">Procedimiento comparativo · Acuerdo 015/2024 · Resolución 0456/2024</p>
-    </div>
-  </div>
-  <div style="display:flex;gap:0;border-bottom:2px solid #E5E7EB;margin-bottom:22px;flex-wrap:wrap;">
-    <button onclick="switchSubTab('cd3p','checklist')" id="cd3p-tab-checklist" style="padding:12px 22px;border:none;background:none;font-weight:700;font-size:14px;color:#0B7A43;border-bottom:3px solid #0B7A43;cursor:pointer;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg> Checklist Documental</button>
-    <button onclick="switchSubTab('cd3p','lexcon')" id="cd3p-tab-lexcon" style="padding:12px 22px;border:none;background:none;font-weight:600;font-size:14px;color:#6B7280;border-bottom:3px solid transparent;cursor:pointer;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg> JURISKILLS IA</button>
-    <button onclick="switchSubTab('cd3p','observaciones')" id="cd3p-tab-observaciones" style="padding:12px 22px;border:none;background:none;font-weight:600;font-size:14px;color:#6B7280;border-bottom:3px solid transparent;cursor:pointer;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Observaciones</button>
-  </div>
-  <div id="cd3p-panel-checklist" class="hslv-fade-panel">
-    <div class="section-card">
-      <h3 style="color:#123C7B;margin-bottom:6px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 7a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9L12 8h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg> Lista de Chequeo — Contratación Directa 3 Propuestas</h3>
-      <p style="color:#64748B;font-size:13px;margin-bottom:16px;">Requiere mínimo 3 cotizaciones comparables. Marque y cargue cada documento.</p>
-      <div style="background:#EFF6FF;border-radius:12px;padding:14px;margin-bottom:18px;display:flex;align-items:center;gap:14px;">
-        <span style="font-weight:700;color:#123C7B;font-size:13px;">Progreso:</span>
-        <div style="flex:1;background:#DBEAFE;border-radius:10px;height:10px;overflow:hidden;">
-          <div id="cd3p-prog-bar" style="background:linear-gradient(90deg,#123C7B,#0B7A43);height:10px;width:0%;border-radius:10px;transition:width .4s;"></div>
-        </div>
-        <span id="cd3p-prog-txt" style="font-weight:800;color:#123C7B;min-width:50px;text-align:right;font-size:14px;">0%</span>
-      </div>
-      <div style="overflow-x:auto;border:1px solid #E5E7EB;border-radius:14px;">
-        <table style="min-width:700px;"><thead><tr><th style="width:50px;">#</th><th>Documento</th><th style="width:80px;text-align:center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg></th><th>Cargar Archivo</th></tr></thead>
-        <tbody id="cd3p-tbody"></tbody></table>
-      </div>
-    </div>
-  </div>
-  <div id="cd3p-panel-lexcon" class="hslv-fade-panel" style="display:none;">
-    <div style="border:2px solid #86d19d;border-radius:18px;background:#FCFFFD;padding:22px;">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div style="width:56px;height:56px;border-radius:50%;background:#123C7B;color:white;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(18,60,123,.25);"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div>
-          <div>
-            <div style="font-size:22px;font-weight:800;color:#123C7B;">JURISKILLS IA <span style="background:#EFF6FF;color:#123C7B;border:1px solid #BFDBFE;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:6px;">BETA</span></div>
-            <p style="color:#4B5563;font-size:13px;margin:4px 0 0;">Análisis Documental — Directa 3 Propuestas · HSLV</p>
-          </div>
-        </div>
-        <button onclick="lexconAnalizar('cd3p')" style="background:#123C7B;color:white;border:none;border-radius:12px;padding:12px 20px;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analizar Expediente</button>
-      </div>
-      <div id="cd3p-lexcon-resultado" style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;min-height:200px;">
-        <div style="text-align:center;color:#9CA3AF;padding:40px 0;"><div style="margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div><p style="font-size:15px;">Haga clic en <strong>"Analizar Expediente"</strong> para que JURISKILLS IA revise el cuadro comparativo de propuestas y documentos habilitantes.</p></div>
-      </div>
-      <div style="margin-top:14px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:14px;">
-        <h4 style="color:#123C7B;margin-bottom:8px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg> Marco Normativo — 3 Propuestas</h4>
-        <ul style="padding-left:18px;color:#4B5563;line-height:2;font-size:13px;">
-          <li>Art. 2° Ley 1150/2007 — Selección objetiva</li><li>Decreto 1082/2015 — Minidocumento comparativo</li><li>Acuerdo 015/2024 HSLV — Mínimo 3 cotizaciones habilitadas</li><li>Resolución 0456/2024 — Comité evaluador interno</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div id="cd3p-panel-observaciones" class="hslv-fade-panel" style="display:none;">
-    <div class="section-card">
-      <h3 style="color:#123C7B;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Observaciones — Directa 3 Propuestas</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:18px;">
-        <div><label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">N° de Proceso</label><input type="text" id="cd3p-obs-id" placeholder="Ej: CD3-001-2026" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"></div>
-        <div><label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Responsable</label><input type="text" id="cd3p-obs-resp" placeholder="Nombre del responsable" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"></div>
-        <div><label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Fecha</label><input type="date" id="cd3p-obs-fecha" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"></div>
-        <div><label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Estado</label><select id="cd3p-obs-estado" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"><option>En trámite</option><option>Adjudicado</option><option>Ejecutando</option><option>Liquidado</option></select></div>
-      </div>
-      <div style="margin-bottom:14px;"><label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Observaciones Generales</label><textarea id="cd3p-obs-general" rows="4" placeholder="Observaciones del proceso comparativo de 3 propuestas..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;"></textarea></div>
-      <div style="margin-bottom:14px;"><label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Alertas Jurídicas</label><textarea id="cd3p-obs-alertas" rows="3" placeholder="Ej: Propuesta no cumple con requisitos habilitantes..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;background:#FFFBEB;"></textarea></div>
-      <div style="margin-bottom:18px;"><label style="font-weight:700;color:#123C7B;font-size:13px;display:block;margin-bottom:6px;">Acciones a Realizar</label><textarea id="cd3p-obs-acciones" rows="3" placeholder="Ej: Solicitar documentos faltantes al oferente 2..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;background:#F0FBF4;"></textarea></div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <button onclick="guardarObservacion('cd3p')" style="background:linear-gradient(90deg,#123C7B,#0B7A43);color:white;border:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar Observación</button>
-        <button onclick="exportarObservacion('cd3p')" style="background:#EFF6FF;color:#123C7B;border:2px solid #BFDBFE;padding:13px 24px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 12h6"/><path d="M9 16h6"/><path d="M13 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8Z"/><path d="M13 3v5h5"/></svg> Exportar PDF</button>
-      </div>
-      <div id="cd3p-obs-historial" style="margin-top:22px;display:none;"><h4 style="color:#123C7B;margin-bottom:12px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg> Historial de Observaciones</h4><div id="cd3p-obs-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════
-     PESTAÑA: CONVOCATORIA PÚBLICA
-══════════════════════════════════════════════════════════════ -->
-<div id="tab-conv" class="section-content" style="display:none;">
-  <div style="background:linear-gradient(90deg,#1D4ED8,#0B7A43);border-radius:22px;padding:24px 28px;margin-bottom:22px;display:flex;align-items:center;gap:18px;">
-    <div style="width:54px;height:54px;border-radius:14px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 11v2a1 1 0 0 0 1 1h3l4.5 5v-14L7 10H4a1 1 0 0 0-1 1Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a9 9 0 0 1 0 12"/></svg></div>
-    <div>
-      <h2 style="color:white;margin:0;font-size:26px;font-weight:800;">Contratación por Convocatoria Pública</h2>
-      <p style="color:rgba(255,255,255,.8);margin:4px 0 0;font-size:14px;">Proceso competitivo abierto · SECOP II · Decreto 1082/2015</p>
-    </div>
-  </div>
-  <div style="display:flex;gap:0;border-bottom:2px solid #E5E7EB;margin-bottom:22px;flex-wrap:wrap;">
-    <button onclick="switchSubTab('conv','checklist')" id="conv-tab-checklist" style="padding:12px 22px;border:none;background:none;font-weight:700;font-size:14px;color:#1D4ED8;border-bottom:3px solid #1D4ED8;cursor:pointer;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg> Checklist Documental</button>
-    <button onclick="switchSubTab('conv','lexcon')" id="conv-tab-lexcon" style="padding:12px 22px;border:none;background:none;font-weight:600;font-size:14px;color:#6B7280;border-bottom:3px solid transparent;cursor:pointer;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg> JURISKILLS IA</button>
-    <button onclick="switchSubTab('conv','observaciones')" id="conv-tab-observaciones" style="padding:12px 22px;border:none;background:none;font-weight:600;font-size:14px;color:#6B7280;border-bottom:3px solid transparent;cursor:pointer;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Observaciones</button>
-  </div>
-  <div id="conv-panel-checklist" class="hslv-fade-panel">
-    <div class="section-card">
-      <h3 style="color:#1D4ED8;margin-bottom:6px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 7a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9L12 8h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg> Lista de Chequeo — Convocatoria Pública</h3>
-      <p style="color:#64748B;font-size:13px;margin-bottom:16px;">Proceso abierto y público. Verifique la publicación en SECOP II y el cumplimiento de plazos legales.</p>
-      <div style="background:#EFF6FF;border-radius:12px;padding:14px;margin-bottom:18px;display:flex;align-items:center;gap:14px;">
-        <span style="font-weight:700;color:#1D4ED8;font-size:13px;">Progreso:</span>
-        <div style="flex:1;background:#DBEAFE;border-radius:10px;height:10px;overflow:hidden;"><div id="conv-prog-bar" style="background:linear-gradient(90deg,#1D4ED8,#0B7A43);height:10px;width:0%;border-radius:10px;transition:width .4s;"></div></div>
-        <span id="conv-prog-txt" style="font-weight:800;color:#1D4ED8;min-width:50px;text-align:right;font-size:14px;">0%</span>
-      </div>
-      <div style="overflow-x:auto;border:1px solid #E5E7EB;border-radius:14px;">
-        <table style="min-width:700px;"><thead><tr><th style="width:50px;">#</th><th>Documento</th><th style="width:80px;text-align:center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg></th><th>Cargar Archivo</th></tr></thead>
-        <tbody id="conv-tbody"></tbody></table>
-      </div>
-    </div>
-  </div>
-  <div id="conv-panel-lexcon" class="hslv-fade-panel" style="display:none;">
-    <div style="border:2px solid #93C5FD;border-radius:18px;background:#F0F7FF;padding:22px;">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div style="width:56px;height:56px;border-radius:50%;background:#1D4ED8;color:white;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(29,78,216,.25);"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div>
-          <div><div style="font-size:22px;font-weight:800;color:#1D4ED8;">JURISKILLS IA <span style="background:#DBEAFE;color:#1D4ED8;border:1px solid #93C5FD;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:6px;">BETA</span></div><p style="color:#4B5563;font-size:13px;margin:4px 0 0;">Análisis Documental — Convocatoria Pública · HSLV</p></div>
-        </div>
-        <button onclick="lexconAnalizar('conv')" style="background:#1D4ED8;color:white;border:none;border-radius:12px;padding:12px 20px;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analizar Expediente</button>
-      </div>
-      <div id="conv-lexcon-resultado" style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;min-height:200px;">
-        <div style="text-align:center;color:#9CA3AF;padding:40px 0;"><div style="margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div><p style="font-size:15px;">JURISKILLS IA verificará plazos de publicación, documentos del proceso, aviso de convocatoria y resolución de apertura.</p></div>
-      </div>
-      <div style="margin-top:14px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:14px;">
-        <h4 style="color:#1D4ED8;margin-bottom:8px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg> Marco Normativo — Convocatoria Pública</h4>
-        <ul style="padding-left:18px;color:#4B5563;line-height:2;font-size:13px;">
-          <li>Ley 80/1993 — Licitación y selección objetiva</li><li>Decreto 1082/2015 — Plazos y publicaciones SECOP II</li><li>Art. 30 Ley 80 — Procedimiento de licitación</li><li>Acuerdo 015/2024 HSLV — Convocatoria y evaluación</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div id="conv-panel-observaciones" class="hslv-fade-panel" style="display:none;">
-    <div class="section-card">
-      <h3 style="color:#1D4ED8;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Observaciones — Convocatoria Pública</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:18px;">
-        <div><label style="font-weight:700;color:#1D4ED8;font-size:13px;display:block;margin-bottom:6px;">N° de Proceso</label><input type="text" id="conv-obs-id" placeholder="Ej: CONV-001-2026" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"></div>
-        <div><label style="font-weight:700;color:#1D4ED8;font-size:13px;display:block;margin-bottom:6px;">Responsable</label><input type="text" id="conv-obs-resp" placeholder="Nombre del responsable" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"></div>
-        <div><label style="font-weight:700;color:#1D4ED8;font-size:13px;display:block;margin-bottom:6px;">Fecha</label><input type="date" id="conv-obs-fecha" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"></div>
-        <div><label style="font-weight:700;color:#1D4ED8;font-size:13px;display:block;margin-bottom:6px;">Estado</label><select id="conv-obs-estado" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"><option>Publicado</option><option>En evaluación</option><option>Adjudicado</option><option>Desierto</option><option>Liquidado</option></select></div>
-      </div>
-      <div style="margin-bottom:14px;"><label style="font-weight:700;color:#1D4ED8;font-size:13px;display:block;margin-bottom:6px;">Observaciones Generales</label><textarea id="conv-obs-general" rows="4" placeholder="Observaciones de la convocatoria pública..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;"></textarea></div>
-      <div style="margin-bottom:14px;"><label style="font-weight:700;color:#1D4ED8;font-size:13px;display:block;margin-bottom:6px;">Alertas Jurídicas</label><textarea id="conv-obs-alertas" rows="3" placeholder="Ej: Plazo de publicación insuficiente, observaciones a pliego..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;background:#FFFBEB;"></textarea></div>
-      <div style="margin-bottom:18px;"><label style="font-weight:700;color:#1D4ED8;font-size:13px;display:block;margin-bottom:6px;">Acciones a Realizar</label><textarea id="conv-obs-acciones" rows="3" placeholder="Ej: Publicar adenda en SECOP II, responder observaciones..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;background:#F0FBF4;"></textarea></div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <button onclick="guardarObservacion('conv')" style="background:linear-gradient(90deg,#1D4ED8,#0B7A43);color:white;border:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar Observación</button>
-        <button onclick="exportarObservacion('conv')" style="background:#EFF6FF;color:#1D4ED8;border:2px solid #BFDBFE;padding:13px 24px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 12h6"/><path d="M9 16h6"/><path d="M13 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8Z"/><path d="M13 3v5h5"/></svg> Exportar PDF</button>
-      </div>
-      <div id="conv-obs-historial" style="margin-top:22px;display:none;"><h4 style="color:#1D4ED8;margin-bottom:12px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg> Historial de Observaciones</h4><div id="conv-obs-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════
-     PESTAÑA: SUBASTA INVERSA
-══════════════════════════════════════════════════════════════ -->
-<div id="tab-subasta" class="section-content" style="display:none;">
-  <div style="background:linear-gradient(90deg,#7C3AED,#0B7A43);border-radius:22px;padding:24px 28px;margin-bottom:22px;display:flex;align-items:center;gap:18px;">
-    <div style="width:54px;height:54px;border-radius:14px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>
-    <div>
-      <h2 style="color:white;margin:0;font-size:26px;font-weight:800;">Subasta Inversa</h2>
-      <p style="color:rgba(255,255,255,.8);margin:4px 0 0;font-size:14px;">Mecanismo electrónico de puja · SECOP II · Decreto 1082/2015 Art. 2.2.1.2.1.2.9</p>
-    </div>
-  </div>
-  <div style="display:flex;gap:0;border-bottom:2px solid #E5E7EB;margin-bottom:22px;flex-wrap:wrap;">
-    <button onclick="switchSubTab('subasta','checklist')" id="subasta-tab-checklist" style="padding:12px 22px;border:none;background:none;font-weight:700;font-size:14px;color:#7C3AED;border-bottom:3px solid #7C3AED;cursor:pointer;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg> Checklist Documental</button>
-    <button onclick="switchSubTab('subasta','lexcon')" id="subasta-tab-lexcon" style="padding:12px 22px;border:none;background:none;font-weight:600;font-size:14px;color:#6B7280;border-bottom:3px solid transparent;cursor:pointer;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg> JURISKILLS IA</button>
-    <button onclick="switchSubTab('subasta','observaciones')" id="subasta-tab-observaciones" style="padding:12px 22px;border:none;background:none;font-weight:600;font-size:14px;color:#6B7280;border-bottom:3px solid transparent;cursor:pointer;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Observaciones</button>
-  </div>
-  <div id="subasta-panel-checklist" class="hslv-fade-panel">
-    <div class="section-card">
-      <h3 style="color:#7C3AED;margin-bottom:6px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 7a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9L12 8h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg> Lista de Chequeo — Subasta Inversa</h3>
-      <p style="color:#64748B;font-size:13px;margin-bottom:16px;">Modalidad para bienes y servicios de características técnicas uniformes. Requiere ficha técnica y plataforma SECOP II.</p>
-      <div style="background:#F5F3FF;border-radius:12px;padding:14px;margin-bottom:18px;display:flex;align-items:center;gap:14px;">
-        <span style="font-weight:700;color:#7C3AED;font-size:13px;">Progreso:</span>
-        <div style="flex:1;background:#EDE9FE;border-radius:10px;height:10px;overflow:hidden;"><div id="subasta-prog-bar" style="background:linear-gradient(90deg,#7C3AED,#0B7A43);height:10px;width:0%;border-radius:10px;transition:width .4s;"></div></div>
-        <span id="subasta-prog-txt" style="font-weight:800;color:#7C3AED;min-width:50px;text-align:right;font-size:14px;">0%</span>
-      </div>
-      <div style="overflow-x:auto;border:1px solid #E5E7EB;border-radius:14px;">
-        <table style="min-width:700px;"><thead><tr><th style="width:50px;">#</th><th>Documento</th><th style="width:80px;text-align:center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg></th><th>Cargar Archivo</th></tr></thead>
-        <tbody id="subasta-tbody"></tbody></table>
-      </div>
-    </div>
-  </div>
-  <div id="subasta-panel-lexcon" class="hslv-fade-panel" style="display:none;">
-    <div style="border:2px solid #C4B5FD;border-radius:18px;background:#FDFAFF;padding:22px;">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div style="width:56px;height:56px;border-radius:50%;background:#7C3AED;color:white;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(124,58,237,.25);"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div>
-          <div><div style="font-size:22px;font-weight:800;color:#7C3AED;">JURISKILLS IA <span style="background:#F5F3FF;color:#7C3AED;border:1px solid #C4B5FD;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:6px;">BETA</span></div><p style="color:#4B5563;font-size:13px;margin:4px 0 0;">Análisis Documental — Subasta Inversa · HSLV</p></div>
-        </div>
-        <button onclick="lexconAnalizar('subasta')" style="background:#7C3AED;color:white;border:none;border-radius:12px;padding:12px 20px;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analizar Expediente</button>
-      </div>
-      <div id="subasta-lexcon-resultado" style="background:white;border:1px solid #E5E7EB;border-radius:14px;padding:20px;min-height:200px;">
-        <div style="text-align:center;color:#9CA3AF;padding:40px 0;"><div style="margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div><p style="font-size:15px;">JURISKILLS IA verificará la ficha técnica de bienes, condiciones de habilitación, reglas de la subasta y documentos del procedimiento electrónico.</p></div>
-      </div>
-      <div style="margin-top:14px;background:#F5F3FF;border:1px solid #C4B5FD;border-radius:12px;padding:14px;">
-        <h4 style="color:#7C3AED;margin-bottom:8px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg> Marco Normativo — Subasta Inversa</h4>
-        <ul style="padding-left:18px;color:#4B5563;line-height:2;font-size:13px;">
-          <li>Decreto 1082/2015 Art. 2.2.1.2.1.2.9 — Subasta inversa</li><li>Ley 1150/2007 Art. 2° Lit. b — Selección abreviada</li><li>Manual SECOP II — Modalidad Subasta Electrónica</li><li>Acuerdo 015/2024 HSLV — Bienes de características uniformes</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div id="subasta-panel-observaciones" class="hslv-fade-panel" style="display:none;">
-    <div class="section-card">
-      <h3 style="color:#7C3AED;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Observaciones — Subasta Inversa</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:18px;">
-        <div><label style="font-weight:700;color:#7C3AED;font-size:13px;display:block;margin-bottom:6px;">N° de Proceso</label><input type="text" id="subasta-obs-id" placeholder="Ej: SA-001-2026" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"></div>
-        <div><label style="font-weight:700;color:#7C3AED;font-size:13px;display:block;margin-bottom:6px;">Responsable</label><input type="text" id="subasta-obs-resp" placeholder="Nombre del responsable" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"></div>
-        <div><label style="font-weight:700;color:#7C3AED;font-size:13px;display:block;margin-bottom:6px;">Fecha</label><input type="date" id="subasta-obs-fecha" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"></div>
-        <div><label style="font-weight:700;color:#7C3AED;font-size:13px;display:block;margin-bottom:6px;">Estado</label><select id="subasta-obs-estado" style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #CBD5E1;font-size:13px;"><option>Configurando subasta</option><option>En puja electrónica</option><option>Adjudicado</option><option>Desierto</option><option>Ejecutando</option></select></div>
-      </div>
-      <div style="margin-bottom:14px;"><label style="font-weight:700;color:#7C3AED;font-size:13px;display:block;margin-bottom:6px;">Observaciones Generales</label><textarea id="subasta-obs-general" rows="4" placeholder="Observaciones del proceso de subasta inversa..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;"></textarea></div>
-      <div style="margin-bottom:14px;"><label style="font-weight:700;color:#7C3AED;font-size:13px;display:block;margin-bottom:6px;">Alertas Jurídicas</label><textarea id="subasta-obs-alertas" rows="3" placeholder="Ej: Bien no tiene características técnicas uniformes, ficha incompleta..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;background:#FFFBEB;"></textarea></div>
-      <div style="margin-bottom:18px;"><label style="font-weight:700;color:#7C3AED;font-size:13px;display:block;margin-bottom:6px;">Acciones a Realizar</label><textarea id="subasta-obs-acciones" rows="3" placeholder="Ej: Completar ficha técnica, configurar lote en SECOP II..." style="width:100%;padding:13px;border-radius:12px;border:1.5px solid #CBD5E1;font-size:13px;resize:vertical;background:#F5F3FF;"></textarea></div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <button onclick="guardarObservacion('subasta')" style="background:linear-gradient(90deg,#7C3AED,#0B7A43);color:white;border:none;padding:13px 24px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar Observación</button>
-        <button onclick="exportarObservacion('subasta')" style="background:#F5F3FF;color:#7C3AED;border:2px solid #C4B5FD;padding:13px 24px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 12h6"/><path d="M9 16h6"/><path d="M13 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8Z"/><path d="M13 3v5h5"/></svg> Exportar PDF</button>
-      </div>
-      <div id="subasta-obs-historial" style="margin-top:22px;display:none;"><h4 style="color:#7C3AED;margin-bottom:12px;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg> Historial de Observaciones</h4><div id="subasta-obs-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div>
-    </div>
-  </div>
-</div>
-
 </div>
 
 
@@ -1183,14 +238,14 @@
 
     <div class="modal-header">
       <h2 style="display:flex;align-items:center;gap:10px;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 7a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9L12 8h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg> Historial de Procesos</h2>
-      <span class="close" onclick="closeModal('modalHistorialProcesos')">&times;</span>
+      <span class="close" data-accion="closeModal" data-args='["modalHistorialProcesos"]'>&times;</span>
     </div>
 
     <!-- Toolbar -->
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:18px;padding:16px;background:#F8FAFC;border-radius:14px;border:1px solid #E5E7EB;">
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;font-weight:700;color:#374151;">Modalidad:</span>
-        <select id="hist-filtro-modal" onchange="hist_renderTabla()">
+        <select id="hist-filtro-modal" data-accion="hist_renderTabla" data-evento="change">
           <option value="">Todas</option>
           <option value="CD1P">Directa 1 Propuesta</option>
           <option value="D3P">Directa 3 Invitaciones</option>
@@ -1200,21 +255,20 @@
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;font-weight:700;color:#374151;display:inline-flex;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-        <input id="hist-filtro-buscar" type="text" placeholder="Buscar por objeto o área…" oninput="hist_renderTabla()">
+        <input id="hist-filtro-buscar" type="text" placeholder="Buscar por objeto o área…" data-accion="hist_renderTabla" data-evento="input">
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;font-weight:700;color:#374151;display:inline-flex;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-        <input id="hist-filtro-responsable" type="text" placeholder="Filtrar por responsable…" oninput="hist_renderTabla()"
+        <input id="hist-filtro-responsable" type="text" placeholder="Filtrar por responsable…" data-accion="hist_renderTabla" data-evento="input"
           list="hist-responsables-datalist">
         <datalist id="hist-responsables-datalist"></datalist>
-        <button onclick="document.getElementById('hist-filtro-responsable').value='';hist_renderTabla();"
-          title="Limpiar filtro responsable"
-          style="background:none;border:1.5px solid #CBD5E1;border-radius:8px;padding:5px 9px;cursor:pointer;font-size:12px;color:#6B7280;transition:.2s;"
-          onmouseenter="this.style.background='#F1F5F9'" onmouseleave="this.style.background='none'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="btn-limpiar-filtro"
+          data-accion="hist_limpiarFiltroResponsable"
+          title="Limpiar filtro responsable"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
         <span id="hist-contador" style="font-size:13px;color:#6B7280;font-weight:600;"></span>
-        <button onclick="hist_exportarExcel()" style="background:#0B7A43;color:white;border:none;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar Excel</button>
+        <button data-accion="hist_exportarExcel" style="background:#0B7A43;color:white;border:none;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar Excel</button>
       </div>
     </div>
 
@@ -1248,7 +302,7 @@
     </div>
 
     <div style="margin-top:18px;text-align:right;">
-      <button class="btn" onclick="closeModal('modalHistorialProcesos')">Cerrar</button>
+      <button class="btn" data-accion="closeModal" data-args='["modalHistorialProcesos"]'>Cerrar</button>
     </div>
   </div>
 </div>
@@ -1259,7 +313,7 @@
 
     <div class="modal-header">
       <h2 style="display:flex;align-items:center;gap:10px;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg> Seguimiento de Procesos</h2>
-      <span class="close" onclick="closeModal('modalSeguimientoConocimiento')">&times;</span>
+      <span class="close" data-accion="closeModal" data-args='["modalSeguimientoConocimiento"]'>&times;</span>
     </div>
 
     <div class="alert-box" style="margin-bottom:16px;">
@@ -1286,7 +340,7 @@
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:18px;padding:16px;background:#F8FAFC;border-radius:14px;border:1px solid #E5E7EB;">
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;font-weight:700;color:#374151;">Estado:</span>
-        <select id="seg-filtro-estado" onchange="seg_renderTabla()">
+        <select id="seg-filtro-estado" data-accion="seg_renderTabla" data-evento="change">
           <option value="">Todos</option>
           <option value="visto">Visto</option>
           <option value="pendiente">Pendiente</option>
@@ -1294,26 +348,24 @@
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;font-weight:700;color:#374151;display:inline-flex;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-        <input id="seg-filtro-buscar" type="text" placeholder="Buscar por proceso, objeto o área…" oninput="seg_renderTabla()" class="seg-filtro-input-buscar">
+        <input id="seg-filtro-buscar" type="text" placeholder="Buscar por proceso, objeto o área…" data-accion="seg_renderTabla" data-evento="input" class="seg-filtro-input-buscar">
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;font-weight:700;color:#374151;display:inline-flex;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-        <input id="seg-filtro-responsable" type="text" placeholder="Filtrar por responsable…" oninput="seg_renderTabla()"
+        <input id="seg-filtro-responsable" type="text" placeholder="Filtrar por responsable…" data-accion="seg_renderTabla" data-evento="input"
           list="seg-responsables-datalist" class="seg-filtro-input-resp">
         <datalist id="seg-responsables-datalist"></datalist>
-        <button onclick="document.getElementById('seg-filtro-responsable').value='';seg_renderTabla();"
-          title="Limpiar filtro responsable"
-          style="background:none;border:1.5px solid #CBD5E1;border-radius:8px;padding:5px 9px;cursor:pointer;font-size:12px;color:#6B7280;transition:.2s;"
-          onmouseenter="this.style.background='#F1F5F9'" onmouseleave="this.style.background='none'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="btn-limpiar-filtro"
+          data-accion="seg_limpiarFiltroResponsable"
+          title="Limpiar filtro responsable"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;font-weight:700;color:#374151;display:inline-flex;align-items:center;gap:5px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Desde:</span>
-        <input id="seg-filtro-fecha" type="date" onchange="seg_renderTabla()"
+        <input id="seg-filtro-fecha" type="date" data-accion="seg_renderTabla" data-evento="change"
           title="Filtra por la fecha de lectura (si ya fue visto) o de asignación (si sigue pendiente)">
-        <button onclick="document.getElementById('seg-filtro-fecha').value='';seg_renderTabla();"
-          title="Limpiar filtro de fecha"
-          style="background:none;border:1.5px solid #CBD5E1;border-radius:8px;padding:5px 9px;cursor:pointer;font-size:12px;color:#6B7280;transition:.2s;"
-          onmouseenter="this.style.background='#F1F5F9'" onmouseleave="this.style.background='none'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="btn-limpiar-filtro"
+          data-accion="seg_limpiarFiltroFecha"
+          title="Limpiar filtro de fecha"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div style="margin-left:auto;">
         <span id="seg-contador" style="font-size:13px;color:#6B7280;font-weight:600;"></span>
@@ -1341,7 +393,7 @@
     </div>
 
     <div style="margin-top:18px;text-align:right;">
-      <button class="btn" onclick="closeModal('modalSeguimientoConocimiento')">Cerrar</button>
+      <button class="btn" data-accion="closeModal" data-args='["modalSeguimientoConocimiento"]'>Cerrar</button>
     </div>
   </div>
 </div>
@@ -1351,7 +403,7 @@
   <div id="hist-detalle-inner">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
       <h3 id="hist-det-titulo" style="margin:0;color:#123C7B;font-size:18px;"></h3>
-      <span onclick="document.getElementById('hist-detalle-panel').classList.remove('open')"
+      <span data-accion="hist_cerrarDetalle"
         style="font-size:28px;cursor:pointer;color:#6B7280;line-height:1;">&times;</span>
     </div>
     <div id="hist-det-body"></div>
@@ -1364,7 +416,7 @@
 
         <div class="modal-header">
             <h2>Publicación SECOP II</h2>
-            <span class="close" onclick="closeModal('modalSecop')">&times;</span>
+            <span class="close" data-accion="closeModal" data-args='["modalSecop"]'>&times;</span>
         </div>
 
         <div class="form-group">
@@ -1382,7 +434,7 @@
             </select>
         </div>
 
-        <button class="btn" onclick="publicarSecop()">Publicar</button>
+        <button class="btn" data-accion="publicarSecop">Publicar</button>
 
     </div>
 
@@ -1397,7 +449,7 @@
         max-width:520px; box-shadow:0 20px 50px rgba(0,0,0,.3);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <h3 style="color:#123C7B;font-size:20px;margin:0;display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg> Skills Inteligentes Jurídicos</h3>
-            <span onclick="cerrarModalApiKey()" style="font-size:28px;cursor:pointer;color:#6B7280;line-height:1;">&times;</span>
+            <span data-accion="cerrarModalApiKey" style="font-size:28px;cursor:pointer;color:#6B7280;line-height:1;">&times;</span>
         </div>
         <div style="background:#EFF6FF;border-left:4px solid #123C7B;border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;color:#1e40af;">
             Este aplicativo utiliza <strong>Skills Inteligentes Jurídicos</strong> para analizar los documentos legales de contratación.<br>
@@ -1412,7 +464,7 @@
             </p>
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <button onclick="cerrarModalApiKey()" style="
+            <button data-accion="cerrarModalApiKey" style="
                 flex:1;min-width:160px;background:linear-gradient(90deg,#0B7A43,#123C7B);
                 color:#fff;border:none;padding:13px 20px;border-radius:12px;
                 font-weight:700;font-size:14px;cursor:pointer;">
@@ -1423,17 +475,11 @@
 </div>
 
 <!-- Botón flotante Skills Inteligentes Jurídicos -->
-<div id="btnApiKeyFlotante" onclick="mostrarModalApiKey()" title="Skills Inteligentes Jurídicos" style="
-    position:fixed; bottom: 24px; right:24px; z-index:99999;
-    background:linear-gradient(135deg,#0B7A43 0%,#123C7B 100%);
-    color:white; border-radius:50px; padding:10px 16px;
-    font-size:12px; font-weight:700; cursor:pointer;
-    box-shadow:0 4px 18px rgba(11,122,67,.35);
-    display:flex; align-items:center; gap:7px;
-    transition:transform .2s, box-shadow .2s, opacity .2s;
-    opacity:.93; user-select:none;"
-    onmouseenter="this.style.transform='translateY(-2px)';this.style.opacity='1';this.style.boxShadow='0 8px 24px rgba(11,122,67,.45)'"
-    onmouseleave="this.style.transform='';this.style.opacity='.93';this.style.boxShadow='0 4px 18px rgba(11,122,67,.35)'">
+<!-- El estilo vive en css/styles.css (#btnApiKeyFlotante): el :hover cambia
+     opacity y box-shadow, y un style inline le habría ganado siempre.
+     js/script.js sigue escribiendo .style.display para ocultarlo cuando hay
+     un modal abierto, y ese inline sí debe ganar. -->
+<div id="btnApiKeyFlotante" data-accion="mostrarModalApiKey" title="Skills Inteligentes Jurídicos">
     <span style="width:18px;height:18px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg></span>
     <span id="btnApiKeyLabel">Skills Inteligentes Jurídicos</span>
 </div>
@@ -1444,10 +490,11 @@
 
 
 
-<script src="/js/sidebar.js"></script>
-<script src="/js/db.js"></script>
-<script src="/js/notificaciones.js"></script>
-<script src="/js/juriskills-engine.js"></script>
-<script src="/js/script.js"></script>
+<script defer src="/js/acciones.js"></script>
+<script defer src="/js/sidebar.js"></script>
+<script defer src="/js/db.js"></script>
+<script defer src="/js/notificaciones.js"></script>
+<script defer src="/js/juriskills-engine.js"></script>
+<script defer src="/js/script.js"></script>
 </body>
 </html>

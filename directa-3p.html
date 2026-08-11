@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contratación Directa 3 Invitaciones — HSLV</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/js/supabase.js"></script>
-    <script src="/js/auth-guard.js"></script>
+    <script defer src="/js/vendor/supabase-js.js"></script>
+    <script defer src="/js/supabase.js"></script>
+    <script defer src="/js/auth-guard.js"></script>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -66,7 +66,7 @@
                 <textarea id="mp_objeto" rows="4" placeholder="Ingrese el objeto contractual" autocomplete="off"></textarea>
                 <button type="button" class="btn" id="mp_verificar_btn"
                     style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;"
-                    onclick="verificarObjetoContractual()">
+                    data-accion="verificarObjetoContractual">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="8"/>
@@ -89,7 +89,7 @@
 
             <div class="form-group" id="fg_valor" style="display:none;">
               <label>Valor del Proceso</label>
-              <input id="mp_valor" type="text" inputmode="decimal" placeholder="Valor estimado del proceso ($)" autocomplete="off" oninput="_fmt_formatearValorInput(this);_fmt_actualizarValorLetras(this)">
+              <input id="mp_valor" type="text" inputmode="decimal" placeholder="Valor estimado del proceso ($)" autocomplete="off" data-accion="_fmt_valorEditado" data-evento="input" data-args='["@el"]'>
               <div id="mp_valor_letras" style="font-size:11px;color:#6B7280;font-style:italic;margin-top:4px;"></div>
             </div>
         </div>
@@ -147,7 +147,7 @@
                             <div id="iaResumenGlobal"></div>
                         </div>
                     </div>
-                    <button class="btn btn-actualizar" onclick="reAnalizarTodo()"
+                    <button class="btn btn-actualizar" data-accion="reAnalizarTodo"
                         style="display:inline-flex;align-items:center;gap:6px;">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -206,12 +206,12 @@
                             <td><input type="checkbox"></td>
                             <td>
                                 <button class="btn btn-cargar-doc"
-                                    onclick="document.getElementById('i3_arch_1').click()">
+                                    data-accion="abrirSelectorArchivo" data-args='["i3_arch_1"]'>
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
                                 </button>
                                 <input type="file" id="i3_arch_1" style="display:none;"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onchange="mostrarArchivo(this,'i3_nom_1')">
+                                    data-accion="mostrarArchivo" data-evento="change" data-args='["@el","i3_nom_1"]'>
                                 <div id="i3_nom_1" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                             </td>
@@ -223,12 +223,12 @@
                             <td><input type="checkbox"></td>
                             <td>
                                 <button class="btn btn-cargar-doc"
-                                    onclick="document.getElementById('i3_arch_2').click()">
+                                    data-accion="abrirSelectorArchivo" data-args='["i3_arch_2"]'>
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
                                 </button>
                                 <input type="file" id="i3_arch_2" style="display:none;"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onchange="mostrarArchivo(this,'i3_nom_2')">
+                                    data-accion="mostrarArchivo" data-evento="change" data-args='["@el","i3_nom_2"]'>
                                 <div id="i3_nom_2" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                             </td>
@@ -240,12 +240,12 @@
                             <td><input type="checkbox"></td>
                             <td>
                                 <button class="btn btn-cargar-doc"
-                                    onclick="document.getElementById('i3_arch_3').click()">
+                                    data-accion="abrirSelectorArchivo" data-args='["i3_arch_3"]'>
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
                                 </button>
                                 <input type="file" id="i3_arch_3" style="display:none;"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onchange="mostrarArchivo(this,'i3_nom_3')">
+                                    data-accion="mostrarArchivo" data-evento="change" data-args='["@el","i3_nom_3"]'>
                                 <div id="i3_nom_3" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                             </td>
@@ -261,15 +261,15 @@
                             <td><input type="checkbox"></td>
                             <td>
                                 <button class="btn btn-cargar-doc"
-                                    onclick="document.getElementById('i3_arch_5').click()">
+                                    data-accion="abrirSelectorArchivo" data-args='["i3_arch_5"]'>
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
                                 </button>
                                 <input type="file" id="i3_arch_5" style="display:none;"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onchange="mostrarArchivo(this,'i3_nom_5')">
+                                    data-accion="mostrarArchivo" data-evento="change" data-args='["@el","i3_nom_5"]'>
                                 <div id="i3_nom_5" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                <button onclick="histU_toggle('i3_',5)"
+                                <button data-accion="histU_toggle" data-args='["i3_",5]'
                                     style="margin-top:8px;background:none;
                                            border:1px solid #CBD5E1;border-radius:8px;
                                            padding:5px 10px;font-size:11px;color:#123C7B;
@@ -295,11 +295,11 @@
                         <tr data-item-num="6"><td>5</td><td>MATRIZ DE RIESGO</td>
                         <td><input type="checkbox"></td><td>
                             <button class="btn btn-cargar-doc"
-                                onclick="document.getElementById('i3_arch_6').click()">
+                                data-accion="abrirSelectorArchivo" data-args='["i3_arch_6"]'>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="i3_arch_6" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_6')">
+                                data-accion="mostrarArchivo" data-evento="change" data-args='["@el","i3_nom_6"]'>
                             <div id="i3_nom_6" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -307,11 +307,11 @@
                         <tr data-item-num="8"><td>6</td><td>PROPUESTA</td>
                         <td><input type="checkbox"></td><td>
                             <button class="btn btn-cargar-doc"
-                                onclick="document.getElementById('i3_arch_8').click()">
+                                data-accion="abrirSelectorArchivo" data-args='["i3_arch_8"]'>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="i3_arch_8" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="mostrarArchivo(this,'i3_nom_8')">
+                                data-accion="mostrarArchivo" data-evento="change" data-args='["@el","i3_nom_8"]'>
                             <div id="i3_nom_8" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -322,15 +322,15 @@
                             <td><input type="checkbox"></td>
                             <td>
                                 <button class="btn btn-cargar-doc"
-                                    onclick="document.getElementById('i3_arch_9').click()">
+                                    data-accion="abrirSelectorArchivo" data-args='["i3_arch_9"]'>
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
                                 </button>
                                 <input type="file" id="i3_arch_9" style="display:none;"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onchange="mostrarArchivo(this,'i3_nom_9')">
+                                    data-accion="mostrarArchivo" data-evento="change" data-args='["@el","i3_nom_9"]'>
                                 <div id="i3_nom_9" style="margin-top:8px;font-size:12px;
                                     color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
-                                <button onclick="histU_toggle('i3_',9)"
+                                <button data-accion="histU_toggle" data-args='["i3_",9]'
                                     style="margin-top:8px;background:none;
                                            border:1px solid #CBD5E1;border-radius:8px;
                                            padding:5px 10px;font-size:11px;color:#123C7B;
@@ -374,7 +374,7 @@
         <!-- BOTÓN GUARDAR (solo visible tras verificar el objeto contractual) -->
         <div class="acciones-modal-final" style="justify-content:flex-end;">
             <button class="btn finalizar-btn"
-                onclick="guardarProcesoHistorial('D3P')">
+                data-accion="guardarProcesoHistorial" data-args='["D3P"]'>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 Guardar Proceso
             </button>
@@ -385,7 +385,7 @@
         <!-- BOTONES -->
         <div class="acciones-modal-final" style="justify-content:flex-end;">
             <button class="btn"
-                onclick="window.location.href='/dashboard'"
+                data-accion="navegar" data-args='["/dashboard"]'
                 style="background:#F3F4F6;color:#374151;border:none;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Volver al Dashboard
             </button>
@@ -393,11 +393,12 @@
 
     </div><!-- fin content -->
 
-    <script src="/js/sidebar.js"></script>
-    <script src="/js/db.js"></script>
-    <script src="/js/notificaciones.js"></script>
-    <script src="/js/juriskills-engine.js"></script>
-    <script src="/js/script.js"></script>
+    <script defer src="/js/acciones.js"></script>
+    <script defer src="/js/sidebar.js"></script>
+    <script defer src="/js/db.js"></script>
+    <script defer src="/js/notificaciones.js"></script>
+    <script defer src="/js/juriskills-engine.js"></script>
+    <script defer src="/js/script.js"></script>
 
 </body>
 </html>

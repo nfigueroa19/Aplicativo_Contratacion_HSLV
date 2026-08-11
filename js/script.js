@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 bloqueHist.className = 'checklist-historial';
                 bloqueHist.style.cssText = 'margin-top:8px;';
                 bloqueHist.innerHTML =
-                    '<button onclick="histU_toggle(\'' + prefijoComentario + '\',' + num + ')" ' +
+                    '<button data-accion="histU_toggle" ' + _accionArgs([prefijoComentario, num]) + ' ' +
                         'style="background:none;border:1px solid #CBD5E1;border-radius:8px;' +
                         'padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;' +
                         'display:flex;align-items:center;gap:5px;">' +
@@ -192,12 +192,12 @@ document.addEventListener('DOMContentLoaded', function() {
             '<div id="' + idTextarea + '_wrap" style="position:relative;width:fit-content;max-width:100%;">' +
                 '<textarea id="' + idTextarea + '" rows="1" ' +
                     'placeholder="Escribir un comentario para este documento…" autocomplete="off" ' +
-                    'oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\';" ' +
+                    'data-accion="autoAjustarAlto" data-evento="input" data-args=\'["@el"]\' ' +
                     'style="width:44ch;max-width:100%;font-size:12px;padding:6px 30px 6px 8px;' +
                     'border:1px solid #CBD5E1;border-radius:8px;resize:none;overflow:hidden;' +
                     'box-sizing:border-box;display:block;"></textarea>' +
                 '<button type="button" ' +
-                    'onclick="checklistComentario_confirmar(\'' + idTextarea + '\')" ' +
+                    'data-accion="checklistComentario_confirmar" ' + _accionArgs([idTextarea]) + ' ' +
                     'style="position:absolute;right:5px;bottom:5px;background:#123C7B;color:white;' +
                     'border:none;border-radius:50%;width:22px;height:22px;padding:0;font-size:11px;' +
                     'line-height:22px;text-align:center;cursor:pointer;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg></button>' +
@@ -239,9 +239,9 @@ async function checklistComentario_confirmar(idTextarea) {
             '<div style="font-weight:700;color:#123C7B;">' + nombreAutor + '</div>' +
             '<div style="color:#1F2937;margin-top:2px;">' + textoEscapado + '</div>' +
             '<div style="margin-top:4px;">' +
-                '<a onclick="checklistComentario_editar(\'' + idTextarea + '\')" ' +
+                '<a data-accion="checklistComentario_editar" ' + _accionArgs([idTextarea]) + ' ' +
                     'style="color:#123C7B;font-size:10px;cursor:pointer;margin-right:10px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Editar</a>' +
-                '<a onclick="checklistComentario_borrar(\'' + idTextarea + '\')" ' +
+                '<a data-accion="checklistComentario_borrar" ' + _accionArgs([idTextarea]) + ' ' +
                     'style="color:#B91C1C;font-size:10px;cursor:pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Borrar</a>' +
             '</div>' +
         '</div>';
@@ -582,11 +582,17 @@ function dash_abrirHistorial(filtroTipo) {
     openModal('modalHistorialProcesos');
 }
 
-// Parchar guardarProcesoHistorial para que también actualice el dashboard
+// Parchar guardarProcesoHistorial para que también actualice el dashboard.
+// ⚠️ Este parche es la razón por la que 'guardarProcesoHistorial' NO puede
+// salir de NOMBRES_RESERVADOS aunque sus tres páginas estén migradas: aquí
+// se accede por nombre a través de window, y renameGlobals lo rompería.
+// El envoltorio reenvía `this` y los argumentos: con on*= daba igual, pero
+// el delegador de js/acciones.js llama con `this` = el elemento pulsado, y
+// guardarProcesoHistorial lo usa para encontrar su propio botón.
 (function() {
     var _orig = window.guardarProcesoHistorial;
     window.guardarProcesoHistorial = function(tipo) {
-        if (typeof _orig === 'function') _orig(tipo);
+        if (typeof _orig === 'function') _orig.apply(this, arguments);
         setTimeout(dash_actualizar, 200);
     };
 })();
@@ -808,6 +814,37 @@ document.addEventListener('DOMContentLoaded', function() {
     panel_actualizarSeguimientoConocimiento();
   };
 
+  // ── Botones "limpiar filtro" del modal (Sprint 4) ──
+  // index.html los llamaba con un onclick= que metía DOS sentencias dentro
+  // del atributo (vaciar el campo y re-renderizar). data-accion nombra UNA
+  // acción, así que la pareja tiene que vivir aquí. Mismo patrón que
+  // hist_limpiarFiltroResponsable(), que resolvió lo mismo en historial.html.
+  function seg_limpiarFiltroResponsable() {
+    var campo = document.getElementById('seg-filtro-responsable');
+    if (campo) campo.value = '';
+    _seg_render();
+  }
+
+  function seg_limpiarFiltroFecha() {
+    var campo = document.getElementById('seg-filtro-fecha');
+    if (campo) campo.value = '';
+    _seg_render();
+  }
+
+  // El registro va acá dentro, no en el bloque del final del archivo, porque
+  // acá se pueden pasar las funciones REALES por referencia (_seg_render y
+  // las dos de arriba son locales de este IIFE). Desde fuera solo se podría
+  // llegar a ellas por window.<nombre>, que es justo el acceso por nombre
+  // que el Sprint 4 quiere eliminar para poder poner renameGlobals:true.
+  if (typeof registrarAcciones === 'function') {
+    registrarAcciones({
+      seg_renderTabla:                 _seg_render,
+      panel_abrirSeguimientoConocimiento: window.panel_abrirSeguimientoConocimiento,
+      seg_limpiarFiltroResponsable:    seg_limpiarFiltroResponsable,
+      seg_limpiarFiltroFecha:          seg_limpiarFiltroFecha
+    });
+  }
+
   // Al cargar: ocultar la tarjeta para cualquiera que no sea admin (el
   // acceso real también está protegido por RLS en `procesos`/`profiles`,
   // esto es solo para no mostrar información que no le corresponde ver
@@ -1005,7 +1042,7 @@ function _alertaCard(item, tipo) {
   var s = estilos[tipo];
   return '<div style="background:'+s.bg+';border:1px solid '+s.brd+';border-left:4px solid '+s.left+';'+
     'border-radius:10px;padding:11px 13px;cursor:pointer;" '+
-    'onclick="dash_abrirHistorial(\'\')" title="Ver en historial">'+
+    'data-accion="dash_abrirHistorial" data-args=\'[""]\' title="Ver en historial">'+
     '<div style="font-size:12px;font-weight:700;color:'+s.titulo+';">'+item.titulo+'</div>'+
     '<div style="font-size:11px;color:#6B7280;margin-top:3px;">'+item.detalle+'</div>'+
     '</div>';
@@ -1071,333 +1108,6 @@ function _actualizarBloquesDinamicos() {
   });
 })();
 
-    // Sync arch_1 → modal label
-    document.addEventListener('DOMContentLoaded', function() {
-      var a1 = document.getElementById('d3p_arch_1');
-      if (a1) a1.addEventListener('change', function() {
-        var lbl = document.getElementById('d3p_arch_1_modal');
-        if (lbl && this.files[0]) lbl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(this.files[0].name);
-      });
-      var a2 = document.getElementById('d3p_arch_2');
-      if (a2) a2.addEventListener('change', function() {
-        var lbl = document.getElementById('d3p_arch_2_modal');
-        if (lbl && this.files[0]) lbl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(this.files[0].name);
-      });
-    });
-
-    function d3p_guardarPAA() {
-      var unspsc = document.getElementById('d3p_paa_unspsc').value.trim();
-      var detalle = document.getElementById('d3p_paa_detalle').value.trim();
-      if (!unspsc) { alert('Por favor ingrese al menos un código UNSPSC.'); return; }
-      document.getElementById('d3p_paa_unspsc_lbl').textContent = unspsc;
-      document.getElementById('d3p_paa_detalle_lbl').textContent = detalle || '—';
-      document.getElementById('d3p_paa_preview').style.display = 'block';
-      var arch = document.getElementById('d3p_arch_1');
-      if (arch.files && arch.files.length > 0) d3p_mostrarArchivo(arch, 'd3p_nom_1');
-      document.getElementById('d3p_modalPAA').style.display = 'none';
-    }
-
-    function d3p_guardarCDP() {
-      var num    = document.getElementById('d3p_cdp_num').value.trim();
-      var fecha  = document.getElementById('d3p_cdp_fecha').value;
-      var objeto = document.getElementById('d3p_cdp_objeto').value.trim();
-      if (!num || !fecha || !objeto) { alert('Por favor complete: Número de CDP, Fecha y Objeto.'); return; }
-      document.getElementById('d3p_cdp_num_lbl').textContent = num;
-      document.getElementById('d3p_cdp_fecha_lbl').textContent = fecha;
-      document.getElementById('d3p_cdp_objeto_lbl').textContent = objeto.slice(0,70) + (objeto.length > 70 ? '…' : '');
-      document.getElementById('d3p_cdp_preview').style.display = 'block';
-      var arch = document.getElementById('d3p_arch_2');
-      if (arch.files && arch.files.length > 0) d3p_mostrarArchivo(arch, 'd3p_nom_2');
-      document.getElementById('d3p_modalCDP').style.display = 'none';
-    }
-
-/*══════════════════════════════════════════════════════════════
-     SCRIPTS: TABS + CHECKLISTS + JURISKILLS IA + OBSERVACIONES
-══════════════════════════════════════════════════════════════ */
-
-// ── Checklists por modalidad ──
-const CHECKLIST_DATA = {
-  'cd1p': [
-    'Estudios Previos y Análisis del Sector','Certificado de Disponibilidad Presupuestal (CDP)',
-    'Plan Anual de Adquisiciones (PAA)','Invitación a Ofertar','Propuesta Económica del Contratista',
-    'Hoja de Vida del Contratista','Cédula de Ciudadanía / NIT','Antecedentes Disciplinarios (Procuraduría)',
-    'Antecedentes Fiscales (Contraloría)','Antecedentes Penales (Policía Nacional)',
-    'RUT (DIAN)','Cámara de Comercio (vigente)','Certificado de Experiencia',
-    'Formato de Verificación de Requisitos','Contrato / Minuta','Registro Presupuestal (RP)',
-    'Pólizas de Garantía aprobadas','Acta de Inicio','Informe de Supervisión',
-    'Acta de Liquidación','Certificación SARLAFT'
-  ],
-  'cd3p': [
-    'Estudios Previos y Análisis del Sector','Certificado de Disponibilidad Presupuestal (CDP)',
-    'Plan Anual de Adquisiciones (PAA)','Invitación a Ofertar (3 proponentes)',
-    'Propuesta Económica — Proponente 1','Propuesta Económica — Proponente 2','Propuesta Económica — Proponente 3',
-    'Cuadro Comparativo de Propuestas','Documentos Habilitantes — Proponente 1',
-    'Documentos Habilitantes — Proponente 2','Documentos Habilitantes — Proponente 3',
-    'Concepto de Evaluación y Selección','Contrato / Minuta con Oferente Seleccionado',
-    'Registro Presupuestal (RP)','Pólizas de Garantía aprobadas',
-    'Acta de Inicio','Informe de Supervisión','Acta de Liquidación','Certificación SARLAFT'
-  ],
-  'conv': [
-    'Estudios Previos y Análisis del Sector','Certificado de Disponibilidad Presupuestal (CDP)',
-    'Plan Anual de Adquisiciones (PAA)','Aviso de Convocatoria / Invitación Pública',
-    'Resolución de Apertura del Proceso','Pliego de Condiciones Definitivo',
-    'Adendas (si aplica)','Publicación SECOP II (dentro de 3 días)',
-    'Propuestas Recibidas','Acta de Cierre del Proceso',
-    'Informe de Evaluación Técnica','Informe de Evaluación Jurídica',
-    'Informe de Evaluación Económica','Resolución de Adjudicación',
-    'Contrato / Minuta','Registro Presupuestal (RP)',
-    'Pólizas de Garantía aprobadas','Acta de Inicio',
-    'Informes de Supervisión','Acta de Liquidación'
-  ],
-  'subasta': [
-    'Estudios Previos y Análisis del Sector','Certificado de Disponibilidad Presupuestal (CDP)',
-    'Plan Anual de Adquisiciones (PAA)','Ficha Técnica del Bien o Servicio (CTU)',
-    'Aviso de Convocatoria en SECOP II','Pliego de Condiciones / Reglas de la Subasta',
-    'Propuestas Habilitadas (documentos jurídicos y técnicos)',
-    'Acta de Habilitación de Proponentes','Configuración del Evento de Subasta en SECOP II',
-    'Acta de Cierre de Subasta / Historial de Pujas',
-    'Resolución de Adjudicación','Contrato / Minuta',
-    'Registro Presupuestal (RP)','Pólizas de Garantía aprobadas',
-    'Acta de Inicio','Informes de Supervisión','Acta de Liquidación','Certificación SARLAFT'
-  ]
-};
-
-// Observaciones almacenadas en memoria
-const obsData = { cd1p: [], cd3p: [], conv: [], subasta: [] };
-
-// ── Inicializar checklists al cargar ──
-document.addEventListener('DOMContentLoaded', function() {
-  Object.keys(CHECKLIST_DATA).forEach(mod => buildChecklist(mod));
-});
-
-function buildChecklist(mod) {
-  const tbody = document.getElementById(mod + '-tbody');
-  if (!tbody) return;
-  const items = CHECKLIST_DATA[mod];
-  tbody.innerHTML = '';
-  items.forEach((doc, i) => {
-    const num = i + 1;
-    const fileId = mod + '_file_' + num;
-    const checkId = mod + '_chk_' + num;
-    const nameId = mod + '_fname_' + num;
-    tbody.innerHTML += `
-      <tr id="${mod}-row-${num}" style="transition:background .3s;">
-        <td style="text-align:center;font-weight:700;color:#6B7280;">${num}</td>
-        <td style="font-size:13px;">${doc}</td>
-        <td style="text-align:center;">
-          <input type="checkbox" id="${checkId}" onchange="tabUpdateProgress('${mod}')"
-            style="width:18px;height:18px;accent-color:#0B7A43;cursor:pointer;">
-        </td>
-        <td>
-          <button onclick="document.getElementById('${fileId}').click()"
-            style="background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;border:none;
-            padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar
-          </button>
-          <input type="file" id="${fileId}" style="display:none;"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="tabFileLoaded(this,'${checkId}','${nameId}','${mod}')">
-          <div id="${nameId}" style="margin-top:6px;font-size:11px;color:#6B7280;">Sin archivo</div>
-        </td>
-      </tr>`;
-  });
-}
-
-function tabFileLoaded(input, checkId, nameId, mod) {
-  if (!input.files || !input.files[0]) return;
-  const f = input.files[0];
-  const size = f.size < 1048576 ? (f.size/1024).toFixed(1)+' KB' : (f.size/1048576).toFixed(2)+' MB';
-  document.getElementById(nameId).innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><strong style="color:#1F2937;">' + f.name + '</strong> <span style="font-size:10px;color:#6B7280;">('+size+')</span>';
-  const chk = document.getElementById(checkId);
-  if (chk) { chk.checked = true; }
-  const rowNum = checkId.split('_chk_')[1];
-  const row = document.getElementById(mod + '-row-' + rowNum);
-  if (row) { row.style.background = '#F0FDF4'; }
-  tabUpdateProgress(mod);
-}
-
-function tabUpdateProgress(mod) {
-  const items = CHECKLIST_DATA[mod];
-  let checked = 0;
-  items.forEach((_, i) => {
-    const chk = document.getElementById(mod + '_chk_' + (i+1));
-    if (chk && chk.checked) checked++;
-  });
-  const pct = items.length ? Math.round((checked / items.length) * 100) : 0;
-  const bar = document.getElementById(mod + '-prog-bar');
-  const txt = document.getElementById(mod + '-prog-txt');
-  if (bar) bar.style.width = pct + '%';
-  if (txt) txt.textContent = pct + '%';
-}
-
-// ── Cambiar sub-pestaña ──
-function switchSubTab(mod, panel) {
-  const panels = ['checklist','lexcon','observaciones'];
-  panels.forEach(p => {
-    const el = document.getElementById(mod + '-panel-' + p);
-    const btn = document.getElementById(mod + '-tab-' + p);
-    if (el) el.style.display = p === panel ? 'block' : 'none';
-    if (btn) {
-      const colors = { cd1p: '#0B7A43', cd3p: '#123C7B', conv: '#1D4ED8', subasta: '#7C3AED' };
-      const c = colors[mod] || '#0B7A43';
-      btn.style.color = p === panel ? c : '#6B7280';
-      btn.style.borderBottom = p === panel ? '3px solid ' + c : '3px solid transparent';
-      btn.style.fontWeight = p === panel ? '700' : '600';
-    }
-  });
-}
-
-// ── JURISKILLS IA — análisis por modalidad ──
-function lexconAnalizar(mod) {
-  const resultado = document.getElementById(mod + '-lexcon-resultado');
-  if (!resultado) return;
-
-  const items = CHECKLIST_DATA[mod];
-  let cargados = 0, faltantes = [];
-  items.forEach((doc, i) => {
-    const chk = document.getElementById(mod + '_chk_' + (i+1));
-    if (chk && chk.checked) cargados++;
-    else faltantes.push({ num: i+1, doc });
-  });
-  const pct = items.length ? Math.round((cargados / items.length) * 100) : 0;
-
-  resultado.innerHTML = '<div style="text-align:center;padding:20px;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p style="color:#6B7280;font-size:14px;margin-top:8px;">Analizando expediente...</p></div>';
-
-  setTimeout(() => {
-    const criticos = faltantes.filter(f => f.num <= 5);
-    const otros = faltantes.filter(f => f.num > 5);
-    const estadoColor = pct >= 80 ? '#166534' : pct >= 50 ? '#92400E' : '#991B1B';
-    const estadoBg = pct >= 80 ? '#DCFCE7' : pct >= 50 ? '#FEF3C7' : '#FEE2E2';
-    const estadoIcon = pct >= 80
-      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
-      : pct >= 50
-      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
-      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
-
-    let html = `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
-        <div style="background:${estadoBg};color:${estadoColor};border-radius:12px;padding:10px 18px;font-size:16px;font-weight:800;">
-          ${estadoIcon} Expediente al ${pct}%
-        </div>
-        <span style="color:#6B7280;font-size:13px;">${cargados} de ${items.length} ítems verificados</span>
-      </div>
-      <div style="background:#F8FAFC;border-radius:12px;padding:16px;margin-bottom:16px;">
-        <div style="font-weight:800;color:#0B7A43;margin-bottom:10px;font-size:15px;display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>Análisis JURISKILLS IA — Contratación HSLV</div>
-        <p style="color:#374151;font-size:13px;line-height:1.7;">
-          ${pct >= 80
-            ? 'El expediente contractual presenta un nivel de completitud <strong>ACEPTABLE</strong>. Se recomienda completar los ítems pendientes antes de la firma del contrato.'
-            : pct >= 50
-            ? 'El expediente está <strong>PARCIALMENTE COMPLETO</strong>. Existen documentos críticos pendientes que deben ser gestionados con urgencia para no incurrir en responsabilidad disciplinaria o fiscal.'
-            : 'El expediente presenta <strong>DEFICIENCIAS CRÍTICAS</strong>. No se recomienda avanzar en el proceso contractual hasta completar los documentos mínimos habilitantes conforme al Acuerdo 015/2024 HSLV.'}
-        </p>
-      </div>`;
-
-    if (criticos.length > 0) {
-      html += `<div style="margin-bottom:14px;"><div style="font-weight:800;color:#DC2626;margin-bottom:8px;font-size:13px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Documentos Críticos Faltantes</div>`;
-      criticos.forEach(f => {
-        html += `<div style="background:#FEF2F2;border:1px solid #FECACA;border-left:4px solid #DC2626;border-radius:10px;padding:10px 13px;margin-bottom:8px;">
-          <strong style="color:#991B1B;font-size:13px;">Ítem ${f.num}: ${f.doc}</strong>
-          <p style="color:#6B7280;font-size:12px;margin-top:3px;">Documento obligatorio conforme al Manual de Contratación HSLV.</p></div>`;
-      });
-      html += '</div>';
-    }
-
-    if (otros.length > 0) {
-      html += `<div style="margin-bottom:14px;"><div style="font-weight:800;color:#D97706;margin-bottom:8px;font-size:13px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Documentos Pendientes</div>`;
-      otros.slice(0,5).forEach(f => {
-        html += `<div style="background:#FFFBEB;border:1px solid #FDE68A;border-left:4px solid #D97706;border-radius:10px;padding:10px 13px;margin-bottom:8px;">
-          <strong style="color:#92400E;font-size:13px;">Ítem ${f.num}: ${f.doc}</strong>
-          <p style="color:#6B7280;font-size:12px;margin-top:3px;">Pendiente de carga y verificación.</p></div>`;
-      });
-      if (otros.length > 5) html += `<p style="color:#6B7280;font-size:12px;margin-top:4px;">...y ${otros.length - 5} ítems más pendientes.</p>`;
-      html += '</div>';
-    }
-
-    if (faltantes.length === 0) {
-      html += `<div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:12px;padding:16px;text-align:center;">
-        <div style="margin-bottom:6px;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-        <strong style="color:#166534;font-size:15px;">¡Expediente Completo!</strong>
-        <p style="color:#374151;font-size:13px;margin-top:6px;">Todos los documentos han sido cargados y verificados. El expediente está listo para continuar.</p>
-      </div>`;
-    }
-
-    html += `<div style="margin-top:14px;color:#9CA3AF;font-size:11px;text-align:right;">JURISKILLS IA · Análisis generado: ${new Date().toLocaleString('es-CO')}</div>`;
-    resultado.innerHTML = html;
-  }, 1200);
-}
-
-// ── Guardar observación ──
-function guardarObservacion(mod) {
-  const id = document.getElementById(mod + '-obs-id')?.value || '';
-  const resp = document.getElementById(mod + '-obs-resp')?.value || '';
-  const fecha = document.getElementById(mod + '-obs-fecha')?.value || '';
-  const estado = document.getElementById(mod + '-obs-estado')?.value || '';
-  const general = document.getElementById(mod + '-obs-general')?.value || '';
-  const alertas = document.getElementById(mod + '-obs-alertas')?.value || '';
-  const acciones = document.getElementById(mod + '-obs-acciones')?.value || '';
-
-  if (!general.trim()) { alert('Por favor ingrese al menos una observación general.'); return; }
-
-  const entry = { id, resp, fecha, estado, general, alertas, acciones, ts: new Date().toLocaleString('es-CO') };
-  obsData[mod].push(entry);
-
-  // Render historial
-  const hist = document.getElementById(mod + '-obs-historial');
-  const lista = document.getElementById(mod + '-obs-lista');
-  if (hist) hist.style.display = 'block';
-  if (lista) {
-    const colors = { cd1p: '#0B7A43', cd3p: '#123C7B', conv: '#1D4ED8', subasta: '#7C3AED' };
-    const c = colors[mod] || '#0B7A43';
-    lista.innerHTML = '';
-    obsData[mod].slice().reverse().forEach((e, i) => {
-      lista.innerHTML += `
-        <div style="background:#FAFAFA;border:1px solid #E5E7EB;border-left:4px solid ${c};border-radius:12px;padding:14px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-            <strong style="color:${c};font-size:14px;">${e.id || 'Sin N°'} — ${e.estado}</strong>
-            <span style="font-size:11px;color:#9CA3AF;">${e.ts}</span>
-          </div>
-          ${e.resp ? '<p style="font-size:12px;color:#6B7280;margin-bottom:6px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Responsable: '+e.resp+'</p>' : ''}
-          ${e.general ? '<p style="font-size:13px;color:#374151;margin-bottom:6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>'+e.general+'</p>' : ''}
-          ${e.alertas ? '<p style="font-size:12px;color:#D97706;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Alerta: '+e.alertas+'</p>' : ''}
-          ${e.acciones ? '<p style="font-size:12px;color:#0B7A43;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Acción: '+e.acciones+'</p>' : ''}
-        </div>`;
-    });
-  }
-  alert('✅ Observación guardada correctamente.');
-}
-
-// ── Exportar observación (impresión) ──
-function exportarObservacion(mod) {
-  const modNames = { cd1p: 'Contratación Directa 1 Propuesta', cd3p: 'Contratación Directa 3 Propuestas', conv: 'Convocatoria Pública', subasta: 'Subasta Inversa' };
-  const id = document.getElementById(mod + '-obs-id')?.value || '';
-  const resp = document.getElementById(mod + '-obs-resp')?.value || '';
-  const fecha = document.getElementById(mod + '-obs-fecha')?.value || '';
-  const estado = document.getElementById(mod + '-obs-estado')?.value || '';
-  const general = document.getElementById(mod + '-obs-general')?.value || '';
-  const alertas = document.getElementById(mod + '-obs-alertas')?.value || '';
-  const acciones = document.getElementById(mod + '-obs-acciones')?.value || '';
-  const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html><head><title>Observación - ${modNames[mod]}</title>
-    <style>body{font-family:'Segoe UI',sans-serif;padding:40px;color:#1F2937;max-width:800px;margin:auto;}
-    h1{color:#046A38;border-bottom:3px solid #046A38;padding-bottom:10px;}
-    .field{margin-bottom:14px;} .label{font-weight:700;color:#123C7B;font-size:12px;text-transform:uppercase;margin-bottom:4px;}
-    .value{background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:10px 13px;font-size:14px;}
-    .footer{margin-top:40px;border-top:1px solid #E5E7EB;padding-top:14px;color:#9CA3AF;font-size:11px;}</style>
-</head>
-    <body><h1>Hospital Susana López de Valencia E.S.E.</h1>
-    <h2 style="color:#123C7B;">${modNames[mod]} — Registro de Observación</h2>
-    <div class="field"><div class="label">N° de Proceso</div><div class="value">${id||'—'}</div></div>
-    <div class="field"><div class="label">Responsable</div><div class="value">${resp||'—'}</div></div>
-    <div class="field"><div class="label">Fecha</div><div class="value">${fecha||'—'}</div></div>
-    <div class="field"><div class="label">Estado</div><div class="value">${estado||'—'}</div></div>
-    <div class="field"><div class="label">Observaciones Generales</div><div class="value">${general||'—'}</div></div>
-    <div class="field"><div class="label">Alertas Jurídicas</div><div class="value">${alertas||'—'}</div></div>
-    <div class="field"><div class="label">Acciones a Realizar</div><div class="value">${acciones||'—'}</div></div>
-    <div class="footer">Generado por Aplicativo HSLV · ${new Date().toLocaleString('es-CO')} · JURISKILLS IA</div>
-    <script>window.print();<\/script>
-    </body></html>`);
-}
-
 window.onclick = function(event){
     const modals = document.querySelectorAll('.modal');
 
@@ -1441,276 +1151,6 @@ window.onclick = function(event){
 
     actualizarVisibilidadBoton();
 })();
-
-let registrosPAA = JSON.parse(localStorage.getItem('registrosPAA')) || [];
-
-function guardarPAA(){
-
-    const fecha = document.getElementById('fechaPAA').value;
-    const archivo = document.getElementById('archivoPAA').files[0];
-    const unspsc = document.getElementById('unspscPAA').value;
-
-    if(fecha === '' || !archivo || unspsc === ''){
-        alert('Debe diligenciar todos los campos y cargar el PDF');
-        return;
-    }
-
-    const nuevoPAA = {
-        id: Date.now(),
-        
-        fecha,
-        archivo: archivo.name,
-        unspsc,
-        estado:'Almacenado'
-    };
-
-    registrosPAA.push(nuevoPAA);
-
-    localStorage.setItem('registrosPAA', JSON.stringify(registrosPAA));
-
-    renderTablaPAA();
-
-    alert('PAA registrado correctamente');
-
-    closeModal('modalPAA');
-}
-
-function renderTablaPAA(){
-
-    registrosPAA = JSON.parse(localStorage.getItem('registrosPAA')) || [];
-
-    const tbody = document.getElementById('tablaPAA');
-
-    if(!tbody){
-        return;
-    }
-
-    tbody.innerHTML='';
-
-    if(registrosPAA.length === 0){
-
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align:center;">
-                    No existen registros PAA almacenados
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    registrosPAA.forEach((item,index)=>{
-
-        tbody.innerHTML += `
-            <tr>
-                <td>${index+1}</td>
-                
-                <td>${item.fecha}</td>
-                <td>${item.archivo}</td>
-                <td>${item.unspsc}</td>
-                <td><span class="status success">${item.estado}</span></td>
-            </tr>
-        `;
-
-    });
-}
-
-function visualizarPAA(){
-
-    renderTablaPAA();
-
-    const tabla = document.getElementById('tablaPAA');
-
-    if(tabla){
-        tabla.scrollIntoView({
-            behavior:'smooth'
-        });
-    }
-}
-
-let archivosCDP = JSON.parse(localStorage.getItem('archivosCDP')) || [];
-
-function guardarCDPArchivo(){
-
-    const modal = document.getElementById('modalCDP');
-
-    const numero = modal.querySelector('input[type="text"]').value;
-    const fecha = modal.querySelector('input[type="date"]').value;
-    const archivo = modal.querySelector('input[type="file"]').files[0];
-
-    if(numero === '' || fecha === '' || !archivo){
-        alert('Debe diligenciar todos los campos y cargar el PDF');
-        return;
-    }
-
-    const nuevoCDP = {
-        id: Date.now(),
-        
-        fecha,
-        archivo: archivo.name,
-        estado:'Almacenado'
-    };
-
-    archivosCDP.push(nuevoCDP);
-
-    localStorage.setItem('archivosCDP', JSON.stringify(archivosCDP));
-
-    renderTablaArchivosCDP();
-    renderTablaPAA();
-
-    alert('Certificado CDP cargado correctamente');
-
-    closeModal('modalCDP');
-}
-
-function renderTablaArchivosCDP(){
-
-    archivosCDP = JSON.parse(localStorage.getItem('archivosCDP')) || [];
-
-    const tbody = document.getElementById('tablaArchivosCDP');
-
-    if(!tbody){
-        return;
-    }
-
-    tbody.innerHTML='';
-
-    if(archivosCDP.length === 0){
-
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" style="text-align:center;">
-                    No existen CDP almacenados
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    archivosCDP.forEach((item,index)=>{
-
-        tbody.innerHTML += `
-            <tr>
-                <td>${index+1}</td>
-                
-                <td>${item.fecha}</td>
-                <td>${item.archivo}</td>
-                <td><span class="status success">${item.estado}</span></td>
-            </tr>
-        `;
-
-    });
-}
-
-function visualizarCDPAlmacenados(){
-
-    renderTablaArchivosCDP();
-    renderTablaPAA();
-
-    showSection('solicitudescdp');
-
-    const tabla = document.getElementById('tablaArchivosCDP');
-
-    if(tabla){
-        tabla.scrollIntoView({
-            behavior:'smooth'
-        });
-    }
-}
-
-let registrosCDP = JSON.parse(localStorage.getItem('solicitudesCDP')) || [];
-
-function guardarCDP(){
-
-    const area = document.querySelector('#modalSolicitudCDP select').value;
-    const fecha = document.querySelector('#modalSolicitudCDP input[type="date"]').value;
-    const valor = document.querySelector('#modalSolicitudCDP input[type="number"]').value;
-    const objeto = document.querySelector('#modalSolicitudCDP input[type="text"]').value;
-
-    if(area === 'Seleccione' || fecha === '' || valor === '' || objeto === ''){
-        alert('Debe diligenciar todos los campos obligatorios');
-        return;
-    }
-
-    const nuevoRegistro = {
-        id: Date.now(),
-        area,
-        fecha,
-        valor,
-        objeto,
-        estado:'Almacenado'
-    };
-
-    registrosCDP.push(nuevoRegistro);
-
-    localStorage.setItem('solicitudesCDP', JSON.stringify(registrosCDP));
-
-    renderTablaCDP();
-
-    document.querySelector('#modalSolicitudCDP select').value='Seleccione';
-    document.querySelector('#modalSolicitudCDP input[type="date"]').value='';
-    document.querySelector('#modalSolicitudCDP input[type="number"]').value='';
-    document.querySelector('#modalSolicitudCDP input[type="text"]').value='';
-    document.querySelector('#modalSolicitudCDP textarea').value='';
-
-    alert('Solicitud CDP registrada y almacenada correctamente');
-
-    closeModal('modalSolicitudCDP');
-
-    showSection('solicitudescdp');
-}
-
-function renderTablaCDP(){
-
-    registrosCDP = JSON.parse(localStorage.getItem('solicitudesCDP')) || [];
-
-    const tbody = document.getElementById('tablaCDPBody');
-
-    if(!tbody){
-        return;
-    }
-
-    tbody.innerHTML = '';
-
-    if(registrosCDP.length === 0){
-
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align:center;">
-                    No existen solicitudes CDP almacenadas
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    registrosCDP.forEach((registro,index)=>{
-
-        tbody.innerHTML += `
-            <tr>
-                <td>${index+1}</td>
-                <td>${registro.area}</td>
-                <td>${registro.fecha}</td>
-                <td>$ ${registro.valor}</td>
-                <td>${registro.objeto}</td>
-                <td><span class="status success">${registro.estado}</span></td>
-            </tr>
-        `;
-
-    });
-}
-
-function mostrarNombreArchivo(input, elementoId){
-
-    const nombre = input.files.length > 0
-        ? 'Archivo cargado: ' + input.files[0].name
-        : 'Sin archivo cargado';
-
-    document.getElementById(elementoId).innerText = nombre;
-}
 
 // ═══════════════════════════════════════════════════════════
 //  BASE DE DATOS EN MEMORIA — PROCESOS CONTRATACIÓN DIRECTA 1P
@@ -1783,6 +1223,15 @@ function _fmt_actualizarValorLetras(input) {
     destino.textContent = (raw > 0) ? numeroALetras(raw) : '';
 }
 
+// Las dos de arriba iban juntas en un mismo oninput= del HTML, separadas
+// por punto y coma. Un data-accion nombra UNA acción, así que la pareja
+// pasa a ser una función (Sprint 4). El orden importa: formatear primero
+// deja el valor limpio que luego se convierte a letras.
+function _fmt_valorEditado(input) {
+    _fmt_formatearValorInput(input);
+    _fmt_actualizarValorLetras(input);
+}
+
 function _cd1pMostrarCamposPostVerificacion() {
     ['fg_area', 'fg_responsable', 'fg_valor', 'cd1p-post-verificacion'].forEach(function(id) {
         var el = document.getElementById(id);
@@ -1837,7 +1286,7 @@ async function verificarObjetoContractual() {
         var pct    = Math.round((resultado.coincidencia.similitud || 0) * 100);
 
         var msg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Ya existe un objeto contractual muy similar (' + pct + '% de coincidencia), ' +
-                  'registrado el ' + fecha + ' con el código <strong>' + resultado.coincidencia.codigo + '</strong>.';
+                  'registrado el ' + fecha + ' con el código <strong>' + escaparHTML(resultado.coincidencia.codigo) + '</strong>.';
 
         _cd1pObjetoVerificado = false;
         _cd1pForzarDuplicado  = false;
@@ -1856,7 +1305,7 @@ async function verificarObjetoContractual() {
                 'font-weight:600;cursor:pointer;font-size:12.5px;color:#7F1D1D;">' +
                 '<input type="checkbox" id="mp_forzar_duplicado" ' +
                 'style="width:auto;flex-shrink:0;" ' +
-                'onchange="_cd1pToggleForzarDuplicado(this)"> ' +
+                'data-accion="_cd1pToggleForzarDuplicado" data-evento="change" data-args=\'["@el"]\'> ' +
                 '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Forzar creación de todas formas</label>' +
                 '</div>';
         } else {
@@ -1947,10 +1396,18 @@ async function guardarProceso() {
     }
 
     // ── Deshabilitar botón mientras guarda ────────────
-    var btnGuardar = document.querySelector(
-        'button[onclick="guardarProceso()"], ' +
-        'button[onclick="guardarProceso()"]'
-    );
+    // Buscaba su propio botón por button[onclick="guardarProceso()"]. Al
+    // migrar contratacion.html ese selector pasaría a devolver null, y como
+    // el resultado va dentro de un `if (btnGuardar)`, la protección contra
+    // el doble clic habría desaparecido SIN ningún error — exactamente lo
+    // que pasó en guardarProcesoHistorial() con las otras tres páginas
+    // (Auditoria_360_Y_Blindaje 6.11). Este era el último que quedaba.
+    // `this` es la vía correcta (el delegador lo pone en el elemento
+    // pulsado); el selector queda de respaldo para llamadas que no vengan
+    // de un clic.
+    var btnGuardar = (this instanceof HTMLElement)
+        ? this
+        : document.querySelector('button[data-accion="guardarProceso"]');
     if (btnGuardar) {
         btnGuardar.disabled    = true;
         btnGuardar.textContent = 'Guardando...';
@@ -2072,7 +1529,7 @@ async function guardarProceso() {
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';
-    toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Proceso <strong>' + resultado.codigo +
+    toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Proceso <strong>' + escaparHTML(resultado.codigo) +
                       '</strong> guardado correctamente';
     document.body.appendChild(toast);
     setTimeout(function(){ toast.remove(); }, 4000);
@@ -2268,7 +1725,7 @@ function renderizarBDProcesos() {
         const iconAlert = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
         const estadoLbl = pct >= 80 ? iconCheck + 'Completo' : pct >= 50 ? iconWarn + 'Parcial' : iconAlert + 'Incompleto';
 
-        return `<tr style="transition:background .15s;" onmouseover="this.style.background='#f8faff'" onmouseout="this.style.background=''">
+        return `<tr class="fila-proceso-reciente">
           <td style="font-weight:700;color:#123C7B;white-space:nowrap;">${p.id}</td>
           <td style="max-width:220px;">
             <div style="font-weight:600;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;" title="${p.objeto}">${p.objeto}</div>
@@ -2295,13 +1752,13 @@ function renderizarBDProcesos() {
             </span>
           </td>
           <td>
-            <button onclick="verDetalleProceso('${p.id}')"
+            <button data-accion="verDetalleProceso" ${_accionArgs([p.id])}
               style="background:#EFF6FF;color:#123C7B;border:1px solid #BFDBFE;
                      border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;
                      cursor:pointer;white-space:nowrap;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Ver
             </button>
-            <button onclick="eliminarProceso('${p.id}')"
+            <button data-accion="eliminarProceso" ${_accionArgs([p.id])}
               style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;
                      border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;
                      cursor:pointer;margin-left:4px;">
@@ -2391,31 +1848,6 @@ function publicarSecop(){
     alert('Proceso publicado en SECOP II correctamente');
 }
 
-function abrirSolicitudesCDP(){
-
-    renderTablaCDP();
-
-    showSection('solicitudescdp');
-
-    const seccion = document.getElementById('solicitudescdp');
-
-    if(seccion){
-        seccion.scrollIntoView({
-            behavior:'smooth'
-        });
-    }
-}
-
-function showSection(sectionId){
-    const sections = document.querySelectorAll('.section-content');
-
-    sections.forEach(section => {
-        section.style.display='none';
-    });
-
-    document.getElementById(sectionId).style.display='block';
-}
-
 // Sincronizar nombre de archivo entre modal y celda
 var _arch1 = document.getElementById('archivo_1');
 if (_arch1) {
@@ -2480,30 +1912,7 @@ function scdpAutoLetras() {
     }
 }
 
-function d3p_mostrarArchivo(input, labelId, miniLabelId) {
-  if (!input.files || !input.files[0]) return;
-  var nombre = input.files[0].name;
-  var el = document.getElementById(labelId);
-  if (el) el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><strong>' + escaparHTML(nombre) + '</strong>';
-  if (miniLabelId) {
-    var ml = document.getElementById(miniLabelId);
-    if (ml) ml.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(nombre);
-  }
-}
-
-// Sync archivo inputs con labels del mini-modal
 document.addEventListener('DOMContentLoaded', function() {
-  var a1 = document.getElementById('d3p_arch_1');
-  if (a1) a1.addEventListener('change', function() {
-    var lbl = document.getElementById('d3p_arch_1_lbl');
-    if (lbl && this.files[0]) lbl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(this.files[0].name);
-  });
-  var a2 = document.getElementById('d3p_arch_2');
-  if (a2) a2.addEventListener('change', function() {
-    var lbl = document.getElementById('d3p_arch_2_lbl');
-    if (lbl && this.files[0]) lbl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(this.files[0].name);
-  });
-
   // ===== FIX FORZADO: restaurar display correcto en tabla del modal 3P =====
   function fixTabla3P() {
     var modal = document.getElementById('modalDirecta3P');
@@ -2762,9 +2171,19 @@ async function guardarProcesoHistorial(tipo) {
 
     // ── Deshabilitar botón mientras guarda (mismo patrón que guardarProceso,
     //    evita que un doble clic cree el mismo proceso dos veces) ──────
-    var btnGuardar = document.querySelector(
-        'button[onclick="guardarProcesoHistorial(\'' + tipo + '\')"]'
-    );
+    // Sprint 4: este botón ya no lleva onclick=, así que el selector por ese
+    // atributo devolvía null en directa-3p, convocatoria y subasta — y la
+    // protección contra el doble clic desaparecía SIN ningún error visible.
+    // El delegador de js/acciones.js deja `this` = el elemento pulsado, igual
+    // que hacía el onclick=; el querySelector queda de respaldo para una
+    // llamada que no venga de un clic.
+    var btnGuardar = (this && this.nodeType === 1 &&
+                      this.getAttribute('data-accion') === 'guardarProcesoHistorial')
+        ? this
+        : document.querySelector(
+            'button[data-accion="guardarProcesoHistorial"]' +
+            '[data-args=\'["' + tipo + '"]\']'
+        );
     if (btnGuardar) {
         btnGuardar.disabled    = true;
         btnGuardar.textContent = 'Guardando...';
@@ -2897,7 +2316,7 @@ async function guardarProcesoHistorial(tipo) {
         'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
         'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
         'box-shadow:0 8px 24px rgba(0,0,0,.3);';
-    toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Proceso <strong>' + resultado.codigo +
+    toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Proceso <strong>' + escaparHTML(resultado.codigo) +
                       '</strong> guardado correctamente';
     document.body.appendChild(toast);
     setTimeout(function(){ toast.remove(); }, 4000);
@@ -3052,12 +2471,72 @@ function hist_actualizarDatalistResponsables() {
   }).join('');
 }
 
+// ── Acciones de la barra de filtros y del panel de detalle ──
+// Existen porque historial.html las llamaba con onclick= escribiendo dos
+// sentencias dentro del atributo. Con data-accion el HTML solo nombra la
+// acción, así que la lógica tiene que estar aquí (Sprint 4).
+// ── Inicialización de la tabla de historial.html (Sprint 4) ──
+// Venía del único <script> en línea del proyecto, al final de historial.html.
+// Se trajo tal cual —misma pausa de 300 ms y las mismas guardas typeof— para
+// no cambiar el comportamiento; lo único que cambia es dónde vive.
+//
+// El data-pagina del <body> es necesario: js/script.js se carga en las 9
+// páginas, e index.html tiene los MISMOS ids (#hist-tabla-body, #hist-filtro-*)
+// dentro de su modal "Historial de Procesos", así que buscar el elemento no
+// distingue una página de la otra. En index.html la tabla la dibuja
+// dash_abrirHistorial() al abrir el modal, no al cargar.
+document.addEventListener('DOMContentLoaded', function () {
+    if (document.body.getAttribute('data-pagina') !== 'historial') return;
+
+    // Pequeña pausa para que script.js termine de cargar HIST_BD
+    setTimeout(function () {
+        if (typeof hist_renderTabla === 'function') {
+            hist_renderTabla();
+        }
+        // Redibujar de nuevo cuando lleguen los datos reales de Supabase
+        // (evita que quede desactualizada si la tabla se dibujó antes de que
+        // terminara de cargar)
+        if (window._dbListo && typeof window._dbListo.then === 'function') {
+            window._dbListo.then(function () {
+                if (typeof hist_renderTabla === 'function') hist_renderTabla();
+            });
+        }
+    }, 300);
+});
+
+function hist_limpiarFiltroResponsable() {
+  var campo = document.getElementById('hist-filtro-responsable');
+  if (campo) campo.value = '';
+  hist_renderTabla();
+}
+
+function hist_cerrarDetalle() {
+  var panel = document.getElementById('hist-detalle-panel');
+  if (panel) panel.classList.remove('open');
+}
+
 // ── Escape de HTML para texto escrito por usuarios ──
 // Convierte < > & " ' en sus versiones inofensivas antes de inyectar el
 // texto con innerHTML. Sin esto, un "Objeto Contractual" que contenga
 // código HTML/JavaScript se ejecutaría en el navegador de quien abra el
 // historial (ataque conocido como XSS). Misma idea que ya usan
 // js/notificaciones.js y js/proceso-detalle.js.
+// ── Sprint 4: emitir data-args dentro de markup generado con innerHTML ──
+// Los argumentos viajan como JSON en un atributo entre comillas SIMPLES, así
+// que hay que escapar lo que rompería ese atributo: la comilla simple y el &.
+// Las comillas dobles del JSON no molestan ahí.
+//
+// Sustituye a los atributos de evento con el valor interpolado a mano que
+// había antes, y de paso cierra un
+// fallo que ya existía: un id, prefijo o clave con apóstrofo rompía aquel
+// atributo (por eso había .replace(/'/g,"\\'") a mano en dos sitios, que ya no
+// hacen falta). Gemelo de _pdArgs() en js/proceso-detalle.js.
+function _accionArgs(lista) {
+    return "data-args='" +
+        JSON.stringify(lista).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;') +
+        "'";
+}
+
 function escaparHTML(texto) {
     return String(texto == null ? '' : texto)
         .replace(/&/g, '&amp;')
@@ -3122,21 +2601,20 @@ function hist_renderTabla() {
               '<div style="display:flex;gap:6px;align-items:center;">' +
                   '<select id="resp_select_' + p.id + '" ' +
                       'data-guardado="' + (p.responsable_asignado || '') + '" ' +
-                      'onchange="_hist_marcarCambioResponsable(\'' + p.id + '\')" ' +
+                      'data-accion="_hist_marcarCambioResponsable" data-evento="change" ' + _accionArgs([p.id]) + ' ' +
                       'style="flex:1;padding:6px 9px;border-radius:8px;' +
                            'border:1.5px solid #BFDBFE;font-size:11px;' +
                            'color:#123C7B;outline:none;background:#F8FAFF;">' +
                     opcionesHTML +
                 '</select>' +
                 '<button id="resp_btn_' + p.id + '" ' +
-                    'onclick="hist_asignarResponsable(\'' + p.id + '\',\'' +
-                             (p.supabase_id || '') + '\')" ' +
+                    _accionArgs([p.id, p.supabase_id || '']) + ' ' +
+                    'data-accion="hist_asignarResponsable" ' +
                     'title="Guardar responsable" ' +
-                    'style="background:#123C7B;color:white;border:none;' +
+                    'class="btn-asignar-resp" style="color:white;border:none;' +
                            'border-radius:7px;padding:6px 10px;font-size:13px;' +
                            'cursor:pointer;flex-shrink:0;transition:background .2s;" ' +
-                    'onmouseover="this.style.background=\'#0B7A43\'" ' +
-                    'onmouseout="this.style.background=\'#123C7B\'"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg></button>' +
+                    '><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg></button>' +
             '</div>' +
         '</div>';
 
@@ -3169,9 +2647,9 @@ function hist_renderTabla() {
       '<td style="padding:12px 14px;white-space:nowrap;color:#6B7280;font-size:12px;">' + p.fecha + '<br><span style="font-size:11px;">' + p.hora + '</span></td>' +
       '<td style="padding:12px 14px;text-align:center;">' +
         '<div style="display:flex;gap:6px;justify-content:center;">' +
-          '<button class="hist-btn-ver" onclick="hist_verDetalle(\'' + p.id + '\')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-2px;margin-right:3px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>Ver</button>' +
+          '<button class="hist-btn-ver" data-accion="hist_verDetalle" ' + _accionArgs([p.id]) + '><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;vertical-align:-2px;margin-right:3px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>Ver</button>' +
           (_perfilCache && _perfilCache.rol === 'admin'
-            ? '<button class="hist-btn-del" onclick="hist_eliminar(\'' + p.id + '\')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
+            ? '<button class="hist-btn-del" data-accion="hist_eliminar" ' + _accionArgs([p.id]) + '><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
             : '') +
         '</div>' +
       '</td>' +
@@ -3286,7 +2764,7 @@ function hist_verDetalle(id) {
     '</div>' +
     checklistHTML +
     '<div style="text-align:right;margin-top:20px;">' +
-      '<button onclick="document.getElementById(\'hist-detalle-panel\').classList.remove(\'open\')" style="background:#E5E7EB;color:#374151;border:none;padding:10px 22px;border-radius:10px;font-weight:700;cursor:pointer;">Cerrar</button>' +
+      '<button data-accion="hist_cerrarDetalle" style="background:#E5E7EB;color:#374151;border:none;padding:10px 22px;border-radius:10px;font-weight:700;cursor:pointer;">Cerrar</button>' +
     '</div>';
 
   document.getElementById('hist-detalle-panel').classList.add('open');
@@ -3318,7 +2796,7 @@ async function hist_eliminar(id) {
       'background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;' +
       'padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;' +
       'box-shadow:0 8px 24px rgba(0,0,0,.3);';
-  toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Proceso <strong>' + id + '</strong> eliminado correctamente';
+  toast.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Proceso <strong>' + escaparHTML(id) + '</strong> eliminado correctamente';
   document.body.appendChild(toast);
   setTimeout(function(){ toast.remove(); }, 4000);
 }
@@ -3405,9 +2883,45 @@ async function hist_asignarResponsable(procesoId, supabaseId) {
     hist_renderTabla();
 }
 
-function hist_exportarExcel() {
+// ── Carga perezosa de SheetJS (PERF-01) ──
+// SheetJS pesa 951 KB y antes se cargaba en el <head> de index.html y
+// historial.html: bloqueaba el pintado de la página en cada visita, para una
+// función que solo se usa al pulsar "Exportar Excel". Ahora se descarga la
+// primera vez que se exporta y se queda en caché del navegador.
+//
+// La promesa se guarda para que dos clics seguidos no lancen dos descargas.
+// Si falla, se descarta para que el siguiente intento vuelva a probar.
+var _sheetJsPromesa = null;
+function _cargarSheetJS() {
+    if (typeof XLSX !== 'undefined') return Promise.resolve();
+    if (_sheetJsPromesa) return _sheetJsPromesa;
+
+    _sheetJsPromesa = new Promise(function (resolver, rechazar) {
+        var s = document.createElement('script');
+        // Ruta absoluta: /proceso/:codigo tiene dos segmentos y una ruta
+        // relativa se resolvería contra /proceso/.
+        s.src = '/js/vendor/xlsx.full.min.js';
+        s.onload  = function () { resolver(); };
+        s.onerror = function () {
+            _sheetJsPromesa = null;
+            rechazar(new Error('no se pudo cargar /js/vendor/xlsx.full.min.js'));
+        };
+        document.head.appendChild(s);
+    });
+    return _sheetJsPromesa;
+}
+
+async function hist_exportarExcel() {
   var lista = hist_filtrarProcesos();
   if (!lista.length) { alert('No hay procesos para exportar.'); return; }
+
+  try {
+    await _cargarSheetJS();
+  } catch (e) {
+    console.error('Error cargando SheetJS:', e);
+    alert('⚠️ No se pudo cargar el módulo de Excel. Revisa tu conexión e inténtalo de nuevo.');
+    return;
+  }
   if (typeof XLSX === 'undefined') { alert('⚠️ No se pudo cargar el módulo de Excel.'); return; }
 
   var encabezados = [
@@ -3483,15 +2997,6 @@ botones.forEach(btn => {
 
 });
 
-window.onload = function(){
-    renderTablaCDP();
-    renderTablaArchivosCDP();
-    renderTablaPAA();
-
-    console.log('Solicitudes CDP cargadas correctamente desde LocalStorage');
-}
-
-
 document.querySelectorAll('.modal').forEach(modal=>{
     modal.addEventListener('click',function(e){
         if(e.target === this){
@@ -3547,7 +3052,7 @@ document.addEventListener('DOMContentLoaded', function() {
             '<div class="modal-content" style="max-width:640px;max-height:85vh;overflow-y:auto;">' +
               '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
                 '<h2 id="juriskillsModalTitulo" style="margin:0;font-size:16px;color:#123C7B;display:flex;align-items:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg><span id="juriskillsModalTituloTexto">Análisis JURISKILLS</span></h2>' +
-                '<button type="button" onclick="juriskillsCerrarModal()" style="border:none;background:none;font-size:22px;line-height:1;cursor:pointer;color:#6B7280;">&times;</button>' +
+                '<button type="button" data-accion="juriskillsCerrarModal" style="border:none;background:none;font-size:22px;line-height:1;cursor:pointer;color:#6B7280;">&times;</button>' +
               '</div>' +
               '<div id="juriskillsModalContenido"></div>' +
             '</div>';
@@ -3702,7 +3207,7 @@ async function mostrarArchivo(input, elementoId) {
     // ── Marcar el checkbox automáticamente al cargar el archivo ──
     cd1p_marcarCheckboxPorItem(sufijo);
 
-    if (divNombre) divNombre.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' + `<strong>${archivo.name}</strong>`;
+    if (divNombre) divNombre.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' + '<strong>' + escaparHTML(archivo.name) + '</strong>';
 
     const modo = _modoAnalisisPorSufijo(sufijo);
     if (modo === 'ninguno') {
@@ -3805,7 +3310,7 @@ function _histU_asegurarContenedor(prefijo, num, inputEl) {
     bloque.className = 'historial-universal-inyectado';
     bloque.style.cssText = 'margin-top:8px;';
     bloque.innerHTML =
-        '<button onclick="histU_toggle(\'' + prefijo + '\',' + num + ')" ' +
+        '<button data-accion="histU_toggle" ' + _accionArgs([prefijo, num]) + ' ' +
             'style="background:none;border:1px solid #CBD5E1;border-radius:8px;' +
             'padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;' +
             'display:flex;align-items:center;gap:5px;">' +
@@ -3894,10 +3399,10 @@ function histU_render(prefijo, num) {
         div.innerHTML =
             '<div class="hist-num ' + (esPrimera ? 'hist-num-v1' : 'hist-num-vN') + '">' + e.version + '</div>' +
             '<div class="hist-info">' +
-                '<div class="hist-nombre"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + e.nombre +
+                '<div class="hist-nombre"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escaparHTML(e.nombre) +
                     (esPrimera ? '<span class="hist-tag-v1">v1 · Inicial</span>' : '<span class="hist-tag-vN">v' + e.version + '</span>') +
                     (idx === 0 ? '<span class="hist-tag-last"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Actual</span>' : '') +
-                    ' <button onclick="histU_quitarVersion(\'' + prefijo + '\',' + num + ',' + e.id + ')" ' +
+                    ' <button data-accion="histU_quitarVersion" ' + _accionArgs([prefijo, num, e.id]) + ' ' +
                         'title="Quitar esta versión" style="background:none;border:1px solid #DC2626;color:#DC2626;' +
                         'border-radius:6px;padding:1px 7px;font-size:10.5px;cursor:pointer;font-weight:600;margin-left:6px;display:inline-flex;align-items:center;gap:2px;">' +
                         '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
@@ -3963,7 +3468,7 @@ function _histU_quitarEntradaPorIndice(prefijo, num, idx) {
             var dt = new DataTransfer();
             dt.items.add(anterior.archivo);
             entrada.origenInput.files = dt.files;
-            if (divNombre) divNombre.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>' + anterior.nombre + '</strong>';
+            if (divNombre) divNombre.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>' + escaparHTML(anterior.nombre) + '</strong>';
         } else {
             if (entrada.origenInput) entrada.origenInput.value = '';
             if (divNombre) divNombre.innerHTML = 'Sin archivo cargado';
@@ -4150,9 +3655,9 @@ function _renderTarjetasJuriskills(docs) {
         if (val.estado === 'pendiente') {
             const clavePend = (val.numItem ?? '') + '__' + (val.archivo?.name || '');
             html += `<div style="padding:8px 0;${idxDoc>0?'border-top:1px solid #F1F5F9;':''}">
-              <div style="margin-bottom:8px;font-size:12px;color:#0B7A43;font-weight:600;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>${val.archivo?.name || ''}</strong></div>
+              <div style="margin-bottom:8px;font-size:12px;color:#0B7A43;font-weight:600;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>${escaparHTML(val.archivo?.name || '')}</strong></div>
               <button class="btn" style="padding:10px 14px;font-size:13px;display:inline-flex;align-items:center;gap:5px;"
-                onclick="analizarDocumentoCD1P('${clavePend.replace(/'/g,"\\'")}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Analizar</button>
+                data-accion="analizarDocumentoCD1P" ${_accionArgs([clavePend])}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Analizar</button>
             </div>`;
             return;
         }
@@ -4188,7 +3693,7 @@ function _renderTarjetasJuriskills(docs) {
             </div>
             <span style="font-size:11px;font-weight:800;color:${pColor};white-space:nowrap;">${puntaje}%</span>
           </div>
-          <a href="javascript:void(0)" onclick="juriskillsAbrirModal('${clave.replace(/'/g,"\\'")}')" style="font-size:11px;font-weight:700;color:#2563EB;text-decoration:underline;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Ver análisis completo</a>
+          <a href="javascript:void(0)" data-accion="juriskillsAbrirModal" ${_accionArgs([clave])} style="font-size:11px;font-weight:700;color:#2563EB;text-decoration:underline;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Ver análisis completo</a>
         </div>`;
     });
 
@@ -4536,7 +4041,7 @@ async function mostrarArchivoSub(input, divId, checkId, todosIds) {
     const numItem = parseInt(checkId.replace('check_', ''));
     const sufijo  = divId.replace('nombreArchivo_', ''); // ej. '15a', '20b', '21a'
 
-    div.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>${archivo.name}</strong>`;
+    div.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>' + escaparHTML(archivo.name) + '</strong>';
 
     if (_SUBDOC_SIN_ANALISIS.indexOf(sufijo) !== -1) {
         _lexconRegistrar(numItem, archivo, _analisisSinRequerir(numItem), 'sin_analisis');
@@ -4840,7 +4345,7 @@ window.cd3p_cargar = function(input, num) {
   var tam = archivo.size < 1024*1024
     ? (archivo.size/1024).toFixed(1)+' KB'
     : (archivo.size/1024/1024).toFixed(2)+' MB';
-  if (nombre) nombre.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><strong style="color:#1F2937;">' + archivo.name + '</strong> <span style="font-size:10px;color:#6B7280;">(' + tam + ')</span>';
+  if (nombre) nombre.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><strong style="color:#1F2937;">' + escaparHTML(archivo.name) + '</strong> <span style="font-size:10px;color:#6B7280;">(' + tam + ')</span>';
   if (estado) { estado.innerHTML='<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Cargado'; estado.style.background='#DCFCE7'; estado.style.color='#166534'; }
   if (row)    { row.style.background='#F0FDF4'; row.style.borderColor='#86EFAC'; }
   cd3p_actualizarProgreso();
@@ -4899,7 +4404,7 @@ function d3p_renderHistorial(numItem) {
     div.innerHTML =
       '<div class="hist-num '+(isPrimera?'hist-num-v1':'hist-num-vN')+'">'+e.version+'</div>'+
       '<div class="hist-info">'+
-        '<div class="hist-nombre"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'+e.nombre+
+        '<div class="hist-nombre"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'+escaparHTML(e.nombre)+
           (isPrimera?'<span class="hist-tag-v1">v1 · Inicial</span>':'<span class="hist-tag-vN">v'+e.version+'</span>')+
           (idx===0?'<span class="hist-tag-last"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:1px;" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Actual</span>':'')+
         '</div>'+
@@ -4999,10 +4504,10 @@ function exportarBDProcesos() {
         return '<tr>' +
           '<td><strong>' + n + '</strong></td>' +
           '<td>' + doc + '</td>' +
-          '<td><input type="checkbox" id="hslv_d3p_chk_' + n + '" onchange="window.hslvUpdateD3PProgress && window.hslvUpdateD3PProgress()"></td>' +
+          '<td><input type="checkbox" id="hslv_d3p_chk_' + n + '" data-accion="hslvUpdateD3PProgress" data-evento="change"></td>' +
           '<td>' +
-            '<button type="button" class="btn" onclick="document.getElementById(\'hslv_d3p_arch_' + n + '\').click()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>' +
-            '<input type="file" id="hslv_d3p_arch_' + n + '" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="window.hslvD3PFallbackFile(this,' + n + ')">' +
+            '<button type="button" class="btn" data-accion="abrirSelectorArchivo" ' + _accionArgs(['hslv_d3p_arch_' + n]) + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>' +
+            '<input type="file" id="hslv_d3p_arch_' + n + '" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" data-accion="hslvD3PFallbackFile" data-evento="change" ' + _accionArgs(['@el', n]) + '>' +
             '<div id="hslv_d3p_nom_' + n + '" class="hslv-file-name">Sin archivo cargado</div>' +
           '</td>' +
         '</tr>';
@@ -5021,13 +4526,33 @@ function exportarBDProcesos() {
   window.hslvD3PFallbackFile = function(input, n){
     var lbl = document.getElementById('hslv_d3p_nom_' + n);
     if(lbl){
-      lbl.innerHTML = input.files && input.files[0] ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><strong style="color:#1F2937;">' + input.files[0].name + '</strong>' : 'Sin archivo cargado';
+      lbl.innerHTML = input.files && input.files[0] ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><strong style="color:#1F2937;">' + escaparHTML(input.files[0].name) + '</strong>' : 'Sin archivo cargado';
     }
     var chk = document.getElementById('hslv_d3p_chk_' + n);
     if(chk) chk.checked = !!(input.files && input.files[0]);
     hslvUpdateD3PProgress();
   };
   window.hslvUpdateD3PProgress = hslvUpdateD3PProgress;
+
+  // ── Sprint 4 ──
+  // Las dos las llamaba el markup que esta misma función genera con
+  // innerHTML. El registro va acá dentro, no en el bloque del final del
+  // archivo, porque acá se pueden pasar las funciones REALES por referencia:
+  // hslvUpdateD3PProgress es local de este IIFE y a hslvD3PFallbackFile solo
+  // se llegaría desde fuera por window.<nombre>, que es el acceso por nombre
+  // que el sprint quiere eliminar. Mismo criterio que el IIFE de
+  // "Seguimiento de Conocimiento Jurídico".
+  //
+  // El on*= viejo era `window.hslvUpdateD3PProgress && window.hslvUpdate…()`:
+  // la guarda existía porque el atributo se evaluaba en un scope donde la
+  // función podía no estar todavía. Aquí ya no hace falta — se registra la
+  // referencia, que existe con seguridad en este punto.
+  if (typeof registrarAcciones === 'function') {
+    registrarAcciones({
+      hslvUpdateD3PProgress: hslvUpdateD3PProgress,
+      hslvD3PFallbackFile:   window.hslvD3PFallbackFile
+    });
+  }
 
   function hslvFixD3PVisual(){
     var modal = document.getElementById('modalDirecta3P');
@@ -5135,7 +4660,7 @@ function _mostrarToast(nombre) {
   var n = document.getElementById('mod-redirect-notice');
   if (!n) return;
   n.style.display = 'flex';
-  n.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;" aria-hidden="true"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>&nbsp;<span>Cambiando a <strong>' + nombre + '</strong></span>';
+  n.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;" aria-hidden="true"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>&nbsp;<span>Cambiando a <strong>' + escaparHTML(nombre) + '</strong></span>';
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(function(){ n.style.display = 'none'; }, 2800);
 }
@@ -5178,7 +4703,7 @@ function _mostrarToast(nombre) {
         <div class="ia-section-title">Observaciones adicionales</div>
         <textarea class="ia-observaciones" id="d3p_iaObservaciones"
           placeholder="Escriba observaciones o justificaciones adicionales…"
-          oninput="document.getElementById('d3p_iaCharCount').textContent=this.value.length+'/1000 caracteres'"
+          data-accion="contarCaracteres" data-evento="input" data-args='["@el","d3p_iaCharCount"]'
           maxlength="1000"></textarea>
         <div id="d3p_iaCharCount" style="margin-top:6px;color:#6B7280;font-size:12px;">0/1000 caracteres</div>
       </div>
@@ -5211,13 +4736,13 @@ function _mostrarToast(nombre) {
 function conv_mostrarArchivo(input, labelId) {
   if (!input.files || !input.files[0]) return;
   var el = document.getElementById(labelId);
-  if (el) el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong style="color:#1F2937;">' + input.files[0].name + '</strong>';
+  if (el) el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong style="color:#1F2937;">' + escaparHTML(input.files[0].name) + '</strong>';
   histU_registrar(input, labelId);
 }
 function sub_mostrarArchivo(input, labelId) {
   if (!input.files || !input.files[0]) return;
   var el = document.getElementById(labelId);
-  if (el) el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong style="color:#1F2937;">' + input.files[0].name + '</strong>';
+  if (el) el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong style="color:#1F2937;">' + escaparHTML(input.files[0].name) + '</strong>';
   histU_registrar(input, labelId);
 }
 
@@ -5293,13 +4818,16 @@ window.cambiarModalidadDesdeD3P = function(val) {
    Un <input type="radio"> nativo no se puede desmarcar por sí solo con un
    segundo clic — el navegador solo permite CAMBIAR a otro radio del mismo
    grupo, nunca dejar el grupo sin ninguno marcado. Estas dos funciones se
-   usan juntas en el HTML (onmousedown + onclick) para lograrlo:
-   1) onmousedown guarda si el radio YA estaba marcado antes de este clic
+   usan juntas para lograrlo:
+   1) el mousedown guarda si el radio YA estaba marcado antes de este clic
       (hay que capturarlo ANTES del clic, porque al momento del evento
       "click" el navegador ya lo dejó marcado de todas formas).
-   2) onclick revisa ese dato: si ya estaba marcado, lo desmarca a mano y
+   2) el click revisa ese dato: si ya estaba marcado, lo desmarca a mano y
       llama la función de turno (actualizarOpcionesSubasta, evaluarAplica13,
-      etc.) para que la pantalla refleje "ninguna opción elegida". */
+      etc.) para que la pantalla refleje "ninguna opción elegida".
+
+   Sprint 4: los dos eran onmousedown= + onclick= en contratacion.html. El
+   click pasó a data-accion; el mousedown NO, y está justo debajo. */
 function radioPermitirDeseleccion(input) {
     input.dataset.previoMarcado = input.checked ? '1' : '0';
 }
@@ -5309,6 +4837,45 @@ function radioClicConDeseleccion(input, callback) {
         input.checked = false;
     }
     if (typeof callback === 'function') callback(input);
+}
+
+/* ── El mousedown de esos radios: listener acotado, no data-accion ──
+   js/acciones.js solo delega click, input, change y submit. `mousedown` se
+   dejó fuera a propósito, por el mismo criterio que `keydown` (ver la nota
+   de Convenciones_De_Codigo): meterlo en el delegador costaría un closest()
+   en CADA mousedown de toda la app para algo que usa una sola página.
+   Esto sigue siendo compatible con el objetivo del sprint — no es un on*=
+   y no busca la función por su nombre.
+   Decidido por Nicolás el 2026-08-08 (ver Auditoria_360_Y_Blindaje 6.13).
+
+   Va sin DOMContentLoaded porque script.js se carga con defer: para cuando
+   se ejecuta, el documento ya está parseado. */
+(function () {
+    var radios = document.querySelectorAll(
+        'input[type="radio"][data-accion="radioSubDistribuidor"], ' +
+        'input[type="radio"][data-accion="radioAplica13"]'
+    );
+    for (var i = 0; i < radios.length; i++) {
+        radios[i].addEventListener('mousedown', function () {
+            radioPermitirDeseleccion(this);
+        });
+    }
+})();
+
+/* ── Una acción por callback ──
+   El onclick viejo pasaba una FUNCIÓN como argumento
+   (`radioClicConDeseleccion(this, evaluarAplica13)`), y data-args es JSON:
+   no puede llevar una referencia. Mandar el NOMBRE del callback y
+   resolverlo en tiempo de ejecución sería volver a la búsqueda por nombre
+   que el sprint elimina — así que cada pareja tiene su propia acción, que
+   pasa el callback por referencia. Mismo patrón que _fmt_valorEditado (6.9).
+   `this` es el radio pulsado, igual que el `this` del onclick de antes. */
+function radioSubDistribuidor() {
+    radioClicConDeseleccion(this, actualizarOpcionesSubasta);
+}
+
+function radioAplica13() {
+    radioClicConDeseleccion(this, evaluarAplica13);
 }
 
 /* ── Ítem 9 (Estudio de Mercado) de Contratación Directa 1 Propuesta ──
@@ -5349,37 +4916,6 @@ function actualizarOpcionesSubasta() {
     btnMercado.style.display = 'none';
     btnPropuestas.style.display = 'none';
     btnCarta.style.display = 'block';
-  }
-}
-
-/* ── Funciones para Estudio de Mercado con lógica condicional (Convocatoria) ── */
-function actualizarOpcionesConv() {
-  var opcion = document.querySelector('input[name="conv_distribuidor"]:checked');
-  var opcDocumentos = document.getElementById('conv_opciones_documentos');
-  var opcionNo = document.getElementById('conv_opcion_no_distribuidor');
-  var opcionSi = document.getElementById('conv_opcion_distribuidor');
-  
-  if (!opcion) {
-    opcDocumentos.style.display = 'none';
-    return;
-  }
-  
-  opcDocumentos.style.display = 'block';
-  
-  if (opcion.value === 'no') {
-    opcionNo.style.display = 'block';
-    opcionSi.style.display = 'none';
-    // Limpiar checksboxes del distribuidor
-    var cartaDist = document.getElementById('conv_carta_distribuidor');
-    if (cartaDist) cartaDist.checked = false;
-  } else {
-    opcionNo.style.display = 'none';
-    opcionSi.style.display = 'block';
-    // Limpiar checkboxes de no distribuidor
-    var mercado = document.getElementById('conv_mercado_file');
-    var propuestas = document.getElementById('conv_propuestas_file');
-    if (mercado) mercado.checked = false;
-    if (propuestas) propuestas.checked = false;
   }
 }
 
@@ -5426,53 +4962,8 @@ function cambiarModalidadDesdeSub(val) {
   _mostrarToast(val);
 }
 
-/* ── Función para actualizar indicadores del dashboard desde historial ── */
-function actualizarIndicadoresDesdeHistorial() {
-  var historialJson = localStorage.getItem('historialProcesos');
-  var historial = historialJson ? JSON.parse(historialJson) : [];
-  
-  if (!historial || historial.length === 0) return;
-  
-  var totalProcesos = historial.length;
-  var conteoModalidad = {};
-  
-  historial.forEach(function(proc) {
-    var modalidad = proc.modalidad || 'Indefinida';
-    conteoModalidad[modalidad] = (conteoModalidad[modalidad] || 0) + 1;
-  });
-  
-  // Actualizar cards de indicadores
-  var cardTotal = document.querySelector('[data-indicator="total"]');
-  var cardConvocatoria = document.querySelector('[data-indicator="convocatoria"]');
-  var cardSubasta = document.querySelector('[data-indicator="subasta"]');
-  var cardDirecta = document.querySelector('[data-indicator="directa"]');
-  
-  if (cardTotal) {
-    var numTotal = cardTotal.querySelector('.card-number');
-    if (numTotal) numTotal.textContent = totalProcesos;
-  }
-  
-  if (cardConvocatoria) {
-    var num = cardConvocatoria.querySelector('.card-number');
-    if (num) num.textContent = conteoModalidad['Contratación por Convocatoria Pública'] || 0;
-  }
-  
-  if (cardSubasta) {
-    var num = cardSubasta.querySelector('.card-number');
-    if (num) num.textContent = conteoModalidad['Subasta Inversa'] || 0;
-  }
-  
-  if (cardDirecta) {
-    var num = cardDirecta.querySelector('.card-number');
-    if (num) num.textContent = (conteoModalidad['Contratación Directa (1) Propuesta'] || 0) + (conteoModalidad['Contratación Directa (3) Propuestas'] || 0);
-  }
-}
-
 /* Actualizar los menús del sidebar para abrir los nuevos modales */
 document.addEventListener('DOMContentLoaded', function() {
-  // Actualizar indicadores al cargar la página
-  actualizarIndicadoresDesdeHistorial();
-  
   document.querySelectorAll('.menu-item').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var txt = this.innerText.trim();
@@ -5481,3 +4972,125 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+
+// ════════════════════════════════════════════════════
+//  REGISTRO DE ACCIONES (Sprint 4 — LIMP-05)
+//
+//  Cada entrada sustituye a un atributo on*= del HTML. Ver js/acciones.js
+//  para el porqué y la sintaxis de data-accion / data-args / data-evento.
+//
+//  Importante: la CLAVE es una cadena (sobrevive a la ofuscación) y el
+//  VALOR es la función por referencia (se puede renombrar). Por eso, a
+//  medida que una página se migra, sus funciones salen de
+//  NOMBRES_RESERVADOS en build.js.
+//
+//  Se registran aunque la página actual no las use: registrar es solo
+//  guardar una referencia en un objeto, y así este bloque no depende de en
+//  qué página esté cargado script.js.
+//
+//  Páginas migradas hasta ahora: LAS 9 — supervision.html, historial.html,
+//  directa-3p.html, convocatoria.html, subasta.html, index.html,
+//  contratacion.html
+//  (login.html y proceso-detalle.html se registran en sus propios
+//  archivos, js/login.js y js/proceso-detalle.js, porque no cargan este).
+//
+//  Este bloque no es el ÚNICO registro de script.js: el IIFE de
+//  "Seguimiento de Conocimiento Jurídico" tiene el suyo, porque sus
+//  funciones son locales de ese IIFE y desde acá solo se llegaría a ellas
+//  por window.<nombre>.
+// ════════════════════════════════════════════════════
+if (typeof registrarAcciones === 'function') {
+    registrarAcciones({
+        // supervision.html
+        supActualizarBarra:   supActualizarBarra,
+        supLimpiar:           supLimpiar,
+        registrarSupervision: registrarSupervision,
+
+        // historial.html — y también index.html, que duplica esa misma barra
+        // de filtros y ese mismo panel de detalle dentro del modal
+        // "Historial de Procesos". Las cuatro se reutilizan tal cual: los ids
+        // (#hist-filtro-*, #hist-detalle-panel) son los mismos en las dos
+        // páginas, que es lo que ya obligó a resolver el foco con reglas por
+        // id en css/styles.css (ver 6.8 del informe).
+        hist_renderTabla:               hist_renderTabla,
+        hist_exportarExcel:             hist_exportarExcel,
+        hist_limpiarFiltroResponsable:  hist_limpiarFiltroResponsable,
+        hist_cerrarDetalle:             hist_cerrarDetalle,
+
+        // directa-3p.html. Las cinco siguen además en NOMBRES_RESERVADOS:
+        // contratacion, convocatoria y subasta las llaman todavía con on*=,
+        // y js/script.js genera botones histU_toggle con innerHTML.
+        verificarObjetoContractual: verificarObjetoContractual,
+        _fmt_valorEditado:          _fmt_valorEditado,
+        mostrarArchivo:             mostrarArchivo,
+        histU_toggle:               histU_toggle,
+        guardarProcesoHistorial:    guardarProcesoHistorial,
+        reAnalizarTodo:             reAnalizarTodo,
+
+        // convocatoria.html. Casi todo lo suyo ya estaba: las genéricas
+        // abrirSelectorArchivo, contarCaracteres y navegar viven en
+        // js/acciones.js, y _fmt_valorEditado y guardarProcesoHistorial
+        // las comparte con directa-3p. Lo único propio es este, y es el
+        // primer nombre que SÍ sale de NOMBRES_RESERVADOS desde que
+        // empezaron las páginas de checklist: no lo llama ninguna otra
+        // página ni lo genera ningún innerHTML.
+        conv_mostrarArchivo:        conv_mostrarArchivo,
+
+        // subasta.html. Gemela de convocatoria: mismas seis formas con
+        // prefijo sub_, y lo único propio es este, que sale igualmente
+        // de NOMBRES_RESERVADOS por la misma razón.
+        sub_mostrarArchivo:         sub_mostrarArchivo,
+
+        // index.html. Es la única página SIN checklist, así que casi no
+        // reutiliza nada de las anteriores: lo suyo son las 5 tarjetas del
+        // dashboard, los modales y el botón flotante. Lo que sí reutiliza
+        // entero es la barra de filtros del historial (las cuatro hist_* de
+        // arriba). seg_renderTabla, panel_abrirSeguimientoConocimiento y los
+        // dos seg_limpiarFiltro* NO están acá: se registran dentro del IIFE
+        // de "Seguimiento de Conocimiento Jurídico", que es donde viven sus
+        // funciones reales.
+        dash_abrirHistorial:  dash_abrirHistorial,
+        closeModal:           closeModal,
+        publicarSecop:        publicarSecop,
+        mostrarModalApiKey:   mostrarModalApiKey,
+        cerrarModalApiKey:    cerrarModalApiKey,
+
+        // contratacion.html — la última página del sprint. 57 de sus 81
+        // atributos usan acciones que ya existían (abrirSelectorArchivo ×31,
+        // mostrarArchivo ×22, _fmt_valorEditado, navegar,
+        // verificarObjetoContractual, reAnalizarTodo). Lo propio es esto:
+        mostrarArchivoSub:    mostrarArchivoSub,
+        toggleHistorial:      toggleHistorial,
+        actualizarJustif13:   actualizarJustif13,
+        guardarProceso:       guardarProceso,
+        // Las dos parejas de radios desmarcables. El mousedown que las
+        // acompaña NO es una acción: es un addEventListener acotado, junto a
+        // radioPermitirDeseleccion().
+        radioSubDistribuidor: radioSubDistribuidor,
+        radioAplica13:        radioAplica13,
+
+        // ── Markup que ESTE archivo genera con innerHTML (población 2) ──
+        // No salían en el recuento de los .html porque se crean en tiempo de
+        // ejecución. El delegador los recoge sin nada extra: escucha en
+        // document, así que da igual cuándo aparezca el elemento.
+        // hslvUpdateD3PProgress y hslvD3PFallbackFile NO están acá: se
+        // registran dentro de su propio IIFE, que es donde viven.
+        checklistComentario_confirmar: checklistComentario_confirmar,
+        checklistComentario_editar:    checklistComentario_editar,
+        checklistComentario_borrar:    checklistComentario_borrar,
+        histU_quitarVersion:           histU_quitarVersion,
+        verDetalleProceso:             verDetalleProceso,
+        eliminarProceso:               eliminarProceso,
+        hist_verDetalle:               hist_verDetalle,
+        hist_eliminar:                 hist_eliminar,
+        hist_asignarResponsable:       hist_asignarResponsable,
+        _hist_marcarCambioResponsable: _hist_marcarCambioResponsable,
+        _cd1pToggleForzarDuplicado:    _cd1pToggleForzarDuplicado,
+        analizarDocumentoCD1P:         analizarDocumentoCD1P,
+        juriskillsAbrirModal:          juriskillsAbrirModal,
+        juriskillsCerrarModal:         juriskillsCerrarModal
+    });
+} else {
+    console.error('js/acciones.js no está cargado: los botones migrados a ' +
+                  'data-accion no responderán. Revisa el orden de los <script>.');
+}

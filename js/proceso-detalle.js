@@ -140,6 +140,58 @@ function escapeHTML(texto) {
     return div.innerHTML;
 }
 
+// ⚠️ escapeHTML() NO sirve para valores de atributo: va por
+// textContent/innerHTML, que convierte & < > pero deja las comillas tal
+// cual, así que un dato con " se sale del atributo y puede meter uno nuevo.
+// Es la misma clase de agujero que SEC-04 (ver Auditoria_360_Y_Blindaje 6.14).
+// Esta es para eso — mismas cinco sustituciones que escaparHTML() de
+// js/script.js. Se deja escapeHTML() intacta: sus otros usos son texto entre
+// etiquetas y ahí está bien.
+function escapeAttr(texto) {
+    return String(texto == null ? '' : texto)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// ── Sprint 4: emitir data-args dentro de markup generado ──
+// Los argumentos viajan como JSON dentro de un atributo delimitado por
+// comillas SIMPLES, así que hay que escapar lo que rompería ese atributo:
+// la comilla simple y el &. Las comillas dobles del JSON no molestan ahí.
+//
+// ⚠️ NO se usa escapeHTML() para esto: esa función escapa vía
+// textContent/innerHTML, que convierte & < > pero **deja las comillas tal
+// cual** — sirve para texto entre etiquetas, no para valores de atributo.
+//
+// De paso esto arregla un fallo que ya existía: antes estos mismos valores
+// iban interpolados dentro del atributo de evento, y un id o una clave con
+// apóstrofo
+// rompía el atributo igual (por eso había .replace(/'/g,"\\'") a mano en dos
+// sitios, que ya no hacen falta).
+function _pdArgs(lista) {
+    return "data-args='" +
+        JSON.stringify(lista).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;') +
+        "'";
+}
+
+// Los dos atributos que encadenaban varias sentencias. data-accion nombra UNA
+// acción, así que cada uno pasa a ser una función. Mismo patrón que
+// _fmt_valorEditado en js/script.js (6.9).
+function _pd_valorEditado(el) {
+    _fmt_formatearValorInput(el);
+    _pd_marcarCambioValor();
+    _fmt_actualizarValorLetras(el);
+}
+
+// El textarea de comentarios: crece con el contenido y guarda el borrador.
+function pd_comentarioEscrito(el, num) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+    _comentariosPendientes[num] = el.value;
+}
+
 function etiquetaRolAutor(autor) {
     if (!autor) return '';
     if (autor.rol === 'admin')       return 'Admin';
@@ -485,13 +537,13 @@ function campoValorProceso(p) {
             'Valor' +
         '</div>' +
         '<div style="display:flex;gap:8px;align-items:center;">' +
-            '<input id="pd-valor-input" type="text" inputmode="decimal" autocomplete="off" value="' + escapeHTML(_fmt_rawAValorInput(p.valor)) + '" ' +
-                'data-guardado="' + escapeHTML(p.valor || '') + '" ' +
+            '<input id="pd-valor-input" type="text" inputmode="decimal" autocomplete="off" value="' + escapeAttr(_fmt_rawAValorInput(p.valor)) + '" ' +
+                'data-guardado="' + escapeAttr(p.valor || '') + '" ' +
                 'placeholder="Valor estimado del proceso ($)" ' +
-                'oninput="_fmt_formatearValorInput(this);_pd_marcarCambioValor();_fmt_actualizarValorLetras(this)" ' +
+                'data-accion="_pd_valorEditado" data-evento="input" data-args=\'["@el"]\' ' +
                 'style="flex:1;min-width:0;padding:7px 10px;border-radius:8px;border:1.5px solid #BFDBFE;' +
                 'font-size:13px;color:#1F2937;outline:none;background:#F8FAFF;">' +
-            '<button id="pd-valor-btn" onclick="pd_actualizarValor()" ' +
+            '<button id="pd-valor-btn" data-accion="pd_actualizarValor" ' +
                 'style="background:#123C7B;color:white;border:none;border-radius:8px;' +
                 'padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">' +
                 '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar' +
@@ -592,12 +644,12 @@ function renderizarInfo(p) {
             '<div style="font-size:14px;margin-bottom:8px;">' + responsableAsignadoHTML + '</div>' +
             '<div style="display:flex;gap:8px;align-items:center;max-width:380px;">' +
                 '<select id="pd-resp-select" data-guardado="' + (p.responsable_asignado || '') + '" ' +
-                    'onchange="_pd_marcarCambioResponsable()" ' +
+                    'data-accion="_pd_marcarCambioResponsable" data-evento="change" ' +
                     'style="flex:1;padding:7px 10px;border-radius:8px;' +
                     'border:1.5px solid #BFDBFE;font-size:12px;color:#123C7B;outline:none;background:#F8FAFF;">' +
                     opcionesHTML +
                 '</select>' +
-                '<button id="pd-resp-btn" onclick="pd_asignarResponsable()" ' +
+                '<button id="pd-resp-btn" data-accion="pd_asignarResponsable" ' +
                     'style="background:#123C7B;color:white;border:none;border-radius:8px;' +
                     'padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">' +
                     (p.responsable_asignado
@@ -744,7 +796,7 @@ function renderizarChecklist() {
         // CHECKLIST" en js/script.js, que inyecta el botón con badge en 0
         // para los 4 módulos). Antes acá solo aparecía si ya había versiones.
         var toggleHistorialHTML =
-            '<button onclick="pd_toggleHistorial(' + num + ')" ' +
+            '<button data-accion="pd_toggleHistorial" data-args=\'[' + num + ']\' ' +
                 'style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;' +
                 'padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;' +
                 'display:flex;align-items:center;gap:5px;">' +
@@ -777,7 +829,7 @@ function renderizarChecklist() {
                 '<div class="hist-num ' + (esPrimera ? 'hist-num-v1' : 'hist-num-vN') + '">' + d.version + '</div>' +
                 '<div class="hist-info">' +
                     '<div class="hist-nombre">' +
-                        '<button onclick="pd_descargar(\'' + d.id + '\')" ' +
+                        '<button data-accion="pd_descargar" ' + _pdArgs([d.id]) + ' ' +
                             'style="background:none;border:none;color:#123C7B;text-decoration:underline;' +
                             'cursor:pointer;font-size:11.5px;font-weight:700;padding:0;text-align:left;">' +
                             '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escapeHTML(d.nombre_archivo || '') +
@@ -822,7 +874,7 @@ function renderizarChecklist() {
                         '<div class="hist-nombre"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escapeHTML(entry.archivo.name) +
                             '<span class="hist-tag-vN">v' + entry.version + '</span>' +
                             (esActual ? '<span class="hist-tag-last"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:1px;" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Actual</span>' : '') +
-                            ' <button onclick="pd_quitarPendiente(' + num + ',' + entry.idx + ')" title="Quitar este archivo" ' +
+                            ' <button data-accion="pd_quitarPendiente" data-args=\'[' + num + ',' + entry.idx + ']\' title="Quitar este archivo" ' +
                                 'style="background:none;border:1px solid #DC2626;color:#DC2626;' +
                                 'border-radius:6px;padding:1px 7px;font-size:10.5px;cursor:pointer;font-weight:600;margin-left:6px;">' +
                                 '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Quitar' +
@@ -855,13 +907,13 @@ function renderizarChecklist() {
 
         var controlSubida = puedeEditar
             ? '<div style="margin-top:6px;">' +
-                '<button class="btn" onclick="pd_elegirArchivo(' + num + ')" ' +
+                '<button class="btn" data-accion="pd_elegirArchivo" data-args=\'[' + num + ']\' ' +
                     'style="padding:10px 14px;font-size:13px;">' +
                     '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Agregar nueva versión' +
                 '</button>' +
                 '<input type="file" id="pd-file-' + num + '" style="display:none;" ' +
                     'accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" ' +
-                    'onchange="pd_archivoElegido(' + num + ',this)">' +
+                    'data-accion="pd_archivoElegido" data-evento="change" data-args=\'[' + num + ',"@el"]\'>' +
               '</div>'
             : '';
 
@@ -915,9 +967,9 @@ function renderizarChecklist() {
                     '<div style="font-weight:700;color:#123C7B;">' + escapeHTML(nombreAutorPendiente) + '</div>' +
                     '<div style="color:#1F2937;margin-top:2px;">' + escapeHTML(borradorComentario) + '</div>' +
                     '<div style="margin-top:4px;">' +
-                        '<a onclick="pd_editarComentarioPendiente(' + num + ')" ' +
+                        '<a data-accion="pd_editarComentarioPendiente" data-args=\'[' + num + ']\' ' +
                             'style="color:#123C7B;font-size:10px;cursor:pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Editar</a>' +
-                        '<a onclick="pd_borrarComentarioPendiente(' + num + ')" ' +
+                        '<a data-accion="pd_borrarComentarioPendiente" data-args=\'[' + num + ']\' ' +
                             'style="color:#B91C1C;font-size:10px;cursor:pointer;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>Borrar</a>' +
                     '</div>' +
                 '</div>';
@@ -934,15 +986,15 @@ function renderizarChecklist() {
                 '<div style="position:relative;width:fit-content;max-width:100%;">' +
                     '<textarea id="pd-com-input-' + num + '" rows="1" ' +
                         'placeholder="Escribir un comentario para este documento…" autocomplete="off" ' +
-                        'oninput="this.style.height=\'auto\';this.style.height=this.scrollHeight+\'px\';' +
-                            '_comentariosPendientes[' + num + ']=this.value;" ' +
+                        'data-accion="pd_comentarioEscrito" data-evento="input" ' +
+                        'data-args=\'["@el",' + num + ']\' ' +
                         'style="width:44ch;max-width:100%;font-size:12px;padding:6px 30px 6px 8px;' +
                         'border:1px solid #CBD5E1;border-radius:8px;resize:none;overflow:hidden;' +
                         'box-sizing:border-box;display:block;">' +
                             escapeHTML(borradorComentario) +
                     '</textarea>' +
                     '<button type="button" ' +
-                        'onclick="pd_confirmarComentario(' + num + ')" ' +
+                        'data-accion="pd_confirmarComentario" data-args=\'[' + num + ']\' ' +
                         'style="position:absolute;right:5px;bottom:5px;background:#123C7B;color:white;' +
                         'border:none;border-radius:50%;width:22px;height:22px;padding:0;font-size:11px;' +
                         'line-height:22px;text-align:center;cursor:pointer;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg></button>' +
@@ -1005,7 +1057,7 @@ function renderizarChecklist() {
         accionesEl.innerHTML =
             botonInicio +
             (puedeComentar
-                ? '<button id="pd-btn-guardar" onclick="pd_guardar()" ' +
+                ? '<button id="pd-btn-guardar" data-accion="pd_guardar" ' +
                     'style="background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;border:none;' +
                     'padding:12px 26px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;margin-right:10px;">' +
                     '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar comentarios' +
@@ -1017,12 +1069,12 @@ function renderizarChecklist() {
     } else if (puedeEditar) {
         accionesEl.innerHTML =
             botonInicio +
-            '<button id="pd-btn-guardar" onclick="pd_guardar()" ' +
+            '<button id="pd-btn-guardar" data-accion="pd_guardar" ' +
                 'style="background:linear-gradient(90deg,#0B7A43,#123C7B);color:white;border:none;' +
                 'padding:12px 26px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;margin-right:10px;">' +
                 '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar' +
             '</button>' +
-            '<button onclick="pd_finalizar()" ' +
+            '<button data-accion="pd_finalizar" ' +
                 'style="background:#DC2626;color:white;border:none;' +
                 'padding:12px 26px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;">' +
                 '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Finalizar Proceso' +
@@ -1414,7 +1466,7 @@ function pd_historialAnalisisHTML(num) {
                 '<div class="hist-nombre">' +
                     '<span class="ia-badge ' + badgeClase + '" style="font-size:9px;">' + badgeTexto + '</span> ' +
                     '<span style="font-size:11px;font-weight:800;color:' + pColor + ';">' + puntaje + '%</span> ' +
-                    '<button onclick="pd_verAnalisisHistorial(\'' + f.id + '\')" ' +
+                    '<button data-accion="pd_verAnalisisHistorial" ' + _pdArgs([f.id]) + ' ' +
                         'style="background:none;border:none;color:#2563EB;text-decoration:underline;cursor:pointer;' +
                         'font-size:11px;font-weight:700;padding:0;margin-left:4px;">Ver detalle</button>' +
                 '</div>' +
@@ -1426,7 +1478,7 @@ function pd_historialAnalisisHTML(num) {
         '</div>';
     }).join('');
 
-    return '<button onclick="pd_toggleHistorialAnalisis(' + num + ')" ' +
+    return '<button data-accion="pd_toggleHistorialAnalisis" data-args=\'[' + num + ']\' ' +
             'style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;' +
             'padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;' +
             'display:flex;align-items:center;gap:5px;">' +
@@ -1482,7 +1534,7 @@ function pd_renderTarjetaAnalisis(val, clave) {
         return '<div style="margin-bottom:8px;font-size:12px;color:#0B7A43;font-weight:600;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><strong>' +
                 escapeHTML(val.archivo ? val.archivo.name : '') + '</strong></div>' +
             '<button class="btn" style="padding:10px 14px;font-size:13px;" ' +
-                'onclick="pd_analizarDocumento(\'' + clave.replace(/'/g, "\\'") + '\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Analizar</button>';
+                'data-accion="pd_analizarDocumento" ' + _pdArgs([clave]) + '><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Analizar</button>';
     }
 
     var a = val.analisis;
@@ -1516,7 +1568,7 @@ function pd_renderTarjetaAnalisis(val, clave) {
             '</div>' +
             '<span style="font-size:11px;font-weight:800;color:' + pColor + ';white-space:nowrap;">' + puntaje + '%</span>' +
         '</div>' +
-        '<a href="javascript:void(0)" onclick="pd_juriskillsAbrirModal(\'' + clave.replace(/'/g, "\\'") + '\')" ' +
+        '<a href="javascript:void(0)" data-accion="pd_juriskillsAbrirModal" ' + _pdArgs([clave]) + ' ' +
             'style="font-size:11px;font-weight:700;color:#2563EB;text-decoration:underline;">Ver análisis completo</a>';
 }
 
@@ -1762,4 +1814,51 @@ window.addEventListener('beforeunload', function(e) {
     e.returnValue = '';
     return '';
 });
+
+
+// ════════════════════════════════════════════════════
+//  REGISTRO DE ACCIONES (Sprint 4 — ver js/acciones.js)
+//  Las funciones que el HTML llamaba con on*= se registran aquí por
+//  referencia, para que el ofuscador pueda renombrarlas y salgan de
+//  NOMBRES_RESERVADOS en build.js.
+//
+//  Solo las que están escritas en proceso-detalle.html. Las que este
+//  archivo inyecta con innerHTML (pd_descargar, pd_elegirArchivo…) siguen
+//  usando onclick y se migran cuando les toque su página.
+// ════════════════════════════════════════════════════
+if (typeof registrarAcciones === 'function') {
+    registrarAcciones({
+        // proceso-detalle.html
+        reAnalizarTodo:           reAnalizarTodo,
+        pd_juriskillsCerrarModal: pd_juriskillsCerrarModal,
+
+        // ── Markup que este archivo genera con innerHTML (Sprint 4) ──
+        // Son los 20 on*= que no salían en el recuento de los .html. El
+        // delegador los recoge sin nada extra: escucha en document, así que
+        // da igual que el botón se cree mucho después de cargar la página.
+        pd_actualizarValor:            pd_actualizarValor,
+        pd_asignarResponsable:         pd_asignarResponsable,
+        pd_guardar:                    pd_guardar,
+        pd_finalizar:                  pd_finalizar,
+        pd_toggleHistorial:            pd_toggleHistorial,
+        pd_toggleHistorialAnalisis:    pd_toggleHistorialAnalisis,
+        pd_verAnalisisHistorial:       pd_verAnalisisHistorial,
+        pd_descargar:                  pd_descargar,
+        pd_quitarPendiente:            pd_quitarPendiente,
+        pd_elegirArchivo:              pd_elegirArchivo,
+        pd_archivoElegido:             pd_archivoElegido,
+        pd_editarComentarioPendiente:  pd_editarComentarioPendiente,
+        pd_borrarComentarioPendiente:  pd_borrarComentarioPendiente,
+        pd_confirmarComentario:        pd_confirmarComentario,
+        pd_analizarDocumento:          pd_analizarDocumento,
+        pd_juriskillsAbrirModal:       pd_juriskillsAbrirModal,
+        _pd_marcarCambioResponsable:   _pd_marcarCambioResponsable,
+        // Los dos que agrupan varias sentencias:
+        _pd_valorEditado:              _pd_valorEditado,
+        pd_comentarioEscrito:          pd_comentarioEscrito
+    });
+} else {
+    console.error('js/acciones.js no está cargado: los botones migrados a ' +
+                  'data-accion no responderán. Revisa el orden de los <script>.');
+}
 

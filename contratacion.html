@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contratación Directa 1 Propuesta — HSLV</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/js/supabase.js"></script>
-    <script src="/js/auth-guard.js"></script>
+    <script defer src="/js/vendor/supabase-js.js"></script>
+    <script defer src="/js/supabase.js"></script>
+    <script defer src="/js/auth-guard.js"></script>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -66,7 +66,7 @@
                 <textarea id="mp_objeto" rows="4" placeholder="Ingrese el objeto contractual" autocomplete="off"></textarea>
                 <button type="button" class="btn" id="mp_verificar_btn"
                     style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;"
-                    onclick="verificarObjetoContractual()">
+                    data-accion="verificarObjetoContractual">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="8"/>
@@ -89,7 +89,7 @@
 
             <div class="form-group" id="fg_valor" style="display:none;">
               <label>Valor del Proceso</label>
-              <input id="mp_valor" type="text" inputmode="decimal" placeholder="Valor estimado del proceso ($)" autocomplete="off" oninput="_fmt_formatearValorInput(this);_fmt_actualizarValorLetras(this)">
+              <input id="mp_valor" type="text" inputmode="decimal" placeholder="Valor estimado del proceso ($)" autocomplete="off" data-accion="_fmt_valorEditado" data-evento="input" data-args='["@el"]'>
               <div id="mp_valor_letras" style="font-size:11px;color:#6B7280;font-style:italic;margin-top:4px;"></div>
             </div>
         </div>
@@ -149,7 +149,7 @@
                 <div id="iaResumenGlobal"></div>
             </div>
         </div>
-        <button class="btn btn-actualizar" onclick="reAnalizarTodo()"
+        <button class="btn btn-actualizar" data-accion="reAnalizarTodo"
             style="display:inline-flex;align-items:center;gap:6px;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -217,7 +217,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_1').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_1"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -225,7 +225,7 @@
             id="archivo_1"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_1')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_1"]'>
 
             <div id="nombreArchivo_1"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -242,7 +242,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_2').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_2"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -250,7 +250,7 @@
             id="archivo_2"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_2')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_2"]'>
 
             <div id="nombreArchivo_2"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -268,7 +268,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_3').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_3"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -276,7 +276,7 @@
             id="archivo_3"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_3')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_3"]'>
 
             <div id="nombreArchivo_3"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -294,7 +294,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_4').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_4"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -302,14 +302,14 @@
             id="archivo_4"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_4')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_4"]'>
 
             <div id="nombreArchivo_4"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
                 Sin archivo cargado
             </div>
 
-            <button onclick="toggleHistorial(4)"
+            <button data-accion="toggleHistorial" data-args='[4]'
             style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;
             padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;
             display:flex;align-items:center;gap:5px;">
@@ -330,7 +330,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_5').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_5"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -338,14 +338,14 @@
             id="archivo_5"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_5')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_5"]'>
 
             <div id="nombreArchivo_5"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
                 Sin archivo cargado
             </div>
 
-            <button onclick="toggleHistorial(5)"
+            <button data-accion="toggleHistorial" data-args='[5]'
             style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;
             padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;
             display:flex;align-items:center;gap:5px;">
@@ -366,7 +366,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_6').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_6"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -374,7 +374,7 @@
             id="archivo_6"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_6')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_6"]'>
 
             <div id="nombreArchivo_6"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -390,7 +390,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_7').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_7"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -398,7 +398,7 @@
             id="archivo_7"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_7')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_7"]'>
 
             <div id="nombreArchivo_7"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -414,7 +414,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_8').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_8"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -422,7 +422,7 @@
             id="archivo_8"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_8')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_8"]'>
 
             <div id="nombreArchivo_8"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -448,14 +448,12 @@
                 </div>
                 <label style="display:block;position:relative;padding-left:24px;cursor:pointer;margin:0 0 6px;font-weight:normal;box-sizing:border-box;">
                     <input type="radio" name="sub_distribuidor" value="no"
-                        onmousedown="radioPermitirDeseleccion(this)"
-                        onclick="radioClicConDeseleccion(this, actualizarOpcionesSubasta)"
+                        data-accion="radioSubDistribuidor"
                         style="position:absolute;left:0;top:2px;margin:0;width:16px;height:16px;"> No es distribuidor exclusivo
                 </label>
                 <label style="display:block;position:relative;padding-left:24px;cursor:pointer;margin:0;font-weight:normal;box-sizing:border-box;">
                     <input type="radio" name="sub_distribuidor" value="si"
-                        onmousedown="radioPermitirDeseleccion(this)"
-                        onclick="radioClicConDeseleccion(this, actualizarOpcionesSubasta)"
+                        data-accion="radioSubDistribuidor"
                         style="position:absolute;left:0;top:2px;margin:0;width:16px;height:16px;"> Es distribuidor o proveedor exclusivo
                 </label>
             </div>
@@ -487,24 +485,24 @@
             <!-- Botones de Carga -->
             <div id="sub_botones_carga" class="hslv-fade-panel" style="display:none;margin-bottom:10px;gap:8px;flex-wrap:wrap;max-width:44ch;box-sizing:border-box;">
                 <div id="sub_btn_mercado" style="display:none;">
-                    <button class="btn btn-cargar-doc" onclick="document.getElementById('archivo_9_mercado').click()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Estudio de Mercado</button>
-                    <input type="file" id="archivo_9_mercado" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_mercado')">
+                    <button class="btn btn-cargar-doc" data-accion="abrirSelectorArchivo" data-args='["archivo_9_mercado"]'><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Estudio de Mercado</button>
+                    <input type="file" id="archivo_9_mercado" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_9_mercado"]'>
                     <div id="nombreArchivo_9_mercado" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                 </div>
                 <div id="sub_btn_propuestas" style="display:none;">
-                    <button class="btn btn-cargar-doc" onclick="document.getElementById('archivo_9_propuestas').click()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Propuestas de Proveedores</button>
-                    <input type="file" id="archivo_9_propuestas" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_propuestas')">
+                    <button class="btn btn-cargar-doc" data-accion="abrirSelectorArchivo" data-args='["archivo_9_propuestas"]'><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Propuestas de Proveedores</button>
+                    <input type="file" id="archivo_9_propuestas" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_9_propuestas"]'>
                     <div id="nombreArchivo_9_propuestas" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                 </div>
                 <div id="sub_btn_carta" style="display:none;">
-                    <button class="btn btn-cargar-doc" onclick="document.getElementById('archivo_9_carta').click()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Carta de Distribuidor</button>
-                    <input type="file" id="archivo_9_carta" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onchange="mostrarArchivo(this,'nombreArchivo_9_carta')">
+                    <button class="btn btn-cargar-doc" data-accion="abrirSelectorArchivo" data-args='["archivo_9_carta"]'><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Carta de Distribuidor</button>
+                    <input type="file" id="archivo_9_carta" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_9_carta"]'>
                     <div id="nombreArchivo_9_carta" style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                 </div>
             </div>
 
             <!-- Historial -->
-            <button onclick="toggleHistorial(9)" style="background:none;border:1px solid #CBD5E1;border-radius:8px;padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:5px;">
+            <button data-accion="toggleHistorial" data-args='[9]' style="background:none;border:1px solid #CBD5E1;border-radius:8px;padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:5px;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Ver historial <span id="badge_hist_9" style="background:#123C7B;color:white;border-radius:10px;padding:1px 7px;font-size:10px;">0</span>
             </button>
             <div id="historial_9" style="display:none;margin-top:8px;max-height:160px;overflow-y:auto;border:1px solid #E5E7EB;border-radius:10px;font-size:11px;background:#F8FAFC;">
@@ -520,7 +518,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_10').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_10"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -528,7 +526,7 @@
             id="archivo_10"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_10')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_10"]'>
 
             <div id="nombreArchivo_10"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -544,7 +542,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_11').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_11"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -552,7 +550,7 @@
             id="archivo_11"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_11')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_11"]'>
 
             <div id="nombreArchivo_11"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -568,7 +566,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_12').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_12"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -576,7 +574,7 @@
             id="archivo_12"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_12')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_12"]'>
 
             <div id="nombreArchivo_12"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -608,8 +606,7 @@
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
                                   font-size:12px;font-weight:600;color:#166534;">
                         <input type="radio" name="aplica_13" value="aplica"
-                               onmousedown="radioPermitirDeseleccion(this)"
-                               onclick="radioClicConDeseleccion(this, evaluarAplica13)"
+                               data-accion="radioAplica13"
                                style="accent-color:#0B7A43;width:15px;height:15px;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                         Aplica
@@ -617,8 +614,7 @@
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
                                   font-size:12px;font-weight:600;color:#DC2626;">
                         <input type="radio" name="aplica_13" value="no_aplica"
-                               onmousedown="radioPermitirDeseleccion(this)"
-                               onclick="radioClicConDeseleccion(this, evaluarAplica13)"
+                               data-accion="radioAplica13"
                                style="accent-color:#DC2626;width:15px;height:15px;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                         No aplica
@@ -632,7 +628,7 @@
                         Motivo de no aplicabilidad:
                     </label>
                     <select id="justif_13_sel"
-                            onchange="actualizarJustif13()"
+                            data-accion="actualizarJustif13" data-evento="change"
                             style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid #FCD34D;
                                    font-size:12px;background:#FFFBEB;color:#374151;cursor:pointer;">
                         <option value="">— Seleccione el motivo —</option>
@@ -644,7 +640,7 @@
                     <div id="justif_13_otro_wrap" style="display:none;margin-top:6px;">
                         <input type="text" id="justif_13_otro"
                                placeholder="Describa el motivo..." autocomplete="off"
-                               oninput="actualizarJustif13()"
+                               data-accion="actualizarJustif13" data-evento="input"
                                style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid #FCD34D;
                                       font-size:12px;background:#FFFBEB;color:#374151;">
                     </div>
@@ -655,7 +651,7 @@
             <!-- ── SECCIÓN DE CARGA (solo visible si aplica) ── -->
             <div id="carga_13_wrap" class="hslv-fade-panel" style="display:none;">
                 <button class="btn btn-cargar-doc"
-                onclick="document.getElementById('archivo_13').click()">
+                data-accion="abrirSelectorArchivo" data-args='["archivo_13"]'>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
                 </button>
 
@@ -663,7 +659,7 @@
                 id="archivo_13"
                 style="display:none;"
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                onchange="mostrarArchivo(this,'nombreArchivo_13')">
+                data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_13"]'>
 
                 <div id="nombreArchivo_13"
                 style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -687,7 +683,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_14').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_14"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -695,7 +691,7 @@
             id="archivo_14"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_14')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_14"]'>
 
             <div id="nombreArchivo_14"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -721,12 +717,12 @@
                     Antecedentes disciplinarios personales — Procuraduría General
                 </div>
                 <button class="btn btn-cargar-doc-sm"
-                    onclick="document.getElementById('archivo_15a').click()">
+                    data-accion="abrirSelectorArchivo" data-args='["archivo_15a"]'>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Antecedentes Disciplinarios Personales
                 </button>
                 <input type="file" id="archivo_15a" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_15a','check_15',['archivo_15a','archivo_15b','archivo_15c','archivo_15d'])">
+                    data-accion="mostrarArchivoSub" data-evento="change" data-args='["@el","nombreArchivo_15a","check_15",["archivo_15a","archivo_15b","archivo_15c","archivo_15d"]]'>
                 <div id="nombreArchivo_15a"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
@@ -744,12 +740,12 @@
                     Antecedentes disciplinarios de la empresa — Procuraduría General
                 </div>
                 <button class="btn btn-cargar-doc-sm"
-                    onclick="document.getElementById('archivo_15b').click()">
+                    data-accion="abrirSelectorArchivo" data-args='["archivo_15b"]'>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Antecedentes Disciplinarios de la Empresa
                 </button>
                 <input type="file" id="archivo_15b" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_15b','check_15',['archivo_15a','archivo_15b','archivo_15c','archivo_15d'])">
+                    data-accion="mostrarArchivoSub" data-evento="change" data-args='["@el","nombreArchivo_15b","check_15",["archivo_15a","archivo_15b","archivo_15c","archivo_15d"]]'>
                 <div id="nombreArchivo_15b"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
@@ -767,12 +763,12 @@
                     Antecedentes fiscales — Contraloría General
                 </div>
                 <button class="btn btn-cargar-doc-sm"
-                    onclick="document.getElementById('archivo_15c').click()">
+                    data-accion="abrirSelectorArchivo" data-args='["archivo_15c"]'>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Antecedentes Fiscales
                 </button>
                 <input type="file" id="archivo_15c" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_15c','check_15',['archivo_15a','archivo_15b','archivo_15c','archivo_15d'])">
+                    data-accion="mostrarArchivoSub" data-evento="change" data-args='["@el","nombreArchivo_15c","check_15",["archivo_15a","archivo_15b","archivo_15c","archivo_15d"]]'>
                 <div id="nombreArchivo_15c"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
@@ -790,12 +786,12 @@
                     Antecedentes judiciales — Policía Nacional
                 </div>
                 <button class="btn btn-cargar-doc-sm"
-                    onclick="document.getElementById('archivo_15d').click()">
+                    data-accion="abrirSelectorArchivo" data-args='["archivo_15d"]'>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Antecedentes Judiciales
                 </button>
                 <input type="file" id="archivo_15d" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_15d','check_15',['archivo_15a','archivo_15b','archivo_15c','archivo_15d'])">
+                    data-accion="mostrarArchivoSub" data-evento="change" data-args='["@el","nombreArchivo_15d","check_15",["archivo_15a","archivo_15b","archivo_15c","archivo_15d"]]'>
                 <div id="nombreArchivo_15d"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
@@ -823,7 +819,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_16').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_16"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -831,7 +827,7 @@
             id="archivo_16"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_16')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_16"]'>
 
             <div id="nombreArchivo_16"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -847,7 +843,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_17').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_17"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -855,7 +851,7 @@
             id="archivo_17"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_17')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_17"]'>
 
             <div id="nombreArchivo_17"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -871,7 +867,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_18').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_18"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -879,7 +875,7 @@
             id="archivo_18"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_18')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_18"]'>
 
             <div id="nombreArchivo_18"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -895,7 +891,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_19').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_19"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -903,7 +899,7 @@
             id="archivo_19"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_19')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_19"]'>
 
             <div id="nombreArchivo_19"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -929,12 +925,12 @@
                     Cédula de ciudadanía del Revisor Fiscal
                 </div>
                 <button class="btn btn-cargar-doc-sm"
-                    onclick="document.getElementById('archivo_20a').click()">
+                    data-accion="abrirSelectorArchivo" data-args='["archivo_20a"]'>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Cédula
                 </button>
                 <input type="file" id="archivo_20a" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_20a','check_20',['archivo_20a','archivo_20b','archivo_20c'])">
+                    data-accion="mostrarArchivoSub" data-evento="change" data-args='["@el","nombreArchivo_20a","check_20",["archivo_20a","archivo_20b","archivo_20c"]]'>
                 <div id="nombreArchivo_20a"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
@@ -952,12 +948,12 @@
                     Certificado de antecedentes del Revisor Fiscal
                 </div>
                 <button class="btn btn-cargar-doc-sm"
-                    onclick="document.getElementById('archivo_20b').click()">
+                    data-accion="abrirSelectorArchivo" data-args='["archivo_20b"]'>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Antecedentes
                 </button>
                 <input type="file" id="archivo_20b" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_20b','check_20',['archivo_20a','archivo_20b','archivo_20c'])">
+                    data-accion="mostrarArchivoSub" data-evento="change" data-args='["@el","nombreArchivo_20b","check_20",["archivo_20a","archivo_20b","archivo_20c"]]'>
                 <div id="nombreArchivo_20b"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
@@ -975,12 +971,12 @@
                     Tarjeta profesional del Revisor Fiscal
                 </div>
                 <button class="btn btn-cargar-doc-sm"
-                    onclick="document.getElementById('archivo_20c').click()">
+                    data-accion="abrirSelectorArchivo" data-args='["archivo_20c"]'>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Tarjeta Profesional
                 </button>
                 <input type="file" id="archivo_20c" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_20c','check_20',['archivo_20a','archivo_20b','archivo_20c'])">
+                    data-accion="mostrarArchivoSub" data-evento="change" data-args='["@el","nombreArchivo_20c","check_20",["archivo_20a","archivo_20b","archivo_20c"]]'>
                 <div id="nombreArchivo_20c"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
@@ -1018,12 +1014,12 @@
                     Certificación de pago de seguridad social
                 </div>
                 <button class="btn btn-cargar-doc-sm"
-                    onclick="document.getElementById('archivo_21a').click()">
+                    data-accion="abrirSelectorArchivo" data-args='["archivo_21a"]'>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Certificación
                 </button>
                 <input type="file" id="archivo_21a" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_21a','check_21',['archivo_21a','archivo_21b'])">
+                    data-accion="mostrarArchivoSub" data-evento="change" data-args='["@el","nombreArchivo_21a","check_21",["archivo_21a","archivo_21b"]]'>
                 <div id="nombreArchivo_21a"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
@@ -1041,12 +1037,12 @@
                     Planillas de seguridad social (salud, pensión, ARL)
                 </div>
                 <button class="btn btn-cargar-doc-sm"
-                    onclick="document.getElementById('archivo_21b').click()">
+                    data-accion="abrirSelectorArchivo" data-args='["archivo_21b"]'>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Planillas
                 </button>
                 <input type="file" id="archivo_21b" style="display:none;"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    onchange="mostrarArchivoSub(this,'nombreArchivo_21b','check_21',['archivo_21a','archivo_21b'])">
+                    data-accion="mostrarArchivoSub" data-evento="change" data-args='["@el","nombreArchivo_21b","check_21",["archivo_21a","archivo_21b"]]'>
                 <div id="nombreArchivo_21b"
                     style="margin-top:7px;font-size:12px;color:#0B7A43;font-weight:600;">
                     Sin archivo cargado
@@ -1074,7 +1070,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_22').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_22"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -1082,7 +1078,7 @@
             id="archivo_22"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_22')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_22"]'>
 
             <div id="nombreArchivo_22"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
@@ -1098,7 +1094,7 @@
         </td>
         <td>
             <button class="btn btn-cargar-doc"
-            onclick="document.getElementById('archivo_23').click()">
+            data-accion="abrirSelectorArchivo" data-args='["archivo_23"]'>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento
             </button>
 
@@ -1106,14 +1102,14 @@
             id="archivo_23"
             style="display:none;"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-            onchange="mostrarArchivo(this,'nombreArchivo_23')">
+            data-accion="mostrarArchivo" data-evento="change" data-args='["@el","nombreArchivo_23"]'>
 
             <div id="nombreArchivo_23"
             style="margin-top:8px;font-size:12px;color:#0B7A43;font-weight:600;">
                 Sin archivo cargado
             </div>
 
-            <button onclick="toggleHistorial(23)"
+            <button data-accion="toggleHistorial" data-args='[23]'
             style="margin-top:8px;background:none;border:1px solid #CBD5E1;border-radius:8px;
             padding:5px 10px;font-size:11px;color:#123C7B;cursor:pointer;font-weight:600;
             display:flex;align-items:center;gap:5px;">
@@ -1148,7 +1144,7 @@
 
     <!-- BOTÓN GUARDAR (solo visible tras verificar el objeto contractual) -->
     <div class="acciones-modal-final" style="justify-content:flex-end;">
-        <button class="btn finalizar-btn" onclick="guardarProceso()">
+        <button class="btn finalizar-btn" data-accion="guardarProceso">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             Guardar Proceso
         </button>
@@ -1159,7 +1155,7 @@
     <!-- BOTONES -->
     <div class="acciones-modal-final" style="justify-content:flex-end;">
         <button class="btn"
-            onclick="window.location.href='/dashboard'"
+            data-accion="navegar" data-args='["/dashboard"]'
             style="background:#F3F4F6;color:#374151;border:none;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Volver al Dashboard
         </button>
@@ -1167,11 +1163,12 @@
 
     </div><!-- fin content -->
 
-    <script src="/js/sidebar.js"></script>
-    <script src="/js/db.js"></script>
-    <script src="/js/notificaciones.js"></script>
-    <script src="/js/juriskills-engine.js"></script>
-    <script src="/js/script.js"></script>
+    <script defer src="/js/acciones.js"></script>
+    <script defer src="/js/sidebar.js"></script>
+    <script defer src="/js/db.js"></script>
+    <script defer src="/js/notificaciones.js"></script>
+    <script defer src="/js/juriskills-engine.js"></script>
+    <script defer src="/js/script.js"></script>
 
 </body>
 </html>

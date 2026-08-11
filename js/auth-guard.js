@@ -200,7 +200,7 @@ function mostrarAvisoInactividad() {
                         'Tu sesión se cerrará en 2 minutos por inactividad.' +
                     '</div>' +
                 '</div>' +
-                '<button onclick="reiniciarContador()" ' +
+                '<button data-accion="reiniciarContador" ' +
                     'style="margin-left:auto;background:white;color:#92400E;' +
                            'border:none;border-radius:8px;padding:7px 14px;' +
                            'font-weight:700;font-size:12px;cursor:pointer;' +
@@ -226,6 +226,23 @@ function ocultarAvisoInactividad() {
     var aviso = document.getElementById('_avisoInactividad');
     if (aviso) aviso.style.display = 'none';
 }
+
+// ── Sprint 4: el botón "Seguir conectado" del aviso ──
+// El aviso se arma con innerHTML, así que su onclick= era de los que no salen
+// en el recuento de los .html. Ahora es data-accion, y el delegador de
+// js/acciones.js lo recoge aunque el botón se cree mucho después: escucha en
+// document, no en el elemento.
+//
+// ⚠️ El registro va dentro de DOMContentLoaded, y NO en el nivel superior de
+// este archivo, porque js/auth-guard.js se carga ANTES que js/acciones.js en
+// las 9 páginas (auth-guard va en el <head>; acciones.js al final del <body>).
+// Arriba, registrarAcciones todavía no existe. Los <script defer> terminan
+// todos antes de DOMContentLoaded, así que aquí ya está disponible.
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof registrarAccion === 'function') {
+        registrarAccion('reiniciarContador', reiniciarContador);
+    }
+});
 
 
 // ════════════════════════════════════════════════════

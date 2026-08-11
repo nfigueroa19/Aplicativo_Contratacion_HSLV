@@ -9,6 +9,7 @@
   },
   "type": "commonjs",
   "devDependencies": {
+    "@supabase/supabase-js": "^2.112.2",
     "clean-css": "^5.3.3",
     "fs-extra": "^11.4.0",
     "javascript-obfuscator": "^4.2.2"

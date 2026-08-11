@@ -342,6 +342,95 @@ table td{
     font-size:12px;
 }
 
+/* ── Campos con realce al enfocar (Sprint 4) ────────────────────────────
+   Antes cada input llevaba onfocus/onblur cambiando this.style.borderColor
+   a mano: 8 de los 14 atributos on*= de supervision.html eran solo eso.
+   :focus hace lo mismo sin JavaScript, y cada atributo on*= que desaparece
+   acerca el objetivo de quitar 'unsafe-inline' del script-src de la CSP.
+
+   Se usan en pareja: class="campo-hslv campo-hslv-verde". La doble clase
+   es necesaria a propósito — `.form-group input` ya define un borde y con
+   una sola clase ganaría por especificidad. */
+.campo-hslv{
+    outline:none;
+    transition:border-color .2s;
+}
+.campo-hslv.campo-hslv-verde{ border:1.5px solid #86d19d; }
+.campo-hslv.campo-hslv-verde:focus{ border-color:#0B7A43; }
+
+.campo-hslv.campo-hslv-azul{ border:1.5px solid #BFDBFE; }
+.campo-hslv.campo-hslv-azul:focus{ border-color:#123C7B; }
+
+.campo-hslv.campo-hslv-gris{ border:1.5px solid #CBD5E1; }
+.campo-hslv.campo-hslv-gris:focus{ border-color:#123C7B; }
+
+/* Botón "limpiar filtro" de la barra de filtros del historial.
+   Sustituye a onmouseenter/onmouseleave que cambiaban el fondo a mano:
+   :hover hace lo mismo sin JavaScript (misma idea que .campo-hslv con
+   :focus). El fondo tiene que vivir aquí y no en un style inline, porque
+   un inline ganaría siempre al :hover. */
+.btn-limpiar-filtro{
+    background:none;
+    border:1.5px solid #CBD5E1;
+    border-radius:8px;
+    padding:5px 9px;
+    cursor:pointer;
+    font-size:12px;
+    color:#6B7280;
+    transition:.2s;
+}
+.btn-limpiar-filtro:hover{ background:#F1F5F9; }
+
+/* Fila de la tabla "Procesos recientes" del dashboard.
+   Sustituye a onmouseover/onmouseout que escribían this.style.background a
+   mano dentro del markup que genera js/script.js con innerHTML. Ese par era
+   de la "población 2" del Sprint 4: no salía en el recuento de los .html
+   porque la fila se crea en tiempo de ejecución. */
+.fila-proceso-reciente{ transition:background .15s; }
+.fila-proceso-reciente:hover{ background:#f8faff; }
+
+/* Botón "Guardar responsable" de la tabla del historial. Mismo caso, y con
+   la trampa de siempre: el fondo base (#123C7B) estaba en el style inline y
+   habría ganado al :hover, así que tuvo que venirse aquí. El resto del
+   inline (tamaño, radio, color de texto) se quedó donde estaba. */
+.btn-asignar-resp{ background:#123C7B; }
+.btn-asignar-resp:hover{ background:#0B7A43; }
+
+/* Botón flotante "Skills Inteligentes Jurídicos" del dashboard.
+   Todo su estilo estaba en un style inline de index.html, junto con
+   onmouseenter/onmouseleave que escribían transform, opacity y boxShadow a
+   mano. Al pasar el efecto a :hover el estilo tuvo que venirse entero aquí:
+   un inline habría ganado a las tres propiedades (misma trampa que el fondo
+   de .btn-limpiar-filtro). Solo existe en index.html.
+   ⚠️ display se deja en la CSS a propósito, pero js/script.js lo sobrescribe
+   con .style.display para ocultar el botón mientras hay un modal abierto —
+   ese inline sí tiene que ganar, y gana. */
+#btnApiKeyFlotante{
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    z-index:99999;
+    background:linear-gradient(135deg,#0B7A43 0%,#123C7B 100%);
+    color:white;
+    border-radius:50px;
+    padding:10px 16px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:0 4px 18px rgba(11,122,67,.35);
+    display:flex;
+    align-items:center;
+    gap:7px;
+    transition:transform .2s, box-shadow .2s, opacity .2s;
+    opacity:.93;
+    user-select:none;
+}
+#btnApiKeyFlotante:hover{
+    transform:translateY(-2px);
+    opacity:1;
+    box-shadow:0 8px 24px rgba(11,122,67,.45);
+}
+
 .alert-box{
     background:#ECFDF5;
     border-left:6px solid #0B7A43;
@@ -1797,13 +1886,23 @@ body.sidebar-abierto .content {
   padding: 8px 14px; border: 1.5px solid #CBD5E1;
   border-radius: 10px; font-size: 13px; outline: none; width: 220px;
 }
+/* El borde con el foco lo ponía un onfocus= inline en historial.html.
+   Al quitarlo (Sprint 4) tuvo que venirse aquí, y NO puede escribirse con
+   las clases .campo-hslv: estos campos tienen regla por id, que gana en
+   especificidad a cualquier clase. Estos dos selectores los comparten
+   historial.html e index.html, así que las dos páginas se ven igual.
+   Ver Auditoria_360_Y_Blindaje 6.8. */
+#hist-filtro-buscar:focus { border-color: #123C7B; }
 #hist-filtro-responsable {
   padding: 8px 14px; border: 1.5px solid #CBD5E1;
   border-radius: 10px; font-size: 13px; outline: none; width: 180px;
   transition: border-color .2s;
 }
+/* El resplandor verde ya estaba aquí y se conserva; lo que cambia es el
+   borde, que pasa de #0B7A43 al azul que historial.html mostraba de verdad
+   (el inline ganaba a esta regla). */
 #hist-filtro-responsable:focus {
-  border-color: #0B7A43; box-shadow: 0 0 0 3px rgba(11,122,67,.12);
+  border-color: #123C7B; box-shadow: 0 0 0 3px rgba(11,122,67,.12);
 }
 #seg-filtro-estado {
   padding: 8px 14px; border: 1.5px solid #CBD5E1;

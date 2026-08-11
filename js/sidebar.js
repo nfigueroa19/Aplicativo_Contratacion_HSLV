@@ -49,9 +49,9 @@
     var sidebarHTML =
         // Logo
         '<div class="sidebar-logo">' +
-            '<img src="/assets/img/Agora_HSLV.png" alt="ÁGORA HSLV"  ' +
-                'style="width:90px;margin-bottom:10px;" ' +
-                'onerror="this.style.display=\'none\'">' +
+            '<img src="/assets/img/Agora_HSLV.png" alt="ÁGORA HSLV" ' +
+                'id="sidebar-logo-img" ' +
+                'style="width:90px;margin-bottom:10px;">' +
             '<h2>HOSPITAL</h2>' +
             '<p>Susana López de Valencia E.S.E.<br>Sistema Integral de Contratación</p>' +
         '</div>' +
@@ -70,7 +70,7 @@
 
         // Botón cerrar sesión
         '<div class="sidebar-logout-wrap">' +
-            '<button class="btn-logout" onclick="cerrarSesion()">' +
+            '<button class="btn-logout" data-accion="cerrarSesion">' +
                 '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
                 'Cerrar Sesión' +
             '</button>' +
@@ -78,5 +78,27 @@
 
     var sidebar = document.querySelector('.sidebar');
     if (sidebar) sidebar.innerHTML = sidebarHTML;
+
+    // ── Sprint 4 ──
+    // "Cerrar Sesión" era onclick="cerrarSesion()". cerrarSesion() vive en
+    // js/auth-guard.js, que se carga antes que este archivo en las 9 páginas,
+    // así que aquí ya se puede pasar la referencia real.
+    if (typeof registrarAccion === 'function' && typeof cerrarSesion === 'function') {
+        registrarAccion('cerrarSesion', cerrarSesion);
+    }
+
+    // ── El onerror del logo: el ÚNICO que el delegador no puede recoger ──
+    // El evento `error` de un <img> NO burbujea hasta document, así que no
+    // hay forma de delegarlo — no es una decisión de diseño de acciones.js,
+    // es cómo funciona el DOM. Va como listener directo sobre el elemento.
+    //
+    // El `complete && naturalWidth === 0` de después cubre el caso en que la
+    // imagen ya haya fallado (por caché) antes de llegar a esta línea: ahí el
+    // evento ya se disparó y el listener nunca se ejecutaría.
+    var logo = document.getElementById('sidebar-logo-img');
+    if (logo) {
+        logo.addEventListener('error', function () { this.style.display = 'none'; });
+        if (logo.complete && logo.naturalWidth === 0) logo.style.display = 'none';
+    }
 
 })();

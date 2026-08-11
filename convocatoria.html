@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Convocatoria Pública — HSLV Contratación</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/js/supabase.js"></script>
-    <script src="/js/auth-guard.js"></script>
+    <script defer src="/js/vendor/supabase-js.js"></script>
+    <script defer src="/js/supabase.js"></script>
+    <script defer src="/js/auth-guard.js"></script>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -72,7 +72,7 @@
 
             <div class="form-group">
               <label>Valor del Proceso</label>
-              <input id="mp_valor" type="text" inputmode="decimal" placeholder="Valor estimado del proceso ($)" autocomplete="off" oninput="_fmt_formatearValorInput(this);_fmt_actualizarValorLetras(this)">
+              <input id="mp_valor" type="text" inputmode="decimal" placeholder="Valor estimado del proceso ($)" autocomplete="off" data-accion="_fmt_valorEditado" data-evento="input" data-args='["@el"]'>
               <div id="mp_valor_letras" style="font-size:11px;color:#6B7280;font-style:italic;margin-top:4px;"></div>
             </div>
         </div>
@@ -103,11 +103,11 @@
                         <tr><td>1</td><td>CERTIFICADO PAA</td>
                         <td><input type="checkbox" id="conv_chk_1"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_1').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_1"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_1" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_1')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_1"]'>
                             <div id="conv_nom_1" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -116,11 +116,11 @@
                         <td>CERTIFICADO DE DISPONIBILIDAD PRESUPUESTAL</td>
                         <td><input type="checkbox" id="conv_chk_2"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_2').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_2"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_2" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_2')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_2"]'>
                             <div id="conv_nom_2" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -128,11 +128,11 @@
                         <tr><td>3</td><td>SOLICITUD PARA CONTRATAR</td>
                         <td><input type="checkbox" id="conv_chk_3"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_3').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_3"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_3" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_3')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_3"]'>
                             <div id="conv_nom_3" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -140,11 +140,11 @@
                         <tr><td>4</td><td>ESTUDIOS PREVIOS</td>
                         <td><input type="checkbox" id="conv_chk_4"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_4').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_4"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_4" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_4')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_4"]'>
                             <div id="conv_nom_4" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -152,11 +152,11 @@
                         <tr><td>5</td><td>MATRIZ DE RIESGO</td>
                         <td><input type="checkbox" id="conv_chk_5"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_5').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_5"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_5" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_5')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_5"]'>
                             <div id="conv_nom_5" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -164,11 +164,11 @@
                         <tr><td>6</td><td>AVISO DE CONVOCATORIA</td>
                         <td><input type="checkbox" id="conv_chk_6"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_6').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_6"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_6" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_6')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_6"]'>
                             <div id="conv_nom_6" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -176,11 +176,11 @@
                         <tr><td>7</td><td>PLIEGO DE CONDICIONES</td>
                         <td><input type="checkbox" id="conv_chk_7"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_7').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_7"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_7" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_7')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_7"]'>
                             <div id="conv_nom_7" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -188,11 +188,11 @@
                         <tr><td>8</td><td>PROPUESTAS RECIBIDAS</td>
                         <td><input type="checkbox" id="conv_chk_8"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_8').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_8"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_8" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_8')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_8"]'>
                             <div id="conv_nom_8" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -200,11 +200,11 @@
                         <tr><td>9</td><td>ACTA DE EVALUACIÓN DE PROPUESTAS</td>
                         <td><input type="checkbox" id="conv_chk_9"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_9').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_9"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_9" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_9')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_9"]'>
                             <div id="conv_nom_9" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -212,11 +212,11 @@
                         <tr><td>10</td><td>ACTA DE ADJUDICACIÓN</td>
                         <td><input type="checkbox" id="conv_chk_10"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_10').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_10"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_10" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_10')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_10"]'>
                             <div id="conv_nom_10" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -225,11 +225,11 @@
                         <td>CERTIFICADO DE EXISTENCIA Y REPRESENTACIÓN</td>
                         <td><input type="checkbox" id="conv_chk_11"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_11').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_11"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_11" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_11')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_11"]'>
                             <div id="conv_nom_11" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -238,11 +238,11 @@
                         <td>REGISTRO ÚNICO TRIBUTARIO (RUT)</td>
                         <td><input type="checkbox" id="conv_chk_12"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_12').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_12"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_12" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_12')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_12"]'>
                             <div id="conv_nom_12" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -252,11 +252,11 @@
                             FISCALES Y JUDICIALES)</td>
                         <td><input type="checkbox" id="conv_chk_13"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_13').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_13"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_13" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_13')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_13"]'>
                             <div id="conv_nom_13" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -265,11 +265,11 @@
                         <td>FORMULARIO ÚNICO DE CONOCIMIENTO SARLAFT</td>
                         <td><input type="checkbox" id="conv_chk_14"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_14').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_14"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_14" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_14')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_14"]'>
                             <div id="conv_nom_14" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -277,11 +277,11 @@
                         <tr><td>15</td><td>MINUTA DE CONTRATO</td>
                         <td><input type="checkbox" id="conv_chk_15"></td>
                         <td><button class="btn" style="padding:10px 14px;font-size:13px;"
-                            onclick="document.getElementById('conv_arch_15').click()">
+                            data-accion="abrirSelectorArchivo" data-args='["conv_arch_15"]'>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Cargar Documento</button>
                             <input type="file" id="conv_arch_15" style="display:none;"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                onchange="conv_mostrarArchivo(this,'conv_nom_15')">
+                                data-accion="conv_mostrarArchivo" data-evento="change" data-args='["@el","conv_nom_15"]'>
                             <div id="conv_nom_15" style="margin-top:8px;font-size:12px;
                                 color:#0B7A43;font-weight:600;">Sin archivo cargado</div>
                         </td></tr>
@@ -335,8 +335,8 @@
                     <div class="ia-section-title">Observaciones adicionales</div>
                     <textarea class="ia-observaciones" id="conv_iaObservaciones"
                         placeholder="Escriba observaciones o justificaciones adicionales…"
-                        oninput="document.getElementById('conv_iaCharCount')
-                                     .textContent=this.value.length+'/1000 caracteres'"
+                        data-accion="contarCaracteres" data-evento="input"
+                        data-args='["@el","conv_iaCharCount"]'
                         maxlength="1000"></textarea>
                     <div id="conv_iaCharCount"
                         style="margin-top:6px;color:#6B7280;font-size:12px;">
@@ -371,12 +371,12 @@
         <div style="display:flex;justify-content:flex-end;gap:12px;
                     flex-wrap:wrap;padding-bottom:32px;">
             <button class="btn"
-                onclick="window.location.href='/dashboard'"
+                data-accion="navegar" data-args='["/dashboard"]'
                 style="background:#F3F4F6;color:#374151;border:none;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Volver al Dashboard
             </button>
             <button class="btn finalizar-btn"
-                onclick="guardarProcesoHistorial('conv')">
+                data-accion="guardarProcesoHistorial" data-args='["conv"]'>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 Guardar Proceso
             </button>
@@ -384,11 +384,12 @@
 
     </div><!-- fin content -->
 
-    <script src="/js/sidebar.js"></script>
-    <script src="/js/db.js"></script>
-    <script src="/js/notificaciones.js"></script>
-    <script src="/js/juriskills-engine.js"></script>
-    <script src="/js/script.js"></script>
+    <script defer src="/js/acciones.js"></script>
+    <script defer src="/js/sidebar.js"></script>
+    <script defer src="/js/db.js"></script>
+    <script defer src="/js/notificaciones.js"></script>
+    <script defer src="/js/juriskills-engine.js"></script>
+    <script defer src="/js/script.js"></script>
 
 </body>
 </html>
