@@ -872,6 +872,149 @@ function _reclasificarCriteriosCruzados(numItem, resultado) {
     });
 }
 
+// ══════════════════════════════════════════════════════════════════
+//  ANTECEDENTES — LOS ANÁLISIS PREVIOS DEL MISMO ÍTEM COMO INSUMO
+//  Un ítem del checklist puede recibir varias versiones del mismo
+//  documento a lo largo del proceso, y desde 2026-08-06 cada análisis
+//  queda registrado en la tabla `analisis_juriskills` (ver
+//  _Segundo_Cerebro/Flujo_Analisis_IA_JURISKILLS.md). Hasta ahora ese
+//  historial era solo de consulta; desde 2026-08-14 también entra como
+//  INSUMO del siguiente análisis del mismo ítem, por dos vías:
+//    1. `analisisPrevios` viaja en el body de la Edge Function, para que
+//       Groq revise el documento nuevo sabiendo qué se le observó a la
+//       versión anterior (solo aplica a los ítems 4, 5 y 23, los únicos
+//       que pasan por Groq — ver _MODO_ANALISIS_CD1P).
+//    2. _seguimientoAntecedentes() compara de forma determinística los
+//       hallazgos anteriores contra el resultado nuevo. Al ser cliente
+//       puro funciona con CUALQUIER motor, así que también cubre los ~20
+//       ítems que nunca pasan por Groq.
+//  El registro lo llena la página que tenga el historial cargado: hoy
+//  solo js/proceso-detalle.js (en creación de proceso todavía no existe
+//  `proceso_id`, así que no hay nada previo que pasar y todo esto queda
+//  inerte, sin cambiar el comportamiento de contratacion.html/directa-3p.html).
+// ══════════════════════════════════════════════════════════════════
+
+// { numItem: [ {fecha, archivo, estado, puntaje, hallazgos, advertencias} ] },
+// más reciente primero (mismo orden que devuelve db_cargarHistorialAnalisis).
+const _ANTECEDENTES_POR_ITEM = {};
+
+// Cuánto historial se le manda a Groq. Se acota a propósito: el prompt ya
+// compite con el texto del documento por el límite de tokens/minuto de la
+// capa gratuita (ver _TAMANO_PARTE_GROQ), y lo que aporta señal es el último
+// análisis, no toda la cadena de versiones.
+const _MAX_ANTECEDENTES_IA       = 2;   // análisis previos por ítem
+const _MAX_OBS_ANTECEDENTE       = 6;   // observaciones por análisis previo
+const _LARGO_MAX_OBS_ANTECEDENTE = 220; // caracteres por observación
+
+// Recibe el historial ya agrupado por ítem (_historialAnalisisPorItem en
+// js/proceso-detalle.js, filas crudas de `analisis_juriskills`) y lo deja
+// listo para las dos vías de arriba. Se puede llamar varias veces: siempre
+// reemplaza el registro completo, nunca acumula duplicados.
+function registrarAntecedentesAnalisis(historialPorItem) {
+    Object.keys(_ANTECEDENTES_POR_ITEM).forEach(function (k) { delete _ANTECEDENTES_POR_ITEM[k]; });
+    if (!historialPorItem) return;
+
+    Object.keys(historialPorItem).forEach(num => {
+        const filas = (historialPorItem[num] || [])
+            .filter(f => f && f.resultado)
+            .map(f => ({
+                fecha:        f.created_at || null,
+                archivo:      f.nombre_archivo || '',
+                estado:       f.estado || f.resultado.estado || '',
+                puntaje:      f.puntaje != null ? f.puntaje : (f.resultado.puntaje != null ? f.resultado.puntaje : null),
+                hallazgos:    Array.isArray(f.resultado.hallazgos) ? f.resultado.hallazgos : [],
+                advertencias: Array.isArray(f.resultado.advertencias) ? f.resultado.advertencias : []
+            }));
+        if (filas.length) _ANTECEDENTES_POR_ITEM[Number(num)] = filas;
+    });
+}
+
+// Versión compacta y recortada de los antecedentes de un ítem, tal como se
+// manda en el body de la Edge Function. `null` si no hay historial — así el
+// prompt de Groq queda exactamente igual que antes cuando es el primer
+// análisis del ítem.
+function _antecedentesParaPrompt(numItem) {
+    const previos = _ANTECEDENTES_POR_ITEM[numItem] || [];
+    if (previos.length === 0) return null;
+
+    return previos.slice(0, _MAX_ANTECEDENTES_IA).map(p => ({
+        fecha:   p.fecha ? String(p.fecha).slice(0, 10) : '',
+        archivo: p.archivo,
+        estado:  p.estado,
+        puntaje: p.puntaje,
+        observaciones: p.hallazgos.concat(p.advertencias)
+            .filter(o => typeof o === 'string' && o.trim().length > 0)
+            .slice(0, _MAX_OBS_ANTECEDENTE)
+            .map(o => o.length > _LARGO_MAX_OBS_ANTECEDENTE
+                ? o.slice(0, _LARGO_MAX_OBS_ANTECEDENTE) + '…'
+                : o)
+    }));
+}
+
+// ¿Dos observaciones hablan del mismo problema? No se busca igualdad literal
+// (ni Groq ni las reglas locales redactan igual dos veces, y el nombre del
+// archivo o el fragmento de contexto cambian entre versiones), sino que
+// compartan el núcleo de palabras significativas — mismo espíritu que
+// _pareceContradichaPorPresente.
+const _UMBRAL_SIMILITUD_ANTECEDENTE = 0.5;
+function _observacionesHablanDeLoMismo(previa, nueva) {
+    const palabrasPrevia = [...new Set(_normalizarTexto(previa).split(/\s+/).filter(p => p.length >= 5))];
+    const palabrasNueva  = new Set(_normalizarTexto(nueva).split(/\s+/).filter(p => p.length >= 5));
+    if (palabrasPrevia.length === 0 || palabrasNueva.size === 0) return false;
+    const comunes = palabrasPrevia.filter(p => palabrasNueva.has(p)).length;
+    return (comunes / palabrasPrevia.length) >= _UMBRAL_SIMILITUD_ANTECEDENTE;
+}
+
+// Respaldo determinístico (independiente de lo que decida Groq): compara las
+// observaciones (hallazgos Y advertencias) del análisis ANTERIOR de este ítem
+// contra las del análisis nuevo y adjunta el resultado en `seguimientoPrevios`.
+// Se incluyen también las advertencias — no solo los hallazgos — porque en el
+// motor local (ejecutarAnalisisLocalReglas) buena parte de los ~20 ítems sin
+// Groq solo llegan a advertencia (ej. "no se identificó una fecha reconocible"
+// cuando no hay ninguna fecha en el documento, ver _verificarVigenciaFecha):
+// esos ítems nunca generarían un hallazgo con el que comparar si solo se
+// miraran los hallazgos, y el seguimiento quedaría inerte precisamente donde
+// más simple es de calcular. No toca `estado` ni `puntaje` — el documento
+// nuevo se sigue calificando por sí mismo; esto solo agrega la lectura "qué
+// pasó con lo que se observó antes", que es lo que se pierde hoy al revisar
+// versión por versión.
+// Se guarda dentro del propio objeto de análisis, así que viaja tal cual a la
+// columna `resultado` (jsonb) de `analisis_juriskills` y el modal histórico lo
+// muestra igual que el modal en vivo, sin cambios de esquema en Supabase.
+function _seguimientoAntecedentes(numItem, resultado) {
+    if (!resultado || resultado.sinAnalisis) return resultado;
+
+    const previos = _ANTECEDENTES_POR_ITEM[numItem] || [];
+    if (previos.length === 0) return resultado;
+
+    const anterior = previos[0];
+    const observacionesPrevias = (anterior.hallazgos || []).concat(anterior.advertencias || [])
+        .filter(h => typeof h === 'string' && h.trim().length > 0);
+    if (observacionesPrevias.length === 0) return resultado;
+
+    const observacionesNuevas = (resultado.hallazgos || []).concat(resultado.advertencias || []);
+
+    return Object.assign({}, resultado, {
+        seguimientoPrevios: {
+            fecha:                anterior.fecha || null,
+            archivo:              anterior.archivo || '',
+            estadoAnterior:       anterior.estado || '',
+            puntajeAnterior:      anterior.puntaje != null ? anterior.puntaje : null,
+            totalAnalisisPrevios: previos.length,
+            observaciones: observacionesPrevias.map(h => ({
+                texto: h,
+                // 'no_detectado', no 'corregido': que el motor ya no lo
+                // reporte no prueba que se haya corregido (pudo cambiar la
+                // redacción, o el OCR leer distinto esta versión). El texto
+                // que ve el usuario es igual de prudente.
+                estado: observacionesNuevas.some(o => _observacionesHablanDeLoMismo(h, o))
+                    ? 'persiste'
+                    : 'no_detectado'
+            }))
+        }
+    });
+}
+
 // Intenta analizar con Groq (IA real); si el archivo no tiene texto legible o
 // la llamada falla (red, límite gratuito agotado, etc.), usa el motor local
 // ejecutarSkillJuridico() como respaldo, para que el checklist nunca se quede
@@ -911,7 +1054,11 @@ async function analizarConGroq(numItem, nombreArchivo, contenido) {
             normativaSkill: skill ? skill.normativa : null,
             esRestringido: _NUMS_RESTRINGIDOS_ANALISIS.indexOf(numItem) !== -1,
             contextoExpediente: typeof EXPEDIENTE_CONTEXTO !== 'undefined' ? EXPEDIENTE_CONTEXTO : null,
-            otrosItemsChecklist
+            otrosItemsChecklist,
+            // Qué se le observó a la versión anterior de ESTE mismo ítem
+            // (null si es el primer análisis) — ver la sección ANTECEDENTES
+            // más arriba y el bloqueAntecedentes de la Edge Function.
+            analisisPrevios: _antecedentesParaPrompt(numItem)
         };
 
         // Se llama una vez por cada parte, EN SECUENCIA (no en paralelo) para no
@@ -987,8 +1134,11 @@ async function analizarConGroq(numItem, nombreArchivo, contenido) {
 
 // Punto de entrada usado por mostrarArchivo()/mostrarArchivoSub()/reAnalizarTodo() —
 // se mantiene el mismo nombre para no tener que tocar esos otros lugares.
+// El seguimiento de antecedentes se aplica aquí (y no dentro de
+// analizarConGroq) para que también cubra los dos caminos de respaldo local
+// que esa función puede tomar cuando Groq falla o el archivo no tiene texto.
 async function analizarConIA(numItem, nombreArchivo, contenido) {
-    return analizarConGroq(numItem, nombreArchivo, contenido);
+    return _seguimientoAntecedentes(numItem, await analizarConGroq(numItem, nombreArchivo, contenido));
 }
 
 // ── Motor de análisis basado en SKILLS_JURIDICOS ──
@@ -2122,7 +2272,9 @@ function ejecutarAnalisisLocalReglas(numItem, nombreArchivo, contenido) {
         resumen = `✅ ${base.titulo}: ${criteriosOk.join('; ')}.`;
     }
 
-    return {
+    // Mismo seguimiento de antecedentes que analizarConIA() aplica al camino
+    // de Groq — aquí cubre a los ~20 ítems que siempre van por reglas locales.
+    return _seguimientoAntecedentes(numItem, {
         estado, puntaje, resumen,
         titulo: base.titulo,
         hallazgos, advertencias,
@@ -2132,5 +2284,5 @@ function ejecutarAnalisisLocalReglas(numItem, nombreArchivo, contenido) {
         normativa: base.normativa,
         motor: 'local_reglas',
         _fechaDetectadaISO: fechaDetectadaISO
-    };
+    });
 }

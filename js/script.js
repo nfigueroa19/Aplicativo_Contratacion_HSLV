@@ -1,27 +1,45 @@
-﻿// DESPUÉS — el botón ya existe en el HTML, solo buscarlo
+﻿// ════════════════════════════════════════════════════
+//  CARGA REAL DE DATOS — window._dbListo
+//
+//  Guarda la promesa de la carga real de datos para que cualquier
+//  tabla (historial, modal del dashboard) pueda esperarla y
+//  redibujarse sola cuando los datos reales terminen de llegar.
+//
+//  Va en el NIVEL SUPERIOR del archivo, no dentro de un
+//  DOMContentLoaded, y eso es a propósito: el splash de index.html
+//  (más abajo, "SPLASH") se engancha a esta promesa, y desde que el
+//  Sprint 5 puso `defer` en todos los <script>, este archivo se
+//  ejecuta ANTES de que DOMContentLoaded dispare. Creándola dentro
+//  de ese evento, el splash no la encontraba, caía a su red de
+//  seguridad (window.load) y se iba antes que los datos: el usuario
+//  alcanzaba a ver las tarjetas en "Cargando procesos...".
+//
+//  Un <script defer> corre con el documento ya parseado (readyState
+//  'interactive'), así que aquí el DOM ya existe y no hace falta
+//  esperar a nada para crearla.
+// ════════════════════════════════════════════════════
+window._dbListo = new Promise(function(resolve) {
+    setTimeout(function() {
+        if (typeof db_inicializar === 'function') {
+            db_inicializar().then(resolve).catch(resolve);
+        } else {
+            resolve();
+        }
+    }, 500);
+});
+// Antes de que termine _dbListo, HIST_BD está vacío y dash_actualizar()
+// mostraba "0" en las tarjetas del dashboard (parecía que no había
+// procesos). window._dashDatosListos hace que dash_actualizar() muestre
+// "Cargando..." mientras tanto, y se pone en true recién cuando la
+// carga real terminó, para pintar los números definitivos una sola vez.
+window._dashDatosListos = false;
+window._dbListo.then(function() {
+    window._dashDatosListos = true;
+    if (typeof dash_actualizar === 'function') dash_actualizar();
+});
+
+// DESPUÉS — el botón ya existe en el HTML, solo buscarlo
 document.addEventListener('DOMContentLoaded', function() {
-    // Guardar la promesa de la carga real de datos para que cualquier
-    // tabla (historial, modal del dashboard) pueda esperarla y
-    // redibujarse sola cuando los datos reales terminen de llegar.
-    window._dbListo = new Promise(function(resolve) {
-        setTimeout(function() {
-            if (typeof db_inicializar === 'function') {
-                db_inicializar().then(resolve).catch(resolve);
-            } else {
-                resolve();
-            }
-        }, 500);
-    });
-    // Antes de que termine _dbListo, HIST_BD está vacío y dash_actualizar()
-    // mostraba "0" en las tarjetas del dashboard (parecía que no había
-    // procesos). window._dashDatosListos hace que dash_actualizar() muestre
-    // "Cargando..." mientras tanto, y se pone en true recién cuando la
-    // carga real terminó, para pintar los números definitivos una sola vez.
-    window._dashDatosListos = false;
-    window._dbListo.then(function() {
-        window._dashDatosListos = true;
-        if (typeof dash_actualizar === 'function') dash_actualizar();
-    });
     var btn = document.getElementById('sidebar-toggle');
 
     var overlay = document.createElement('div');
@@ -308,26 +326,33 @@ document.addEventListener('DOMContentLoaded', function() {
     var percent = document.getElementById('splashPercent');
     var bar     = document.getElementById('splashBar');
 
-    // window._dbListo se crea dentro de un listener de DOMContentLoaded
-    // (arriba en este mismo archivo) — como este IIFE corre en cuanto se
-    // parsea el <script>, ANTES de que DOMContentLoaded dispare, todavía
-    // no existe en ese momento. Hay que esperar a ese evento (si ya pasó,
-    // conectar de inmediato) para engancharse a la promesa real en vez de
-    // caer siempre al fallback de window.load.
+    // window._dbListo se crea en el NIVEL SUPERIOR de este mismo archivo
+    // (arriba del todo), así que para cuando corre este IIFE ya existe y
+    // el enganche es directo.
+    //
+    // Antes esto esperaba a DOMContentLoaded cuando readyState valía
+    // 'loading'. Con `defer` (Sprint 5) esa condición NUNCA se cumple:
+    // comprobado en el navegador, un <script defer> se ejecuta siempre con
+    // readyState === 'interactive' y con DOMContentLoaded todavía sin
+    // disparar. El resultado era que se conectaba de inmediato, no
+    // encontraba la promesa (que se creaba dentro de ese evento) y caía al
+    // fallback de window.load — que desde el Sprint 5 llega casi al
+    // instante, porque ya no hay ningún script bloqueante. El splash se
+    // iba antes que los datos.
+    //
+    // No volver a condicionar esto a readyState: 'interactive' no
+    // distingue "antes" de "después" de DOMContentLoaded.
     function conectarDatos(callback) {
-        function intentar() {
-            if (window._dbListo && typeof window._dbListo.then === 'function') {
-                window._dbListo.then(callback).catch(callback);
-            } else {
-                // Fallback si _dbListo no llegó a definirse de todos modos
-                window.addEventListener('load', callback);
-            }
+        if (window._dbListo && typeof window._dbListo.then === 'function') {
+            window._dbListo.then(callback).catch(callback);
+            return;
         }
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', intentar);
-        } else {
-            intentar();
-        }
+        // Red de seguridad para que el splash no se quede pegado para
+        // siempre si alguien vuelve a mover la promesa. Ojo: por este
+        // camino el splash se va antes de tiempo — es justo el fallo de
+        // arriba, por eso avisa en consola en vez de hacerlo en silencio.
+        console.warn('Splash: window._dbListo no existe todavía; se usa window.load como red de seguridad.');
+        window.addEventListener('load', callback);
     }
 
     function ocultarSplash() {

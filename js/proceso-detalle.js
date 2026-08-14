@@ -308,6 +308,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (!_historialAnalisisPorItem[fila.item_num]) _historialAnalisisPorItem[fila.item_num] = [];
             _historialAnalisisPorItem[fila.item_num].push(fila);
         });
+        // Ese mismo historial es el insumo del próximo análisis de cada ítem:
+        // se le pasa al motor para que Groq revise el documento nuevo sabiendo
+        // qué se observó antes, y para el seguimiento determinístico de
+        // hallazgos previos (ver registrarAntecedentesAnalisis en
+        // js/juriskills-engine.js).
+        registrarAntecedentesAnalisis(_historialAnalisisPorItem);
         await pdLoaderAvanzar();
     }
 
@@ -1257,6 +1263,10 @@ async function pd_guardar() {
                 if (filaAnalisis) {
                     if (!_historialAnalisisPorItem[num]) _historialAnalisisPorItem[num] = [];
                     _historialAnalisisPorItem[num].unshift(filaAnalisis);
+                    // El análisis recién guardado pasa a ser el antecedente
+                    // del siguiente documento de este ítem, sin esperar a que
+                    // se recargue la página.
+                    registrarAntecedentesAnalisis(_historialAnalisisPorItem);
                 }
             }
         }
@@ -1447,7 +1457,21 @@ function pd_historialAnalisisHTML(num) {
     // se cierra solo si el usuario lo colapsa (pd_toggleHistorialAnalisis).
     var abierto = _historialAnalisisAbierto[num] === false ? 'none' : 'block';
 
-    var entradasHTML = filas.map(function(f) {
+    // `filas` viene más reciente primero (db_cargarHistorialAnalisis ordena
+    // por created_at desc, y pd_guardar() hace unshift al agregar una nueva).
+    // `analisis_juriskills` no tiene una columna `version` propia (a
+    // diferencia de `documentos`, ver docsItem/entradasHistorial más abajo en
+    // este archivo) — el número de versión se calcula aquí por posición: la
+    // fila más antigua del arreglo es "v1 · Inicial", la del índice 0 es la
+    // más reciente y lleva la etiqueta "Actual". Mismas clases CSS
+    // (hist-num-v1/vN, hist-tag-v1/vN/last) que usa ese historial de
+    // documentos, para que las dos cajas se vean como el mismo patrón.
+    var totalFilas = filas.length;
+    var entradasHTML = filas.map(function(f, idx) {
+        var version   = totalFilas - idx;
+        var esPrimera = version === 1;
+        var esUltima  = idx === 0;
+
         var fechaObj = f.created_at ? new Date(f.created_at) : null;
         var fecha = fechaObj
             ? fechaObj.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -1462,6 +1486,7 @@ function pd_historialAnalisisHTML(num) {
         var analistaNombre = (f.analizadoPor && f.analizadoPor.nombre) || '';
 
         return '<div class="hist-entrada">' +
+            '<div class="hist-num ' + (esPrimera ? 'hist-num-v1' : 'hist-num-vN') + '">' + version + '</div>' +
             '<div class="hist-info">' +
                 '<div class="hist-nombre">' +
                     '<span class="ia-badge ' + badgeClase + '" style="font-size:9px;">' + badgeTexto + '</span> ' +
@@ -1469,10 +1494,15 @@ function pd_historialAnalisisHTML(num) {
                     '<button data-accion="pd_verAnalisisHistorial" ' + _pdArgs([f.id]) + ' ' +
                         'style="background:none;border:none;color:#2563EB;text-decoration:underline;cursor:pointer;' +
                         'font-size:11px;font-weight:700;padding:0;margin-left:4px;">Ver detalle</button>' +
+                    (esPrimera
+                        ? '<span class="hist-tag-v1">v1 · Inicial</span>'
+                        : '<span class="hist-tag-vN">v' + version + '</span>') +
+                    (esUltima ? '<span class="hist-tag-last"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:1px;" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>Actual</span>' : '') +
                 '</div>' +
-                '<div class="hist-meta">' + escapeHTML(f.nombre_archivo || '') +
-                    ' &nbsp;·&nbsp; ' + fecha + ' &nbsp;·&nbsp; ' + hora +
-                    (analistaNombre ? ' &nbsp;·&nbsp; Subido por: ' + escapeHTML(analistaNombre) : '') +
+                '<div class="hist-meta"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' + escapeHTML(f.nombre_archivo || '') +
+                    ' &nbsp;·&nbsp; <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + fecha +
+                    ' &nbsp;·&nbsp; <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + hora +
+                    (analistaNombre ? ' &nbsp;·&nbsp; <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px;" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Subido por: ' + escapeHTML(analistaNombre) : '') +
                 '</div>' +
             '</div>' +
         '</div>';
@@ -1568,8 +1598,28 @@ function pd_renderTarjetaAnalisis(val, clave) {
             '</div>' +
             '<span style="font-size:11px;font-weight:800;color:' + pColor + ';white-space:nowrap;">' + puntaje + '%</span>' +
         '</div>' +
+        pd_seguimientoPreviosResumenHTML(a) +
         '<a href="javascript:void(0)" data-accion="pd_juriskillsAbrirModal" ' + _pdArgs([clave]) + ' ' +
             'style="font-size:11px;font-weight:700;color:#2563EB;text-decoration:underline;">Ver análisis completo</a>';
+}
+
+// Línea de una sola frase en la tarjeta compacta, para que se vea desde el
+// checklist que este análisis sí tuvo en cuenta el anterior del mismo ítem
+// (el detalle observación por observación está en el modal, ver
+// pd_seguimientoPreviosHTML).
+function pd_seguimientoPreviosResumenHTML(a) {
+    var seg = a && a.seguimientoPrevios;
+    if (!seg || !seg.observaciones || seg.observaciones.length === 0) return '';
+
+    var persisten = seg.observaciones.filter(function(o) { return o.estado === 'persiste'; }).length;
+    var color = persisten > 0 ? '#B91C1C' : '#0B7A43';
+
+    return '<div style="font-size:10.5px;color:' + color + ';margin-bottom:5px;line-height:1.4;">' +
+        '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+        (persisten > 0
+            ? persisten + ' de ' + seg.observaciones.length + ' observación(es) del análisis anterior sigue(n) apareciendo.'
+            : 'Ninguna de las ' + seg.observaciones.length + ' observación(es) del análisis anterior vuelve a aparecer.') +
+    '</div>';
 }
 
 // Modal de detalle completo — mismo markup que _renderContenidoCompletoAnalisis()
@@ -1586,6 +1636,50 @@ function pd_juriskillsAbrirModal(clave) {
 
 function pd_juriskillsCerrarModal() {
     document.getElementById('juriskillsModal').style.display = 'none';
+}
+
+// Caja "Comparación con el análisis anterior" del modal de detalle. Se
+// alimenta de `analisis.seguimientoPrevios`, que arma el propio motor
+// (_seguimientoAntecedentes en js/juriskills-engine.js) cuando el ítem ya
+// tenía análisis guardados en `analisis_juriskills`. Devuelve '' cuando es el
+// primer análisis del ítem — ahí no hay nada con qué comparar.
+// Usa la misma paleta que la caja "Historial de análisis" del checklist
+// (#F8FAFC / #E2E8F0 / #123C7B): es información del mismo origen.
+function pd_seguimientoPreviosHTML(a) {
+    var seg = a && a.seguimientoPrevios;
+    if (!seg || !seg.observaciones || seg.observaciones.length === 0) return '';
+
+    var fechaObj = seg.fecha ? new Date(seg.fecha) : null;
+    var fechaTxt = fechaObj
+        ? fechaObj.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        : '';
+
+    var persisten = seg.observaciones.filter(function(o) { return o.estado === 'persiste'; }).length;
+
+    var itemsHTML = seg.observaciones.map(function(o) {
+        var persiste = o.estado === 'persiste';
+        var color    = persiste ? '#DC2626' : '#0B7A43';
+        var etiqueta = persiste ? 'Persiste' : 'Ya no se detecta';
+        return '<li style="margin-bottom:6px;">' +
+            '<span style="display:inline-block;background:' + color + ';color:white;border-radius:6px;' +
+                'padding:1px 6px;font-size:9px;font-weight:800;margin-right:5px;">' + etiqueta + '</span>' +
+            escapeHTML(o.texto) +
+        '</li>';
+    }).join('');
+
+    return '<div style="margin-bottom:6px;background:#F8FAFC;border-radius:8px;padding:6px 8px;border:1px solid #E2E8F0;">' +
+        '<div style="font-size:11px;font-weight:700;color:#123C7B;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Comparación con el análisis anterior:</div>' +
+        '<div style="font-size:10.5px;color:#6B7280;margin-bottom:5px;">' +
+            'Se tuvo en cuenta el análisis ' + (fechaTxt ? 'del ' + fechaTxt + ' ' : '') +
+            'de "' + escapeHTML(seg.archivo || '') + '"' +
+            (seg.puntajeAnterior != null ? ' (' + seg.puntajeAnterior + '% en ese momento)' : '') + '. ' +
+            persisten + ' de ' + seg.observaciones.length + ' observación(es) de entonces sigue(n) apareciendo.' +
+        '</div>' +
+        '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + itemsHTML + '</ul>' +
+        '<div style="font-size:10px;color:#9CA3AF;margin-top:5px;line-height:1.4;">' +
+            'Que una observación anterior ya no aparezca no confirma que se haya corregido — puede deberse a un cambio de redacción o a una lectura distinta del documento. Verifíquelo manualmente.' +
+        '</div>' +
+    '</div>';
 }
 
 function pd_renderContenidoCompletoAnalisis(val) {
@@ -1664,6 +1758,7 @@ function pd_renderContenidoCompletoAnalisis(val) {
         (advConcHTML ? '<div style="margin-bottom:6px;background:#FFF7ED;border-radius:8px;padding:6px 8px;border:1px solid #FED7AA;">' +
             '<div style="font-size:11px;font-weight:700;color:#C2410C;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Concordancia entre documentos:</div>' +
             '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;color:#4B5563;">' + advConcHTML + '</ul></div>' : '') +
+        pd_seguimientoPreviosHTML(a) +
         (recomHTML ? '<div style="margin-bottom:2px;background:#F0FDF4;border-radius:8px;padding:6px 8px;">' +
             '<div style="font-size:11px;font-weight:700;color:#0B7A43;margin-bottom:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px;" aria-hidden="true"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>Recomendaciones:</div>' +
             '<ul style="margin:0 0 0 14px;padding:0;font-size:11.5px;">' + recomHTML + '</ul></div>' : '') +

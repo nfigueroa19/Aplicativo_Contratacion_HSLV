@@ -499,7 +499,7 @@ async function db_guardarAnalisisJuriskills(procesoId, itemNum, itemLabel, nombr
                 resultado:      analisis,
                 analizado_por:  perfil ? perfil.id : null
             })
-            .select()
+            .select('*, analizadoPor:analizado_por(nombre)')
             .single();
 
         if (error) {
